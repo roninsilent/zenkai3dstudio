@@ -15,6 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>
 :root{
   --paper:#F2F2F0; --surface:#FFFFFF; --ink:#191A1C; --ink-soft:#6B6D72;
@@ -217,7 +218,12 @@ textarea.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:
     </div>
     <div class="grid3" style="margin-top:12px">
       <label class="f">Nombre de peces <input type="number" id="q-peces" min="1" step="1" value="1"></label>
-      <label class="f">Temps d'impressió total (h) <input type="number" id="q-temps" min="0" step="0.25" placeholder="p. ex. 6.5"></label>
+      <label class="f">Temps d'impressió total
+        <span style="display:flex;gap:6px">
+          <input type="number" id="q-temps" min="0" step="1" placeholder="h" style="flex:1">
+          <input type="number" id="q-temps-min" min="0" max="59" step="1" placeholder="min" style="flex:1">
+        </span>
+      </label>
       <label class="f">Preparació de l'arxiu (min) <input type="number" id="q-prep" min="0" step="1" placeholder="tallar, suports"></label>
     </div>
   </div>
@@ -278,6 +284,8 @@ textarea.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:
   <div class="toolbar">
     <button class="btn primary" id="save-quote">Desa al historial</button>
     <button class="btn" id="copy-summary">Copia el resum</button>
+    <button class="btn" id="pdf-client">PDF per al client</button>
+    <button class="btn" id="pdf-intern">PDF complet</button>
   </div>
 
 </section>
@@ -376,7 +384,8 @@ textarea.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:
     </table>
     <p class="note" id="d-notes" style="margin-top:10px"></p>
     <div class="actions">
-      <button class="btn primary" id="d-dup">Duplica</button>
+      <button class="btn primary" id="d-pdf">PDF</button>
+      <button class="btn" id="d-dup">Duplica</button>
       <button class="btn" id="d-close">Tanca</button>
       <span class="spacer"></span>
       <button class="btn danger" id="d-del">Elimina</button>
@@ -417,6 +426,12 @@ var view="calc";
 function $(id){ return document.getElementById(id); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
 function num(v){ var n=parseFloat(v); return isFinite(n)?n:0; }
+function fmtHM(h){
+  h=h||0;
+  var tot=Math.round(h*60), hh=Math.floor(tot/60), mm=tot%60;
+  if(!tot) return "0 min";
+  return (hh?hh+" h":"")+(hh&&mm?" ":"")+(mm?mm+" min":"");
+}
 function fmtE(n){ if(!isFinite(n)) return "—"; return (Math.round(n*100)/100).toFixed(2).replace(".",",")+" €"; }
 function toast(msg){ var t=$("toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(function(){t.hidden=true;},2600); }
 
@@ -496,7 +511,7 @@ function currentInput(){
     tipus: tipus,
     client: $("q-client").value.trim(),
     peces: Math.max(1, Math.round(num($("q-peces").value))||1),
-    tempsH: num($("q-temps").value),
+    tempsH: num($("q-temps").value) + num($("q-temps-min").value)/60,
     prepMin: num($("q-prep").value),
     materialQty: num($("q-material").value),
     materialPreu: num($("q-preu-material").value),
@@ -639,7 +654,7 @@ function recalc(){
 function summaryText(inp, r){
   var l = [];
   l.push((inp.client||"Pressupost")+" — "+(tipus==="resina"?"Resina":"Filament (FDM)"));
-  l.push(inp.peces+" peç"+(inp.peces===1?"a":"es")+" · "+inp.tempsH+" h d'impressió");
+  l.push(inp.peces+" peç"+(inp.peces===1?"a":"es")+" · "+fmtHM(inp.tempsH)+" d'impressió");
   l.push("");
   l.push("Material: "+fmtE(r.materialCost));
   l.push("Màquina, manteniment i electricitat: "+fmtE(r.machineCost+r.manteniCost+r.elecCost));
@@ -703,7 +718,7 @@ function openDetail(uid){
   detailUid=uid;
   var inp=rec.input, r=rec.resultat;
   $("d-title").textContent = inp.client || "Pressupost";
-  $("d-sub").textContent = fmtDate(rec.data)+" · "+(inp.tipus==="resina"?"Resina":"Filament (FDM)")+" · "+inp.peces+" peç"+(inp.peces===1?"a":"es")+" · "+inp.tempsH+" h";
+  $("d-sub").textContent = fmtDate(rec.data)+" · "+(inp.tipus==="resina"?"Resina":"Filament (FDM)")+" · "+inp.peces+" peç"+(inp.peces===1?"a":"es")+" · "+fmtHM(inp.tempsH);
   $("d-body").innerHTML = bdRows(r, inp.tipus==="resina");
   $("d-notes").textContent = inp.notes||"";
   $("overlay").hidden=false;
@@ -716,6 +731,10 @@ $("d-del").onclick=function(){
   historial=historial.filter(function(r){return r.uid!==detailUid;});
   closeDetail(); persistHistory(); toast("Pressupost eliminat");
 };
+$("d-pdf").onclick=function(){
+  var rec=byUidH(detailUid); if(!rec) return;
+  makePDF(rec.input, rec.resultat, false, rec.data);
+};
 $("d-dup").onclick=function(){
   var rec=byUidH(detailUid); if(!rec) return;
   loadIntoForm(rec.input);
@@ -727,7 +746,9 @@ function loadIntoForm(inp){
   setTipus(inp.tipus||"fdm");
   $("q-client").value = inp.client||"";
   $("q-peces").value = inp.peces||1;
-  $("q-temps").value = inp.tempsH||"";
+  var _th=inp.tempsH||0;
+  $("q-temps").value = _th?Math.floor(_th):"";
+  $("q-temps-min").value = _th?Math.round((_th-Math.floor(_th))*60):"";
   $("q-prep").value = inp.prepMin||"";
   $("q-material").value = inp.materialQty||"";
   $("q-preu-material").value = inp.materialPreu||"";
@@ -803,12 +824,12 @@ Array.prototype.forEach.call($("pintat-presets").querySelectorAll("button"),func
     recalc();
   };
 });
-["q-peces","q-temps","q-prep","q-material","q-preu-material","q-postproces","q-marge","q-disseny-hores","q-disseny-preu","q-pintat-hores","q-pintat-mat","q-pintat-preu"].forEach(function(id){
+["q-peces","q-temps","q-temps-min","q-prep","q-material","q-preu-material","q-postproces","q-marge","q-disseny-hores","q-disseny-preu","q-pintat-hores","q-pintat-mat","q-pintat-preu"].forEach(function(id){
   $(id).addEventListener("input", recalc);
 });
 
 $("nou").onclick=function(){
-  $("q-client").value=""; $("q-peces").value=1; $("q-temps").value=""; $("q-prep").value=""; $("q-material").value="";
+  $("q-client").value=""; $("q-peces").value=1; $("q-temps").value=""; $("q-temps-min").value=""; $("q-prep").value=""; $("q-material").value="";
   $("q-preu-material")._auto=true; $("q-preu-material").value = tipus==="resina"?settings.general.materialLResina:settings.general.materialKgFdm;
   $("q-postproces").value=""; setMargeMode("pctmat"); $("q-marge").value=settings.general.marge; $("q-amic").checked=false; $("q-notes").value="";
   $("q-disseny").checked=false; $("disseny-box").hidden=true; $("q-disseny-hores").value=""; $("q-disseny-preu").value=settings.general.dissenyHora;
@@ -818,6 +839,151 @@ $("nou").onclick=function(){
   recalc();
 };
 $("save-quote").onclick=saveQuote;
+/* ---------------- PDF ---------------- */
+var BRAND_BLUE=[62,150,194], BRAND_ORANGE=[230,115,36], INK=[25,26,28], SOFT=[120,123,128];
+
+function pdfLines(inp,r,intern){
+  var rows=[];
+  if(intern){
+    rows.push(["Material", r.materialCost]);
+    rows.push(["Màquina (amortització)", r.machineCost]);
+    rows.push(["Manteniment i desgast", r.manteniCost]);
+    rows.push(["Electricitat", r.elecCost]);
+    if(inp.tipus==="resina") rows.push(["Consumibles (FEP, LCD, IPA)", r.consumCost]);
+    rows.push(["Marge per fallades", r.falladaExtra]);
+    if(r.prepCost>0) rows.push(["Preparació de l'arxiu", r.prepCost]);
+    if(r.dissenyCost>0) rows.push(["Disseny personalitzat", r.dissenyCost]);
+    if(r.maObraPerPeca>0) rows.push(["Mà d'obra (postprocés)", r.maObraPerPeca*r.peces]);
+    if(r.pintatPerPeca>0) rows.push(["Pintat", r.pintatPerPeca*r.peces]);
+    rows.push(["__SUB__Cost total", r.costTotalPerPeca*r.peces]);
+    rows.push(["Marge / guany", r.guanyPerPeca*r.peces]);
+    if(r.amic) rows.push(["__SUB__Preu normal", r.preuNormalPerPeca*r.peces]);
+    return rows;
+  }
+  /* versió per al client: per servei, amb el marge repartit, sense costos interns */
+  var base=[];
+  base.push(["Material", r.materialCost + (inp.tipus==="resina"?r.consumCost:0)]);
+  base.push(["Impressió i ús de màquina", r.machineCost + r.manteniCost + r.elecCost + r.falladaExtra]);
+  if(r.prepCost+r.dissenyCost>0) base.push([r.dissenyCost>0?"Disseny i preparació":"Preparació de l'arxiu", r.prepCost+r.dissenyCost]);
+  if(r.maObraPerPeca>0) base.push(["Postprocés i acabat", r.maObraPerPeca*r.peces]);
+  if(r.pintatPerPeca>0) base.push(["Pintat a mà", r.pintatPerPeca*r.peces]);
+  var sum=base.reduce(function(a,x){ return a+x[1]; },0);
+  var k = sum>0 ? (r.preuVendaTotal/sum) : 1;
+  return base.map(function(x){ return [x[0], x[1]*k]; });
+}
+
+function makePDF(inp,r,intern,dateISO){
+  if(!window.jspdf||!window.jspdf.jsPDF){ toast("No he pogut carregar el generador de PDF (revisa la connexió)."); return; }
+  var doc=new window.jspdf.jsPDF({unit:"mm",format:"a4"});
+  var M=18, W=210, right=W-M, y=0;
+
+  try{
+    var logo=document.querySelector(".brandmark");
+    if(logo&&logo.src) doc.addImage(logo.src,"PNG",M,14,17,17);
+  }catch(e){}
+
+  doc.setFont("helvetica","bold"); doc.setFontSize(12);
+  doc.setTextColor(BRAND_BLUE[0],BRAND_BLUE[1],BRAND_BLUE[2]);
+  doc.text("ZENKAI",M+21,22);
+  var wz=doc.getTextWidth("ZENKAI");
+  doc.setTextColor(BRAND_ORANGE[0],BRAND_ORANGE[1],BRAND_ORANGE[2]);
+  doc.text("3D STUDIO",M+21+wz+1.2,22);
+  doc.setFont("helvetica","normal"); doc.setFontSize(8.5);
+  doc.setTextColor(SOFT[0],SOFT[1],SOFT[2]);
+  doc.text("Impressió 3D · disseny i acabat",M+21,27);
+
+  var d=dateISO?new Date(dateISO):new Date();
+  var ref="P-"+d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+
+          "-"+String(Math.abs((inp.client||"x").split("").reduce(function(a,c){return a+c.charCodeAt(0);},0))%97).padStart(2,"0");
+  doc.setFontSize(9); doc.setTextColor(SOFT[0],SOFT[1],SOFT[2]);
+  doc.text(d.toLocaleDateString("ca-ES",{day:"numeric",month:"long",year:"numeric"}),right,22,{align:"right"});
+  doc.text("Ref. "+ref,right,27,{align:"right"});
+
+  doc.setDrawColor(215,215,211); doc.setLineWidth(0.3);
+  doc.line(M,36,right,36);
+
+  doc.setFont("helvetica","bold"); doc.setFontSize(21);
+  doc.setTextColor(INK[0],INK[1],INK[2]);
+  doc.text(intern?"Full de costos":"Pressupost",M,49);
+
+  y=60;
+  doc.setFontSize(9.5); doc.setFont("helvetica","bold");
+  doc.setTextColor(SOFT[0],SOFT[1],SOFT[2]);
+  doc.text("PER A",M,y);
+  doc.text("TREBALL",M+62,y);
+  doc.setFont("helvetica","normal"); doc.setTextColor(INK[0],INK[1],INK[2]); doc.setFontSize(11);
+  doc.text(inp.client||"—",M,y+6);
+  var desc=inp.peces+" peç"+(inp.peces===1?"a":"es")+" · "+(inp.tipus==="resina"?"Resina":"Filament (FDM)");
+  doc.text(desc,M+62,y+6);
+  doc.setFontSize(9); doc.setTextColor(SOFT[0],SOFT[1],SOFT[2]);
+  doc.text(fmtHM(inp.tempsH)+" d'impressió",M+62,y+11);
+
+  y=88;
+  doc.setDrawColor(182,182,177); doc.setLineWidth(0.4);
+  doc.line(M,y,right,y);
+  y+=6;
+  doc.setFont("helvetica","bold"); doc.setFontSize(8.5);
+  doc.setTextColor(SOFT[0],SOFT[1],SOFT[2]);
+  doc.text("CONCEPTE",M,y);
+  doc.text("IMPORT",right,y,{align:"right"});
+  y+=3.5;
+  doc.setDrawColor(215,215,211); doc.setLineWidth(0.3);
+  doc.line(M,y,right,y);
+  y+=7;
+
+  var rows=pdfLines(inp,r,intern);
+  doc.setFontSize(10.5);
+  rows.forEach(function(row){
+    var label=row[0], sub=false;
+    if(label.indexOf("__SUB__")===0){ label=label.slice(7); sub=true; }
+    doc.setFont("helvetica",sub?"bold":"normal");
+    doc.setTextColor(INK[0],INK[1],INK[2]);
+    doc.text(label,M,y);
+    doc.text(fmtE(row[1]),right,y,{align:"right"});
+    y+=6.6;
+    if(sub){ doc.setDrawColor(230,230,227); doc.line(M,y-3.2,right,y-3.2); }
+  });
+
+  y+=2;
+  doc.setDrawColor(25,26,28); doc.setLineWidth(0.5);
+  doc.line(M,y,right,y);
+  y+=9;
+  doc.setFont("helvetica","bold"); doc.setFontSize(13);
+  doc.setTextColor(INK[0],INK[1],INK[2]);
+  doc.text(r.amic&&!intern?"TOTAL (preu d'amic)":"TOTAL",M,y);
+  doc.setFontSize(17);
+  doc.text(fmtE(r.preuVendaTotal),right,y+0.6,{align:"right"});
+  y+=7;
+  doc.setFont("helvetica","normal"); doc.setFontSize(9);
+  doc.setTextColor(SOFT[0],SOFT[1],SOFT[2]);
+  doc.text(fmtE(r.preuVendaPerPeca)+" per peça · "+inp.peces+" unitat"+(inp.peces===1?"":"s"),right,y,{align:"right"});
+
+  if(inp.notes){
+    y+=12;
+    doc.setFont("helvetica","bold"); doc.setFontSize(8.5);
+    doc.setTextColor(SOFT[0],SOFT[1],SOFT[2]);
+    doc.text("NOTES",M,y);
+    y+=5;
+    doc.setFont("helvetica","normal"); doc.setFontSize(10);
+    doc.setTextColor(INK[0],INK[1],INK[2]);
+    doc.splitTextToSize(inp.notes,right-M).forEach(function(ln){ doc.text(ln,M,y); y+=5; });
+  }
+
+  doc.setFontSize(8); doc.setTextColor(SOFT[0],SOFT[1],SOFT[2]);
+  doc.setDrawColor(215,215,211); doc.setLineWidth(0.3);
+  doc.line(M,273,right,273);
+  doc.text(intern
+    ? "Document intern — no destinat al client."
+    : "Pressupost vàlid 30 dies. Els terminis es confirmen en acceptar la comanda.", M,279);
+  doc.text("Zenkai3D Studio",right,279,{align:"right"});
+
+  var safe=(inp.client||"pressupost").replace(/[^A-Za-zÀ-ÿ0-9 _-]/g,"").trim()||"pressupost";
+  doc.save((intern?"Costos - ":"Pressupost - ")+safe+".pdf");
+}
+
+$("pdf-client").onclick=function(){ var i=currentInput(); makePDF(i,calc(i),false,null); };
+$("pdf-intern").onclick=function(){ var i=currentInput(); makePDF(i,calc(i),true,null); };
+
 $("copy-summary").onclick=function(){
   var inp=currentInput(), r=calc(inp);
   var text=summaryText(inp,r);
