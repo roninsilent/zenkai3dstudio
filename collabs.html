@@ -475,24 +475,30 @@ function scheduleRemoteWrite(){
   },450);
 }
 function manualSync(){
-  var btn=$("sync-btn");
-  if(!dbDoc){ toast("La sincronització no està disponible ara mateix"); return; }
-  var old=btn.textContent;
+  var btn=$("sync-btn"), old=btn.textContent;
+  if(typeof gToken==="undefined" || !gToken || !gFileId){
+    toast("Per sincronitzar cal entrar-hi amb el compte de Google.");
+    return;
+  }
   btn.disabled=true; btn.textContent="Actualitzant…";
-  dbDoc.get().then(function(snap){
+  driveLoad(gFileId).then(function(d){
     btn.disabled=false; btn.textContent=old;
-    var d = snap.exists ? (snap.data()||{}) : {};
-    var remote = Array.isArray(d.collabs) ? d.collabs : [];
-    var ser = JSON.stringify(remote);
-    if(ser===JSON.stringify(collabs)){
+    var remote = Array.isArray(d && d.collabs) ? d.collabs : [];
+    if(JSON.stringify(remote)===JSON.stringify(collabs)){
       toast("Ja tenies l'última versió");
     }else{
-      collabs=JSON.parse(JSON.stringify(remote)); lastSerialized=ser; saveLocal(); renderAll();
-      toast("Actualitzat amb els últims canvis");
+      collabs=JSON.parse(JSON.stringify(remote));
+      saveLocal(); renderAll();
+      toast("Actualitzat amb els últims canvis del Drive");
     }
-  }).catch(function(){
+  }).catch(function(e){
     btn.disabled=false; btn.textContent=old;
-    toast("No he pogut actualitzar-ho ara mateix");
+    if(e&&e.code==="g_401"){
+      toast("La sessió de Google ha caducat; torna a entrar-hi.");
+      gToken=null; showLogin("Torna a entrar-hi per continuar.");
+    } else {
+      toast("No he pogut llegir el Drive ara mateix.");
+    }
   });
 }
 function connectCaps(){
