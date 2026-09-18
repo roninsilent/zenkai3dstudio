@@ -1041,12 +1041,38 @@ function processImportText(raw){
     return;
   }
 
-  toAdd.forEach(function(c){ collabs.push(c); });
+  /* si la marca ja hi és, no la repeteixo: actualitzo la fitxa existent */
+  var afegides=0, actualitzades=0;
+  toAdd.forEach(function(c){
+    var key=(c.marca||"").trim().toLowerCase();
+    var idx=-1;
+    for(var i=0;i<collabs.length;i++){
+      if((collabs[i].marca||"").trim().toLowerCase()===key){ idx=i; break; }
+    }
+    if(idx<0){ collabs.push(c); afegides++; return; }
+    /* conserva l'uid i les fitxes que ja tenies marcades com a fetes */
+    var vell=collabs[idx];
+    var fets={};
+    (vell.entregables||[]).forEach(function(x){ if(x.fet) fets[(x.text||"").trim().toLowerCase()]=1; });
+    (vell.rebuts||[]).forEach(function(x){ if(x.fet) fets[(x.text||"").trim().toLowerCase()]=1; });
+    c.entregables.forEach(function(x){ if(fets[(x.text||"").trim().toLowerCase()]) x.fet=true; });
+    c.rebuts.forEach(function(x){ if(fets[(x.text||"").trim().toLowerCase()]) x.fet=true; });
+    c.uid=vell.uid;
+    c.creat=vell.creat||c.creat;
+    if((vell.fitxers||[]).length) c.fitxers=vell.fitxers;
+    collabs[idx]=c;
+    actualitzades++;
+  });
+
   $("import-box").value="";
-  msg.className="note ok"; msg.textContent="Afegides "+toAdd.length+" col·laboracions.";
+  var parts=[];
+  if(afegides) parts.push(afegides+" afegid"+(afegides===1?"a":"es"));
+  if(actualitzades) parts.push(actualitzades+" actualitzad"+(actualitzades===1?"a":"es"));
+  msg.className="note ok";
+  msg.textContent = parts.length ? parts.join(" i ")+"." : "No hi havia res de nou.";
   try{ persist(); }catch(e){ msg.textContent+=" (però hi ha hagut un problema en desar-ho: "+e.message+")"; }
   go("llista");
-  toast(toAdd.length+" col·laboracions afegides");
+  toast(msg.textContent);
 }
 $("import-btn").onclick=function(){ processImportText($("import-box").value); };
 $("import-file-btn").onclick=function(){
