@@ -298,6 +298,7 @@ textarea.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:
   </label>
   <div class="toolbar">
     <button class="btn primary" id="mail-buscar">Busca al correu</button>
+    <button class="btn" id="mail-reconsent">Torna a demanar el permís</button>
   </div>
   <p class="note" id="mail-msg"></p>
   <div id="mail-list"></div>
@@ -845,8 +846,17 @@ function alreadyKnown(email,subject){
   return null;
 }
 
+$("mail-reconsent").onclick=function(){
+  if(!gTokenClient){ mailMsg("err","Encara carregant Google; prova d'aquí un moment."); return; }
+  mailMsg("","Demanant el permís de Gmail…");
+  gTokenClient.requestAccessToken({prompt:"consent"});
+};
 $("mail-buscar").onclick=function(){
   if(!gToken){ mailMsg("err","Per llegir el correu cal entrar-hi amb el compte de Google."); return; }
+  if(gScopes && gScopes.indexOf("gmail.readonly")<0){
+    mailMsg("err","La sessió actual no inclou el permís de Gmail. Toca «Torna a demanar el permís» aquí sota.");
+    return;
+  }
   var q=$("mail-q").value.trim();
   if(!q){ mailMsg("err","Escriu què vols buscar."); return; }
   var btn=$("mail-buscar"), old=btn.textContent;
@@ -873,13 +883,18 @@ $("mail-buscar").onclick=function(){
     })
     .catch(function(e){
       btn.disabled=false; btn.textContent=old;
+      var det=(e&&e.detail)||"";
       if(e&&e.code==="g_401"){
-        mailMsg("err","La sessió ha caducat o falta el permís del correu. Tanca sessió i torna a entrar-hi per concedir-lo.");
         gToken=null;
-      } else if(e&&String(e.code||"").indexOf("403")>=0){
-        mailMsg("err","Google no dona permís per llegir el correu. Tanca sessió, torna a entrar-hi i accepta el permís de Gmail.");
+        mailMsg("err","La sessió ha caducat. Tanca sessió i torna a entrar-hi.");
+      } else if(e&&e.status===403 && /has not been used|is disabled|SERVICE_DISABLED/i.test(det)){
+        mailMsg("err","Falta activar la Gmail API al teu projecte de Google Cloud. Ves a console.cloud.google.com → API i serveis → Biblioteca → «Gmail API» → Habilita. Espera un minut i torna-ho a provar.");
+      } else if(e&&e.status===403 && /insufficient|scope|permission/i.test(det)){
+        mailMsg("err","El permís de Gmail no s'ha concedit. Toca «Torna a demanar el permís» aquí sota.");
+      } else if(e&&(e.status===403||e.status===400)){
+        mailMsg("err","Google ho ha rebutjat: "+det);
       } else {
-        mailMsg("err","No he pogut llegir el correu ara mateix.");
+        mailMsg("err","No he pogut llegir el correu ara mateix."+(det?" ("+det+")":""));
       }
     });
 };
@@ -1378,9 +1393,11 @@ $g("acct-signout").onclick=function(){
   showLogin("");
 };
 
+var gScopes="";
 function onGToken(resp){
   if(resp.error){ showLogin("Accés no concedit. Torna-ho a provar."); return; }
   gToken=resp.access_token;
+  gScopes=resp.scope||"";
   fetch("https://www.googleapis.com/oauth2/v3/userinfo",{headers:{Authorization:"Bearer "+gToken}})
     .then(function(r){ return r.json(); })
     .then(function(u){
@@ -1422,9 +1439,13 @@ function driveFetch(url,opts){
   opts=opts||{};
   opts.headers=Object.assign({},opts.headers,{Authorization:"Bearer "+gToken});
   return fetch(url,opts).then(function(r){
-    if(r.status===401) throw {code:"g_401"};
-    if(!r.ok) throw {code:"g_http_"+r.status};
-    return r;
+    if(r.ok) return r;
+    return r.text().then(function(t){
+      var detail="";
+      try{ var j=JSON.parse(t); detail=(j.error&&(j.error.message||j.error.status))||""; }
+      catch(e){ detail=(t||"").slice(0,200); }
+      throw {code:(r.status===401?"g_401":"g_http_"+r.status), status:r.status, detail:detail};
+    });
   });
 }
 function driveFindOrCreate(name,mime,initialBody){
