@@ -252,6 +252,7 @@ textarea.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:
 <nav role="tablist">
   <button role="tab" data-view="llista" aria-selected="true">Col·laboracions</button>
   <button role="tab" data-view="pendent" aria-selected="false">Pendent</button>
+  <button role="tab" data-view="correu" aria-selected="false">Correu</button>
   <button role="tab" data-view="instagram" aria-selected="false">Instagram</button>
   <button role="tab" data-view="importa" aria-selected="false">Importa</button>
 </nav>
@@ -286,6 +287,20 @@ textarea.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:
     <b>No tens res pendent ara mateix</b>
     O no has desat cap entregable/recepció encara, o ja els tens tots marcats.
   </div>
+</section>
+
+<section id="view-correu" hidden>
+  <h2>Busca col·laboracions al correu</h2>
+  <p class="hint">Mira el teu Gmail i et llista els correus que semblen col·laboracions. Els que ja tens fitxats els marca; dels altres et pot crear la fitxa amb el text ja posat.</p>
+
+  <label class="f">Què buscar
+    <input type="text" id="mail-q" value="newer_than:120d (collaboration OR partnership OR sponsor OR ambassador OR affiliate OR &quot;creator program&quot; OR gifted)">
+  </label>
+  <div class="toolbar">
+    <button class="btn primary" id="mail-buscar">Busca al correu</button>
+  </div>
+  <p class="note" id="mail-msg"></p>
+  <div id="mail-list"></div>
 </section>
 
 <section id="view-instagram" hidden>
@@ -334,7 +349,8 @@ textarea.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:
   <h2>Carrega un fitxer</h2>
   <p class="hint">La manera més segura des del mòbil: no depèn del teclat ni del porta-retalls.</p>
   <div class="toolbar" style="margin-top:0">
-    <button class="btn primary" id="import-file-btn">Tria un fitxer .json</button>
+    <button class="btn primary" id="import-file-btn">Afegeix des d'un fitxer .json</button>
+    <button class="btn danger" id="import-replace-btn">Substitueix-ho tot amb un fitxer</button>
     <input type="file" id="import-file-input" hidden>
   </div>
 
@@ -791,6 +807,139 @@ document.addEventListener("click",function(e){
   if(e.target.closest("[data-goto-add]")) openEditor(null);
 });
 
+/* ---------------- Correu: buscar col·laboracions al Gmail ---------------- */
+var mailHits=[];
+
+function mailMsg(cls,txt){ var m=$("mail-msg"); m.className="note"+(cls?" "+cls:""); m.textContent=txt; }
+
+function headerOf(msg,name){
+  var h=(msg.payload&&msg.payload.headers)||[];
+  for(var i=0;i<h.length;i++){ if((h[i].name||"").toLowerCase()===name) return h[i].value||""; }
+  return "";
+}
+function senderName(from){
+  var m=from.match(/^\s*"?([^"<]*?)"?\s*</);
+  var nom=(m&&m[1]||"").trim();
+  var em=(from.match(/<([^>]+)>/)||[null,from])[1]||"";
+  return {nom:nom, email:em.trim()};
+}
+function domainOf(email){
+  var d=(email.split("@")[1]||"").toLowerCase();
+  return d.replace(/^(mail|mkt|info|team|partnerships|marketing|creator|cloud|directmail)\./,"");
+}
+/* marca provisional a partir del domini: creator@meshy.ai -> Meshy */
+function brandFromEmail(email){
+  var d=domainOf(email).split(".")[0]||"";
+  if(!d) return "";
+  return d.charAt(0).toUpperCase()+d.slice(1);
+}
+function alreadyKnown(email,subject){
+  var dom=domainOf(email);
+  var low=(subject||"").toLowerCase();
+  for(var i=0;i<collabs.length;i++){
+    var c=collabs[i];
+    var hay=((c.marca||"")+" "+(c.contacte||"")).toLowerCase();
+    if(dom && hay.indexOf(dom.split(".")[0])>=0) return c;
+    if((c.marca||"") && low.indexOf((c.marca||"").toLowerCase().split(" ")[0])>=0) return c;
+  }
+  return null;
+}
+
+$("mail-buscar").onclick=function(){
+  if(!gToken){ mailMsg("err","Per llegir el correu cal entrar-hi amb el compte de Google."); return; }
+  var q=$("mail-q").value.trim();
+  if(!q){ mailMsg("err","Escriu què vols buscar."); return; }
+  var btn=$("mail-buscar"), old=btn.textContent;
+  btn.disabled=true; btn.textContent="Buscant…";
+  mailMsg("","Buscant al correu…");
+  $("mail-list").innerHTML="";
+  mailHits=[];
+
+  driveFetch("https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=25&q="+encodeURIComponent(q))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var ids=(d.messages||[]).map(function(m){ return m.id; });
+      if(!ids.length){ btn.disabled=false; btn.textContent=old; mailMsg("","Cap correu trobat amb aquesta cerca."); return; }
+      mailMsg("","Llegint "+ids.length+" correus…");
+      return Promise.all(ids.map(function(id){
+        return driveFetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/"+id+
+                          "?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date")
+          .then(function(r){ return r.json(); })
+          .catch(function(){ return null; });
+      })).then(function(msgs){
+        btn.disabled=false; btn.textContent=old;
+        renderMailHits(msgs.filter(Boolean));
+      });
+    })
+    .catch(function(e){
+      btn.disabled=false; btn.textContent=old;
+      if(e&&e.code==="g_401"){
+        mailMsg("err","La sessió ha caducat o falta el permís del correu. Tanca sessió i torna a entrar-hi per concedir-lo.");
+        gToken=null;
+      } else if(e&&String(e.code||"").indexOf("403")>=0){
+        mailMsg("err","Google no dona permís per llegir el correu. Tanca sessió, torna a entrar-hi i accepta el permís de Gmail.");
+      } else {
+        mailMsg("err","No he pogut llegir el correu ara mateix.");
+      }
+    });
+};
+
+function renderMailHits(msgs){
+  /* un per fil: el més recent de cada conversa */
+  var perThread={};
+  msgs.forEach(function(m){
+    var t=m.threadId||m.id;
+    if(!perThread[t] || Number(m.internalDate||0)>Number(perThread[t].internalDate||0)) perThread[t]=m;
+  });
+  mailHits=Object.keys(perThread).map(function(k){ return perThread[k]; })
+    .sort(function(a,b){ return Number(b.internalDate||0)-Number(a.internalDate||0); });
+
+  var nous=0;
+  $("mail-list").innerHTML = mailHits.map(function(m,i){
+    var from=headerOf(m,"from"), subj=headerOf(m,"subject");
+    var sn=senderName(from);
+    var known=alreadyKnown(sn.email,subj);
+    if(!known) nous++;
+    var d=new Date(Number(m.internalDate||0));
+    var data=isNaN(d)?"":d.toLocaleDateString("ca-ES",{day:"numeric",month:"short",year:"numeric"});
+    return '<div class="row" data-i="'+i+'">'+
+      '<div class="rowmain">'+
+        '<div class="name">'+esc(sn.nom||sn.email)+'</div>'+
+        '<div class="sub">'+esc(subj)+'</div>'+
+        '<div class="sub note">'+esc(data)+' · '+esc(sn.email)+'</div>'+
+        '<div class="sub">'+esc((m.snippet||"").slice(0,180))+'…</div>'+
+      '</div>'+
+      (known
+        ? '<span class="badge">ja fitxada</span>'
+        : '<button class="btn small mail-add" type="button">Crea fitxa</button>')+
+      '</div>';
+  }).join("");
+
+  Array.prototype.forEach.call($("mail-list").querySelectorAll(".mail-add"),function(b){
+    b.onclick=function(){
+      var row=b.closest(".row");
+      var m=mailHits[parseInt(row.dataset.i,10)];
+      var from=headerOf(m,"from"), subj=headerOf(m,"subject");
+      var sn=senderName(from);
+      var rec=buildRecord({
+        marca: brandFromEmail(sn.email) || sn.nom || "Sense nom",
+        contacte: (sn.nom? sn.nom+" (" : "")+sn.email+(sn.nom?")":""),
+        canal: "email",
+        tipus: "material",
+        estat: "proposta",
+        notes: subj+"\n\n"+(m.snippet||"")
+      });
+      collabs.push(rec);
+      persist();
+      toast("Fitxa creada — revisa-la i completa-la");
+      openEditor(rec.uid);
+    };
+  });
+
+  mailMsg("ok", mailHits.length+" fil"+(mailHits.length===1?"":"s")+" trobat"+(mailHits.length===1?"":"s")+
+    (nous? " · "+nous+" sense fitxar" : " · tots ja fitxats"));
+}
+
 /* ---------------- Instagram: llegir captures de pantalla ---------------- */
 var igShots = [];
 
@@ -995,6 +1144,7 @@ function buildRecord(c){
   return {
     uid: uid("C"),
     creat: new Date().toISOString(),
+    key: (c.key!=null?String(c.key).trim().toLowerCase():null),
     marca: (c.marca!=null?String(c.marca):""),
     contacte: (c.contacte!=null?String(c.contacte):null),
     canal: (c.canal!=null?String(c.canal):"email"),
@@ -1009,7 +1159,7 @@ function buildRecord(c){
     fitxers: fit.map(function(f){ return Object.assign({},f); })
   };
 }
-function processImportText(raw){
+function processImportText(raw,replace){
   var msg=$("import-msg");
   raw=(raw||"").trim();
   if(!raw){ msg.className="note err"; msg.textContent="No hi ha cap contingut per llegir."; return; }
@@ -1041,13 +1191,21 @@ function processImportText(raw){
     return;
   }
 
-  /* si la marca ja hi és, no la repeteixo: actualitzo la fitxa existent */
+  /* amb "substitueix", l'arxiu mana i s'esborra el que hi havia */
+  if(replace){ collabs.length=0; }
+
+  /* si ja hi és, actualitzo la fitxa en lloc de duplicar-la.
+     Es compara primer per "key" (que no canvia mai) i, si no n'hi ha, pel nom. */
   var afegides=0, actualitzades=0;
   toAdd.forEach(function(c){
-    var key=(c.marca||"").trim().toLowerCase();
+    var k=(c.key||"").trim().toLowerCase();
+    var nom=(c.marca||"").trim().toLowerCase();
     var idx=-1;
     for(var i=0;i<collabs.length;i++){
-      if((collabs[i].marca||"").trim().toLowerCase()===key){ idx=i; break; }
+      var ek=(collabs[i].key||"").trim().toLowerCase();
+      var en=(collabs[i].marca||"").trim().toLowerCase();
+      if(k && ek){ if(ek===k){ idx=i; break; } }
+      else if(en===nom){ idx=i; break; }
     }
     if(idx<0){ collabs.push(c); afegides++; return; }
     /* conserva l'uid i les fitxes que ja tenies marcades com a fetes */
@@ -1069,12 +1227,20 @@ function processImportText(raw){
   if(afegides) parts.push(afegides+" afegid"+(afegides===1?"a":"es"));
   if(actualitzades) parts.push(actualitzades+" actualitzad"+(actualitzades===1?"a":"es"));
   msg.className="note ok";
-  msg.textContent = parts.length ? parts.join(" i ")+"." : "No hi havia res de nou.";
+  msg.textContent = replace
+    ? ("Substituït: ara hi ha "+collabs.length+" col·laboracions.")
+    : (parts.length ? parts.join(" i ")+"." : "No hi havia res de nou.");
   try{ persist(); }catch(e){ msg.textContent+=" (però hi ha hagut un problema en desar-ho: "+e.message+")"; }
   go("llista");
   toast(msg.textContent);
 }
-$("import-btn").onclick=function(){ processImportText($("import-box").value); };
+var importReplace=false;
+$("import-btn").onclick=function(){ processImportText($("import-box").value,false); };
+$("import-replace-btn").onclick=function(){
+  if(collabs.length && !confirm("Això esborrarà les "+collabs.length+" col·laboracions actuals i les substituirà per les del fitxer. Continuem?")) return;
+  importReplace=true;
+  $("import-file-input").click();
+};
 $("import-file-btn").onclick=function(){
   try{ $("import-file-input").click(); }
   catch(e){ $("import-msg").className="note err"; $("import-msg").textContent="No he pogut obrir el selector de fitxers: "+e.message; }
@@ -1088,10 +1254,11 @@ $("import-file-input").onchange=function(e){
     var reader=new FileReader();
     reader.onload=function(){
       e.target.value="";
-      processImportText(String(reader.result));
+      var rep=importReplace; importReplace=false;
+      processImportText(String(reader.result),rep);
     };
     reader.onerror=function(){
-      e.target.value="";
+      e.target.value=""; importReplace=false;
       msg.className="note err"; msg.textContent="No he pogut llegir el fitxer.";
     };
     reader.readAsText(file);
@@ -1101,7 +1268,7 @@ $("import-file-input").onchange=function(e){
 };
 
 function go(v){
-  ["llista","pendent","instagram","importa"].forEach(function(k){ $("view-"+k).hidden=(k!==v); });
+  ["llista","pendent","correu","instagram","importa"].forEach(function(k){ $("view-"+k).hidden=(k!==v); });
   document.querySelectorAll("nav button").forEach(function(b){ b.setAttribute("aria-selected", String(b.dataset.view===v)); });
 }
 document.querySelectorAll("nav button").forEach(function(b){ b.onclick=function(){ go(b.dataset.view); }; });
@@ -1175,7 +1342,7 @@ function gateInit(){
     try{
       gTokenClient=google.accounts.oauth2.initTokenClient({
         client_id: cid,
-        scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile",
+        scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile",
         callback: onGToken,
         error_callback: function(){ showLogin("No s'ha pogut iniciar sessió. Torna-ho a provar."); }
       });
