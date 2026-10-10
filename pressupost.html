@@ -131,6 +131,14 @@ table.bd tr.muted td{color:var(--ink-soft)}
 .presetrow{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 10px}
 .presetrow button{font-size:12px;padding:5px 10px}
 .presetrow button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.xrow{display:grid;grid-template-columns:1fr 94px 84px 36px;gap:8px;align-items:center;margin-bottom:8px}
+.xrow.xhead{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-weight:600;margin-bottom:5px}
+.xdel{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r);height:34px;cursor:pointer;font-size:17px;line-height:1;color:var(--ink-soft);padding:0}
+.xdel:hover{border-color:var(--alert);color:var(--alert)}
+@media(max-width:520px){.xrow{grid-template-columns:1fr 72px 62px 32px;gap:6px}.xrow input{padding:7px 6px;font-size:14px}}
+.editbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:13.5px;padding:11px 13px;margin:18px 0 0;
+  border:1px solid var(--brand-blue);border-left:3px solid var(--brand-blue);border-radius:var(--r);background:rgba(62,150,194,.08)}
+.editbar[hidden]{display:none}
 
 .gate{position:fixed;inset:0;background:var(--paper);z-index:60;display:flex;align-items:center;justify-content:center;padding:24px}
 .gate[hidden]{display:none}
@@ -207,6 +215,12 @@ textarea.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:
 <main>
 <section id="view-calc">
 
+  <div class="editbar" id="editbar" hidden>
+    <span id="editbar-txt"></span>
+    <span class="spacer"></span>
+    <button class="btn" type="button" id="editbar-new">Desa'l com a nou</button>
+  </div>
+
   <div class="toolbar">
     <div class="seg" id="tipus-seg">
       <button data-v="fdm" aria-pressed="true">Filament (FDM)</button>
@@ -242,6 +256,19 @@ textarea.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:
     <div id="resina-extra" hidden>
       <p class="hint" style="margin-top:12px">Els consumibles propis de la resina (FEP, pantalla LCD, IPA, guants) surten sols dels Ajustos — no cal tornar-los a escriure cada vegada.</p>
     </div>
+  </div>
+
+  <div class="card">
+    <h3>Components externs</h3>
+    <p class="hint">Peces que compres fetes i van amb l'impressió: la cadeneta d'un clauer, els LEDs i el cable d'una làmpada, imants, cargols, una bosseta.</p>
+    <div class="xrow xhead" aria-hidden="true"><span>Component</span><span>€ / unitat</span><span>Unitats</span><span></span></div>
+    <div id="extres-list"></div>
+    <div class="toolbar" style="margin:10px 0 0">
+      <button class="btn" type="button" id="extra-add">Afegeix un component</button>
+      <span class="spacer"></span>
+      <span class="note" id="extres-tot"></span>
+    </div>
+    <label class="f chk" style="margin-top:12px"><input type="checkbox" id="q-extres-marge" checked> Aplica-hi el marge de benefici (cobres per buscar-ho i muntar-ho)</label>
   </div>
 
   <div class="card">
@@ -390,6 +417,7 @@ textarea.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:
     <p class="note" id="d-notes" style="margin-top:10px"></p>
     <div class="actions">
       <button class="btn primary" id="d-pdf">PDF</button>
+      <button class="btn" id="d-edit">Edita</button>
       <button class="btn" id="d-dup">Duplica</button>
       <button class="btn" id="d-close">Tanca</button>
       <span class="spacer"></span>
@@ -426,6 +454,7 @@ var LS_S="pressupost3d-settings-v1", LS_H="pressupost3d-historial-v1";
 var dbAj=null, dbHi=null, remoteAjSeen=false, remoteHiSeen=false;
 var writeAjT=null, writeHiT=null, lastAjSer="", lastHiSer="";
 var tipus="fdm", pintatOn=false, margeMode="pctmat";
+var extres=[], editUid=null;
 var view="calc";
 
 function $(id){ return document.getElementById(id); }
@@ -530,6 +559,8 @@ function currentInput(){
       preuHora:num($("q-disseny-preu").value)
     } : null,
     notes: $("q-notes").value.trim(),
+    extres: readExtres().filter(function(x){ return x.desc!=="" || x.preu>0; }),
+    extresMarge: $("q-extres-marge").checked,
     pintat: $("q-pintar").checked ? {
       actiu:true,
       horesPeca:num($("q-pintat-hores").value),
@@ -593,15 +624,28 @@ function calc(inp){
     pintatPerPeca = (inp.pintat.materialsPeca||0) + (inp.pintat.horesPeca||0)*ph;
   }
 
-  var costTotalPerPeca = produccioPerPeca + maObraPerPeca + pintatPerPeca;
+  /* components que es compren fets: no es tornen a pagar si una impressio falla */
+  var extresPerPeca = 0, extresLlista = [];
+  if(Array.isArray(inp.extres)){
+    for(var ei=0; ei<inp.extres.length; ei++){
+      var ex = inp.extres[ei] || {};
+      var eq = (ex.qty==null) ? 1 : Math.max(0, ex.qty||0);
+      var ec = (ex.preu||0) * eq;
+      extresPerPeca += ec;
+      extresLlista.push({ desc:(ex.desc||""), preu:(ex.preu||0), qty:eq, cost:ec });
+    }
+  }
+  var extresMarge = inp.extresMarge !== false;
+
+  var costTotalPerPeca = produccioPerPeca + maObraPerPeca + pintatPerPeca + extresPerPeca;
 
   var guanyPerPeca;
   if(inp.margeMode==="flat"){
     guanyPerPeca = inp.margePct||0;
   } else if(inp.margeMode==="pct"){
-    guanyPerPeca = costTotalPerPeca * ((inp.margePct||0)/100);
+    guanyPerPeca = (costTotalPerPeca - (extresMarge?0:extresPerPeca)) * ((inp.margePct||0)/100);
   } else { /* "pctmat" per defecte, com fa Prusa: marge nomes sobre el material */
-    guanyPerPeca = (materialCost/peces) * ((inp.margePct||0)/100);
+    guanyPerPeca = (materialCost/peces + (extresMarge?extresPerPeca:0)) * ((inp.margePct||0)/100);
   }
   var preuNormalPerPeca = costTotalPerPeca + guanyPerPeca;
 
@@ -614,7 +658,9 @@ function calc(inp){
     materialCost:materialCost, machineCost:machineCost, manteniCost:manteniCost, elecCost:elecCost, consumCost:consumCost,
     falladaExtra:falladaExtra, subtotalTanda:subtotalTanda, tandaAmbFallada:tandaAmbFallada,
     prepCost:prepCost, dissenyCost:dissenyCost, tandaTotal:tandaTotal,
-    maObraPerPeca:maObraPerPeca, pintatPerPeca:pintatPerPeca, costTotalPerPeca:costTotalPerPeca,
+    maObraPerPeca:maObraPerPeca, pintatPerPeca:pintatPerPeca,
+    extresPerPeca:extresPerPeca, extresMarge:extresMarge, extresLlista:extresLlista,
+    costTotalPerPeca:costTotalPerPeca,
     guanyPerPeca:guanyPerPeca, preuNormalPerPeca:preuNormalPerPeca,
     amic:!!inp.amic, preuAmicPerPeca:preuAmicPerPeca,
     preuVendaPerPeca:preuVendaPerPeca, preuVendaTotal:preuVendaPerPeca*peces
@@ -637,6 +683,16 @@ function bdRows(r, isR){
   rows += row("Cost de producció", r.tandaTotal/r.peces, r.tandaTotal, "subtotal");
   rows += row("Mà d'obra (postprocés)", r.maObraPerPeca, r.maObraPerPeca*r.peces);
   if(r.pintatPerPeca>0) rows += row("Pintat", r.pintatPerPeca, r.pintatPerPeca*r.peces);
+  if(r.extresPerPeca>0){
+    var exl = r.extresLlista||[];
+    if(exl.length>1){
+      for(var xi=0; xi<exl.length; xi++){
+        if(!(exl[xi].cost>0)) continue;
+        rows += row("· "+(exl[xi].desc||"component")+(exl[xi].qty!==1?" ×"+exl[xi].qty:""), exl[xi].cost, exl[xi].cost*r.peces, "muted");
+      }
+    }
+    rows += row("Components externs", r.extresPerPeca, r.extresPerPeca*r.peces);
+  }
   rows += row("Cost total", r.costTotalPerPeca, r.costTotalPerPeca*r.peces, "subtotal");
   rows += row("Marge / guany", r.guanyPerPeca, r.guanyPerPeca*r.peces);
   if(r.amic){
@@ -652,6 +708,8 @@ function recalc(){
   var inp = currentInput();
   var r = calc(inp);
   $("bd-body").innerHTML = bdRows(r, tipus==="resina");
+  var et=$("extres-tot");
+  if(et) et.textContent = r.extresPerPeca>0 ? (fmtE(r.extresPerPeca)+" per peça · "+fmtE(r.extresPerPeca*r.peces)+" en total") : "";
   return {inp:inp, r:r};
 }
 
@@ -669,6 +727,11 @@ function summaryText(inp, r){
   if(r.dissenyCost>0) l.push("Disseny personalitzat: "+fmtE(r.dissenyCost));
   if(r.maObraPerPeca>0) l.push("Mà d'obra: "+fmtE(r.maObraPerPeca*r.peces));
   if(r.pintatPerPeca>0) l.push("Pintat: "+fmtE(r.pintatPerPeca*r.peces));
+  if(r.extresPerPeca>0){
+    var exl=(r.extresLlista||[]).filter(function(x){return x.cost>0;});
+    var det = exl.map(function(x){ return (x.desc||"component")+(x.qty!==1?" ×"+x.qty:""); }).join(", ");
+    l.push("Components externs"+(det?" ("+det+")":"")+": "+fmtE(r.extresPerPeca*r.peces));
+  }
   l.push("");
   if(r.amic){
     l.push("Preu normal per peça: "+fmtE(r.preuNormalPerPeca));
@@ -681,10 +744,87 @@ function summaryText(inp, r){
   return l.join("\n");
 }
 
+/* ---------------- components externs ---------------- */
+function readExtres(){
+  var out=[];
+  Array.prototype.forEach.call($("extres-list").querySelectorAll(".xrow"),function(row){
+    var q=row.querySelector(".x-qty").value;
+    out.push({
+      desc: row.querySelector(".x-desc").value.trim(),
+      preu: num(row.querySelector(".x-preu").value),
+      qty: q===""?1:Math.max(0,num(q))
+    });
+  });
+  return out;
+}
+function renderExtres(){
+  $("extres-list").innerHTML = extres.map(function(x,i){
+    return '<div class="xrow" data-i="'+i+'">'+
+      '<input type="text" class="x-desc" autocomplete="off" placeholder="p. ex. cadeneta de clauer" value="'+esc(x.desc||"")+'">'+
+      '<input type="number" class="x-preu" min="0" step="0.05" placeholder="0,00" value="'+(x.preu>0?x.preu:"")+'">'+
+      '<input type="number" class="x-qty" min="0" step="1" value="'+(x.qty==null?1:x.qty)+'">'+
+      '<button type="button" class="xdel" title="Treu aquest component" aria-label="Treu aquest component">×</button>'+
+      '</div>';
+  }).join("");
+  Array.prototype.forEach.call($("extres-list").querySelectorAll(".xrow"),function(row){
+    var idx = +row.dataset.i;
+    Array.prototype.forEach.call(row.querySelectorAll("input"),function(el){
+      el.addEventListener("input",function(){ extres=readExtres(); recalc(); });
+    });
+    row.querySelector(".xdel").onclick=function(){
+      extres=readExtres(); extres.splice(idx,1); renderExtres(); recalc();
+    };
+  });
+}
+$("extra-add").onclick=function(){
+  extres=readExtres();
+  extres.push({desc:"",preu:0,qty:1});
+  renderExtres();
+  var rows=$("extres-list").querySelectorAll(".xrow");
+  if(rows.length) rows[rows.length-1].querySelector(".x-desc").focus();
+  recalc();
+};
+$("q-extres-marge").onchange=recalc;
+
+/* ---------------- edicio d'un pressupost desat ---------------- */
+function setEditing(rec){
+  editUid = rec ? rec.uid : null;
+  var bar=$("editbar");
+  if(!editUid){
+    bar.hidden=true;
+    $("save-quote").textContent="Desa al historial";
+    return;
+  }
+  bar.hidden=false;
+  $("editbar-txt").textContent = "Estàs editant «"+((rec.input&&rec.input.client)||"Sense nom")+"», desat el "+fmtDate(rec.data)+".";
+  $("save-quote").textContent="Desa els canvis";
+}
+$("editbar-new").onclick=function(){
+  setEditing(null);
+  toast("D'acord: quan el desis en sortirà un pressupost nou");
+};
+
 /* ---------------- desar / historial ---------------- */
 function saveQuote(){
   var inp=currentInput(), r=calc(inp);
   if(!inp.tempsH && !inp.materialQty){ toast("Omple almenys el temps o el material abans de desar"); return; }
+  if(editUid){
+    var trobat=false;
+    var nou=historial.map(function(x){
+      if(x.uid!==editUid) return x;
+      trobat=true;
+      return { uid:x.uid, data:x.data, modificat:new Date().toISOString(), input:inp, resultat:r };
+    });
+    if(trobat){
+      historial=nou;
+      setEditing(null);
+      persistHistory();
+      toast("Pressupost actualitzat");
+      return;
+    }
+    setEditing(null);
+    toast("Aquell pressupost ja no hi era; el deso com a nou");
+  }
   var rec = {
     uid: "Q"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
     data: new Date().toISOString(),
@@ -709,7 +849,7 @@ function renderHist(){
     return '<div class="qrow" data-uid="'+esc(rec.uid)+'">'+
       '<span class="qtype '+(inp.tipus==="resina"?"resina":"fdm")+'"></span>'+
       '<div class="qmain"><div class="name">'+esc(inp.client||"Sense nom")+'</div>'+
-      '<div class="sub note">'+fmtDate(rec.data)+' · '+(inp.tipus==="resina"?"Resina":"FDM")+' · '+inp.peces+' peç'+(inp.peces===1?"a":"es")+'</div></div>'+
+      '<div class="sub note">'+fmtDate(rec.data)+' · '+(inp.tipus==="resina"?"Resina":"FDM")+' · '+inp.peces+' peç'+(inp.peces===1?"a":"es")+(rec.modificat?' · editat el '+fmtDate(rec.modificat):'')+'</div></div>'+
       '<div class="qprice">'+fmtE(r.preuVendaTotal)+'<small>'+fmtE(r.preuVendaPerPeca)+'/peça</small></div></div>';
   }).join("");
   Array.prototype.forEach.call(list.querySelectorAll(".qrow"),function(row){
@@ -723,7 +863,7 @@ function openDetail(uid){
   detailUid=uid;
   var inp=rec.input, r=rec.resultat;
   $("d-title").textContent = inp.client || "Pressupost";
-  $("d-sub").textContent = fmtDate(rec.data)+" · "+(inp.tipus==="resina"?"Resina":"Filament (FDM)")+" · "+inp.peces+" peç"+(inp.peces===1?"a":"es")+" · "+fmtHM(inp.tempsH);
+  $("d-sub").textContent = fmtDate(rec.data)+" · "+(inp.tipus==="resina"?"Resina":"Filament (FDM)")+" · "+inp.peces+" peç"+(inp.peces===1?"a":"es")+" · "+fmtHM(inp.tempsH)+(rec.modificat?" · modificat el "+fmtDate(rec.modificat):"");
   $("d-body").innerHTML = bdRows(r, inp.tipus==="resina");
   $("d-notes").textContent = inp.notes||"";
   $("overlay").hidden=false;
@@ -733,6 +873,7 @@ $("d-close").onclick=closeDetail;
 $("overlay").onclick=function(e){ if(e.target===this) closeDetail(); };
 document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!$("overlay").hidden) closeDetail(); });
 $("d-del").onclick=function(){
+  if(editUid===detailUid) setEditing(null);
   historial=historial.filter(function(r){return r.uid!==detailUid;});
   closeDetail(); persistHistory(); toast("Pressupost eliminat");
 };
@@ -740,11 +881,20 @@ $("d-pdf").onclick=function(){
   var rec=byUidH(detailUid); if(!rec) return;
   makePDF(rec.input, rec.resultat, false, rec.data);
 };
-$("d-dup").onclick=function(){
+$("d-edit").onclick=function(){
   var rec=byUidH(detailUid); if(!rec) return;
   loadIntoForm(rec.input);
+  setEditing(rec);
   closeDetail(); go("calc");
-  toast("Carregat al pressupost — ajusta el que calgui i torna a desar-lo");
+  try{ window.scrollTo(0,0); }catch(e){}
+  toast("Canvia el que calgui i toca «Desa els canvis»");
+};
+$("d-dup").onclick=function(){
+  var rec=byUidH(detailUid); if(!rec) return;
+  setEditing(null);
+  loadIntoForm(rec.input);
+  closeDetail(); go("calc");
+  toast("Carregat com a còpia nova — ajusta'l i desa'l");
 };
 
 function loadIntoForm(inp){
@@ -767,6 +917,12 @@ function loadIntoForm(inp){
   $("q-disseny-hores").value = d?d.hores||"":"";
   $("q-disseny-preu").value = d?(d.preuHora||settings.general.dissenyHora):settings.general.dissenyHora;
   $("q-notes").value = inp.notes||"";
+  extres = (Array.isArray(inp.extres)?inp.extres:[]).map(function(x){
+    x = x||{};
+    return { desc:x.desc||"", preu:x.preu||0, qty:(x.qty==null?1:x.qty) };
+  });
+  renderExtres();
+  $("q-extres-marge").checked = inp.extresMarge!==false;
   var p=inp.pintat;
   $("q-pintar").checked = !!(p&&p.actiu);
   $("pintat-box").hidden = !($("q-pintar").checked);
@@ -841,6 +997,8 @@ $("nou").onclick=function(){
   $("q-pintar").checked=false; $("pintat-box").hidden=true;
   $("q-pintat-hores").value=""; $("q-pintat-mat").value=""; $("q-pintat-preu").value=settings.general.pintatHora;
   Array.prototype.forEach.call($("pintat-presets").querySelectorAll("button"),function(x){x.setAttribute("aria-pressed","false");});
+  extres=[]; renderExtres(); $("q-extres-marge").checked=true;
+  setEditing(null);
   recalc();
 };
 $("save-quote").onclick=saveQuote;
@@ -860,6 +1018,16 @@ function pdfLines(inp,r,intern){
     if(r.dissenyCost>0) rows.push(["Disseny personalitzat", r.dissenyCost]);
     if(r.maObraPerPeca>0) rows.push(["Mà d'obra (postprocés)", r.maObraPerPeca*r.peces]);
     if(r.pintatPerPeca>0) rows.push(["Pintat", r.pintatPerPeca*r.peces]);
+    if(r.extresPerPeca>0){
+      var exl=(r.extresLlista||[]).filter(function(x){return x.cost>0;});
+      if(exl.length && exl.length<=6){
+        exl.forEach(function(x){
+          rows.push([(x.desc||"Component extern")+(x.qty!==1?" x"+x.qty:""), x.cost*r.peces]);
+        });
+      } else {
+        rows.push(["Components externs", r.extresPerPeca*r.peces]);
+      }
+    }
     rows.push(["__SUB__Cost total", r.costTotalPerPeca*r.peces]);
     rows.push(["Marge / guany", r.guanyPerPeca*r.peces]);
     if(r.amic) rows.push(["__SUB__Preu normal", r.preuNormalPerPeca*r.peces]);
@@ -872,6 +1040,13 @@ function pdfLines(inp,r,intern){
   if(r.prepCost+r.dissenyCost>0) base.push([r.dissenyCost>0?"Disseny i preparació":"Preparació de l'arxiu", r.prepCost+r.dissenyCost]);
   if(r.maObraPerPeca>0) base.push(["Postprocés i acabat", r.maObraPerPeca*r.peces]);
   if(r.pintatPerPeca>0) base.push(["Pintat a mà", r.pintatPerPeca*r.peces]);
+  if(r.extresPerPeca>0){
+    var exc=(r.extresLlista||[]).filter(function(x){return x.cost>0;});
+    var noms=exc.map(function(x){ return (x.desc||"").trim(); }).filter(function(t){ return t!==""; });
+    var et="Components i material extern";
+    if(noms.length && noms.join(", ").length<=52) et += " ("+noms.join(", ")+")";
+    base.push([et, r.extresPerPeca*r.peces]);
+  }
   var sum=base.reduce(function(a,x){ return a+x[1]; },0);
   var k = sum>0 ? (r.preuVendaTotal/sum) : 1;
   return base.map(function(x){ return [x[0], x[1]*k]; });
@@ -1096,14 +1271,20 @@ document.querySelectorAll("nav button").forEach(function(b){ b.onclick=function(
 /* ---------------- arrencada ---------------- */
 
 function buildCSV(){
-  var cols=["data","client","tipus","peces","hores","prep_min","material_qty","material_preu",
+  var cols=["data","modificat","client","tipus","peces","hores","prep_min","material_qty","material_preu",
             "postproces_min","marge_mode","marge","amic","disseny_hores","pintat_hores",
+            "extres_eur_peca","extres_detall",
             "cost_per_peca","preu_per_peca","preu_total"];
   var rows=historial.map(function(rec){
     var i=rec.input, r=rec.resultat;
-    var vals=[rec.data, i.client||"", i.tipus, i.peces, i.tempsH, i.prepMin||0,
+    var exDet=(Array.isArray(i.extres)?i.extres:[]).map(function(x){
+      x=x||{}; var q=(x.qty==null?1:x.qty);
+      return (x.desc||"component")+(q!==1?" x"+q:"")+" @ "+(Math.round((x.preu||0)*100)/100)+" EUR";
+    }).join(" + ");
+    var vals=[rec.data, rec.modificat||"", i.client||"", i.tipus, i.peces, i.tempsH, i.prepMin||0,
       i.materialQty, i.materialPreu, i.postprocesMin||0, i.margeMode||"", i.margePct||0,
       i.amic?"si":"no", (i.disseny&&i.disseny.hores)||0, (i.pintat&&i.pintat.horesPeca)||0,
+      (Math.round((r.extresPerPeca||0)*100)/100), exDet,
       (Math.round(r.costTotalPerPeca*100)/100), (Math.round(r.preuVendaPerPeca*100)/100),
       (Math.round(r.preuVendaTotal*100)/100)];
     return vals.map(function(v){ return '"'+String(v==null?"":v).replace(/"/g,'""')+'"'; }).join(",");
@@ -1131,6 +1312,8 @@ var ZCFG = {
     $("q-preu-material")._auto=true;
     setMargeMode("pctmat");
     setTipus("fdm");
+    renderExtres();
+    setEditing(null);
     fillSettingsForm();
     renderHist();
     connectDb();
