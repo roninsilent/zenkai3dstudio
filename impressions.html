@@ -231,6 +231,38 @@ input[type=range]{width:100%;accent-color:var(--brand-blue)}
 .empty-state b{color:var(--ink);font-size:15px}
 .empty-state[hidden]{display:none}
 
+
+/* ───── correccions d'interfície ───── */
+/* Una classe amb display: propi es menjava l'atribut «hidden» i deixava
+   coses a la vista que havien d'estar amagades. */
+[hidden]{display:none!important}
+
+/* Les pestanyes, al mòbil, que es vegi que n'hi ha més a la dreta */
+nav{-webkit-overflow-scrolling:touch;scrollbar-width:none;position:relative}
+nav::-webkit-scrollbar{display:none}
+
+/* Als dits els cal una mica més de superfície */
+@media(max-width:720px){
+  nav button{padding:11px 13px 10px}
+  .btn{padding:10px 14px}
+  .q{min-width:32px;height:32px}
+}
+
+@media(min-width:760px){
+  .grid2,.grid3{max-width:760px}
+  label.f.full input[type=text]{max-width:520px}
+  label.f.full textarea{max-width:620px}
+  #fil-list,#extres-list{max-width:760px}
+  .drop{max-width:760px}
+  .statrow{max-width:760px}
+}
+
+@media(max-width:560px){ .toolbar .spacer{display:none} }
+
+.navwrap{position:relative}
+.navwrap::after{content:"";position:absolute;right:0;top:0;bottom:1px;width:34px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--paper));opacity:0;transition:opacity .15s}
+.navwrap.hi-ha-mes::after{opacity:1}
 </style>
 </head>
 <body>
@@ -271,14 +303,14 @@ input[type=range]{width:100%;accent-color:var(--brand-blue)}
     <button class="btn" id="acct-signout">Tanca sessió</button>
   </div>
   <h1>Registre d'impressions</h1>
-  <p class="sub">Deixa-hi el fitxer que et dona el slicer i te'n treu els grams, el temps i els colors. <span class="ver">v3 · llegeix .3mf, .gcode i projectes</span></p>
+  <p class="sub">Deixa-hi el fitxer que et dona el slicer i te'n treu els grams, el temps i els colors. <span class="ver">v4 · interfície revisada</span></p>
 </header>
 
-<nav role="tablist">
+<div class="navwrap"><nav role="tablist">
   <button role="tab" data-view="read" aria-selected="true">Llegeix</button>
   <button role="tab" data-view="hist" aria-selected="false">Historial</button>
   <button role="tab" data-view="settings" aria-selected="false">Ajustos</button>
-</nav>
+</nav></div>
 
 <main>
 <section id="view-read">
@@ -1534,6 +1566,16 @@ function scheduleDriveSave(){
 
 gateInit();
 
+
+/* ---------------- pista de pestanyes que no caben ---------------- */
+(function(){
+  var w=document.querySelector(".navwrap"), n=w&&w.querySelector("nav");
+  if(!w||!n) return;
+  function mira(){ w.classList.toggle("hi-ha-mes", n.scrollWidth - n.clientWidth - n.scrollLeft > 6); }
+  n.addEventListener("scroll", mira);
+  window.addEventListener("resize", mira);
+  setTimeout(mira, 60); mira();
+})();
 </script>
 </body>
 </html>

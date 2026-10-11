@@ -124,8 +124,12 @@ input[type=search]{flex:1 1 190px;min-width:0}
 .spacer{flex:1}
 
 /* ---------- spool grid ---------- */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:24px 18px}
-.card{display:flex;flex-direction:column;gap:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:22px 14px}
+@media(max-width:430px){.grid{grid-template-columns:1fr 1fr;gap:18px 12px}}
+@media(min-width:900px){.grid{grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:26px 20px}}
+.card{display:flex;flex-direction:column;gap:8px;height:100%}
+.cardmain .name{min-height:1.3em}
+.card .qty{margin-top:auto;padding-top:2px}
 .cardmain{
   background:none;border:0;padding:0;cursor:pointer;text-align:left;width:100%;color:inherit;
   display:flex;flex-direction:column;gap:9px;
@@ -276,6 +280,46 @@ table.tbl td:last-child,table.tbl th:last-child{text-align:right;padding-right:0
 @keyframes p{0%,100%{opacity:.25}50%{opacity:1}}
 #e-photo{width:100%;max-height:180px;object-fit:cover;border:1px solid var(--line);border-radius:var(--r);margin-bottom:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.pulse{animation:none;opacity:.7}}
+
+/* ───── correccions d'interfície ───── */
+/* Una classe amb display: propi es menjava l'atribut «hidden» i deixava
+   coses a la vista que havien d'estar amagades. */
+[hidden]{display:none!important}
+
+/* Les pestanyes, al mòbil, que es vegi que n'hi ha més a la dreta */
+nav{-webkit-overflow-scrolling:touch;scrollbar-width:none;position:relative}
+nav::-webkit-scrollbar{display:none}
+
+/* Als dits els cal una mica més de superfície */
+@media(max-width:720px){
+  nav button{padding:11px 13px 10px}
+  .btn{padding:10px 14px}
+  .q{min-width:32px;height:32px}
+}
+
+/* la barra de cerca i filtres, en fila mentre hi càpiga */
+.toolbar input[type=search],.toolbar input[type=text]{flex:1 1 150px;min-width:0;width:auto}
+.toolbar select{flex:0 1 auto;width:auto;min-width:0}
+@media(max-width:560px){
+  .toolbar{gap:7px}
+  .toolbar input[type=search],.toolbar input[type=text]{flex:1 1 100%}
+  .toolbar select{flex:1 1 calc(50% - 4px);font-size:13px}
+  .toolbar .btn{flex:1 1 calc(50% - 4px)}
+}
+@media(min-width:760px){
+  .toolbar input[type=search],.toolbar input[type=text]{max-width:300px}
+  .toolbar select{max-width:200px}
+}
+
+@media(max-width:560px){ .toolbar .spacer{display:none} }
+
+.navwrap{position:relative}
+.navwrap::after{content:"";position:absolute;right:0;top:0;bottom:1px;width:34px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--paper));opacity:0;transition:opacity .15s}
+.navwrap.hi-ha-mes::after{opacity:1}
+
+.ver{display:inline-block;margin-left:7px;padding:2px 9px;border-radius:999px;background:var(--brand-blue);
+  color:#fff;font-size:11px;font-weight:700;letter-spacing:.04em;white-space:nowrap;vertical-align:2px}
 </style>
 </head>
 <body>
@@ -316,7 +360,7 @@ table.tbl td:last-child,table.tbl th:last-child{text-align:right;padding-right:0
     <span class="spacer"></span>
     <button class="btn" id="acct-signout">Tanca sessió</button>
   </div>
-  <h1>Inventari de filament</h1>
+  <h1>Inventari de filament <span class="ver">v2 · interfície revisada</span></h1>
   <div class="meta">
     <span><b id="t-spools">0</b> bobines</span>
     <span><b id="t-kg">0</b> kg restants</span>
@@ -327,13 +371,13 @@ table.tbl td:last-child,table.tbl th:last-child{text-align:right;padding-right:0
   <div class="stockbar-cap">Cada franja és una bobina, d'amplada proporcional als grams que li queden.</div>
 </header>
 
-<nav role="tablist">
+<div class="navwrap"><nav role="tablist">
   <button role="tab" data-view="inventari" aria-selected="true">Inventari</button>
   <button role="tab" data-view="colors" aria-selected="false">Colors</button>
   <button role="tab" data-view="comprar" aria-selected="false">Per comprar</button>
   <button role="tab" data-view="importa" aria-selected="false">Importa</button>
   <button role="tab" data-view="prompt" aria-selected="false">El prompt</button>
-</nav>
+</nav></div>
 
 <main>
 <section id="view-inventari">
@@ -938,6 +982,12 @@ function colorsOf(it){
   return [{hex:normHex(it.color_hex)||"#9AA0A6", nom:it.color_nom||null}];
 }
 function isMulti(it){ return colorsOf(it).length>1; }
+function nomColor(it){
+  if(it.color_nom) return it.color_nom;
+  var noms=colorsOf(it).map(function(c){ return c&&c.nom; }).filter(Boolean);
+  if(noms.length) return noms.join(" + ");
+  return isMulti(it) ? "Multicolor" : "Sense nom";
+}
 function isGradient(it){ return String(it.patro||"").indexOf("degrad")>=0; }
 function gradCss(it){
   var cs=colorsOf(it), n=cs.length;
@@ -1045,7 +1095,7 @@ function renderGrid(){
     var card=document.createElement("div");
     card.className="card"+(out?" out":(needsBuy(it)?" buy low":""));
     card.innerHTML='<button class="cardmain">'+spoolSVG(it)+
-      '<div><div class="name">'+esc(it.color_nom)+'</div>'+
+      '<div><div class="name">'+esc(nomColor(it))+'</div>'+
       '<div class="sub">'+(out
         ? '<span class="grams">esgotada</span>'
         : '<span class="grams">'+fmtG(it.pes_restant_g)+'</span> · '+
@@ -2266,6 +2316,16 @@ function scheduleDriveSave(){
 
 gateInit();
 
+
+/* ---------------- pista de pestanyes que no caben ---------------- */
+(function(){
+  var w=document.querySelector(".navwrap"), n=w&&w.querySelector("nav");
+  if(!w||!n) return;
+  function mira(){ w.classList.toggle("hi-ha-mes", n.scrollWidth - n.clientWidth - n.scrollLeft > 6); }
+  n.addEventListener("scroll", mira);
+  window.addEventListener("resize", mira);
+  setTimeout(mira, 60); mira();
+})();
 </script>
 </body>
 </html>
