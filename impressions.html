@@ -170,6 +170,52 @@ table.bd tr.muted td{color:var(--ink-soft)}
 .err{color:var(--alert)}
 textarea.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ───── correccions d'interfície ───── */
+/* Una classe amb display: propi es menjava l'atribut «hidden» i deixava
+   coses a la vista que havien d'estar amagades. */
+[hidden]{display:none!important}
+
+/* Les pestanyes, al mòbil, que es vegi que n'hi ha més a la dreta */
+nav{-webkit-overflow-scrolling:touch;scrollbar-width:none;position:relative}
+nav::-webkit-scrollbar{display:none}
+
+/* Als dits els cal una mica més de superfície */
+@media(max-width:720px){
+  nav button{padding:11px 13px 10px}
+  .btn{padding:10px 14px}
+  .q{min-width:32px;height:32px}
+}
+
+/* A l'ordinador, un camp de 800 px per escriure «48» no té sentit */
+@media(min-width:760px){
+  .grid2,.grid3{max-width:760px}
+  label.f.full input[type=text]{max-width:520px}
+  label.f.full textarea{max-width:620px}
+  .xrow{max-width:620px}
+}
+/* els components externs, llegibles al mòbil */
+@media(max-width:430px){
+  .xrow{grid-template-columns:1fr 66px 54px 30px;gap:5px}
+  .xrow.xhead{font-size:10px}
+  .xdel{height:32px;font-size:15px}
+}
+/* el selector de marge no s'encavalqui amb l'etiqueta */
+.lbl-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:22px}
+.seg.mini{transform:none;margin-left:auto}
+.seg.mini button{padding:4px 9px;font-size:11.5px}
+
+@media(max-width:560px){ .toolbar .spacer{display:none} }
+
+.navwrap{position:relative}
+.navwrap::after{content:"";position:absolute;right:0;top:0;bottom:1px;width:34px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--paper));opacity:0;transition:opacity .15s}
+.navwrap.hi-ha-mes::after{opacity:1}
+
+@media(max-width:560px){
+  .grid2 > label.f:has(#q-marge){grid-column:1/-1}
+  .lbl-row{justify-content:space-between}
+}
 /* ---- lector de fitxers ---- */
 .drop{border:2px dashed var(--line-strong);border-radius:12px;padding:30px 20px;text-align:center;cursor:pointer;
   display:flex;flex-direction:column;gap:6px;align-items:center;background:var(--surface);transition:border-color .15s,background .15s}
@@ -231,38 +277,6 @@ input[type=range]{width:100%;accent-color:var(--brand-blue)}
 .empty-state b{color:var(--ink);font-size:15px}
 .empty-state[hidden]{display:none}
 
-
-/* ───── correccions d'interfície ───── */
-/* Una classe amb display: propi es menjava l'atribut «hidden» i deixava
-   coses a la vista que havien d'estar amagades. */
-[hidden]{display:none!important}
-
-/* Les pestanyes, al mòbil, que es vegi que n'hi ha més a la dreta */
-nav{-webkit-overflow-scrolling:touch;scrollbar-width:none;position:relative}
-nav::-webkit-scrollbar{display:none}
-
-/* Als dits els cal una mica més de superfície */
-@media(max-width:720px){
-  nav button{padding:11px 13px 10px}
-  .btn{padding:10px 14px}
-  .q{min-width:32px;height:32px}
-}
-
-@media(min-width:760px){
-  .grid2,.grid3{max-width:760px}
-  label.f.full input[type=text]{max-width:520px}
-  label.f.full textarea{max-width:620px}
-  #fil-list,#extres-list{max-width:760px}
-  .drop{max-width:760px}
-  .statrow{max-width:760px}
-}
-
-@media(max-width:560px){ .toolbar .spacer{display:none} }
-
-.navwrap{position:relative}
-.navwrap::after{content:"";position:absolute;right:0;top:0;bottom:1px;width:34px;pointer-events:none;
-  background:linear-gradient(90deg,transparent,var(--paper));opacity:0;transition:opacity .15s}
-.navwrap.hi-ha-mes::after{opacity:1}
 </style>
 </head>
 <body>
@@ -303,14 +317,14 @@ nav::-webkit-scrollbar{display:none}
     <button class="btn" id="acct-signout">Tanca sessió</button>
   </div>
   <h1>Registre d'impressions</h1>
-  <p class="sub">Deixa-hi el fitxer que et dona el slicer i te'n treu els grams, el temps i els colors. <span class="ver">v4 · interfície revisada</span></p>
+  <p class="sub">Deixa-hi el fitxer que et dona el slicer i te'n treu els grams, el temps i els colors. <span class="ver">v5 · provada amb fitxers reals</span></p>
 </header>
 
 <div class="navwrap"><nav role="tablist">
   <button role="tab" data-view="read" aria-selected="true">Llegeix</button>
   <button role="tab" data-view="hist" aria-selected="false">Historial</button>
   <button role="tab" data-view="settings" aria-selected="false">Ajustos</button>
-</nav></div>
+</nav>
 
 <main>
 <section id="view-read">
@@ -955,7 +969,11 @@ function showResult(){
   else $("r-thumb").hidden=true;
 
   var netFitxer = parsed.fileName.replace(/\.(gcode\.3mf|3mf|gcode)$/i,"");
-  var nom = (!cru && pl.objects && pl.objects.length) ? pl.objects.slice(0,2).join(", ") : netFitxer;
+  /* el Bambu Studio bateja les peces "Object_1": per títol val més el nom del fitxer */
+  var objsBons = (pl.objects||[]).filter(function(x){
+    return x && !/^object_?\d*$/i.test(x) && !/^wipe[_ ]?tower$/i.test(x);
+  });
+  var nom = (!cru && objsBons.length) ? objsBons.slice(0,2).join(", ") : netFitxer;
   $("r-name").textContent = nom;
   if(!$("r-title").value) $("r-title").value = nom;
 
