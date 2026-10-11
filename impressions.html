@@ -6,6 +6,7 @@
 <title>Registre d'impressions</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="description" content="Llegeix el fitxer del slicer: grams, temps i colors">
 <meta name="apple-mobile-web-app-title" content="Impressions">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#F2F2F0">
@@ -270,7 +271,7 @@ input[type=range]{width:100%;accent-color:var(--brand-blue)}
     <button class="btn" id="acct-signout">Tanca sessió</button>
   </div>
   <h1>Registre d'impressions</h1>
-  <p class="sub">Deixa-hi el fitxer que et dona el slicer i te'n treu els grams, el temps i els colors. <span class="ver">v2 · llegeix .3mf, .gcode i projectes</span></p>
+  <p class="sub">Deixa-hi el fitxer que et dona el slicer i te'n treu els grams, el temps i els colors. <span class="ver">v3 · llegeix .3mf, .gcode i projectes</span></p>
 </header>
 
 <nav role="tablist">
@@ -282,18 +283,18 @@ input[type=range]{width:100%;accent-color:var(--brand-blue)}
 <main>
 <section id="view-read">
 
-  <div class="drop" id="drop" tabindex="0" role="button" aria-label="Tria un fitxer tallat">
+  <div class="drop" id="drop" tabindex="0" role="button" aria-label="Tria el fitxer de la impressió">
     <input type="file" id="file" hidden>
-    <b id="drop-main">Deixa anar aquí el fitxer tallat</b>
-    <span id="drop-sub">o toca per triar-lo · .gcode.3mf, .3mf o .gcode</span>
+    <b id="drop-main">Deixa anar aquí el fitxer de la impressió</b>
+    <span id="drop-sub">el que surt del slicer · .gcode.3mf o .gcode</span>
   </div>
   <p class="note" id="read-status"></p>
 
   <div id="result" hidden>
 
     <div class="warn" id="unsliced" hidden>
-      <b>Aquest fitxer és el projecte, no la impressió.</b>
-      <span>Porta el model i els filaments que hi tens carregats, però el Bambu Studio només hi escriu els grams i el temps quan exportes <b>després de tallar</b>. Talla la placa i fes servir el botó d'exportar que surt llavors — el fitxer que en surt acaba en <code>.gcode.3mf</code>. El <code>.gcode</code> que envies a la impressora també em val.</span>
+      <b>Aquest fitxer encara no porta els números.</b>
+      <span>Hi ha el model i els filaments, però els grams i el temps el Bambu Studio no els calcula fins que prems <b>Slice plate</b> — el botó gros de dalt a la dreta, el que et mostra la peça per capes i et diu quant trigarà. No parteix la peça, només calcula. Un cop fet, ves a <b>Fitxer → Exporta → Export plate sliced file</b> i passa'm aquell fitxer, que acaba en <code>.gcode.3mf</code>. Si imprimeixes per targeta, el fitxer que hi copies ja és aquest mateix.</span>
     </div>
 
     <div class="card reshead">
@@ -337,7 +338,8 @@ input[type=range]{width:100%;accent-color:var(--brand-blue)}
 
     <div class="toolbar">
       <button class="btn primary" id="save-print">Desa al registre</button>
-      <button class="btn" id="copy-press">Copia per al pressupost</button>
+      <button class="btn" id="fes-press">Fes-ne el pressupost</button>
+      <button class="btn" id="copy-press">Copia les dades</button>
       <button class="btn" id="clear-read">Descarta</button>
     </div>
 
@@ -358,7 +360,7 @@ input[type=range]{width:100%;accent-color:var(--brand-blue)}
   <div id="hist-list"></div>
   <div class="empty-state" id="hist-empty" hidden>
     <b>Encara no has registrat cap impressió</b>
-    Deixa anar un fitxer tallat a la pestanya Llegeix.
+    Deixa anar a la pestanya Llegeix el fitxer que et dona el Bambu Studio.
   </div>
 </section>
 
@@ -913,6 +915,7 @@ function showResult(){
   var cru = !!parsed.unsliced;
   $("unsliced").hidden = !cru;
   $("save-print").hidden = cru;
+  $("fes-press").hidden = cru;
   $("copy-press").hidden = cru;
   $("r-title").closest(".card").hidden = cru;
 
@@ -925,7 +928,7 @@ function showResult(){
   if(!$("r-title").value) $("r-title").value = nom;
 
   var bits=[];
-  if(cru){ bits.push("sense tallar — no hi ha ni temps ni grams"); }
+  if(cru){ bits.push("encara sense calcular — ni temps ni grams"); }
   else { bits.push(fmtHM(pl.seconds)); bits.push(fmtG(pl.weight||0)); }
   if(parsed.printer) bits.push(String(parsed.printer));
   $("r-sub").textContent = bits.join(" · ");
@@ -985,7 +988,7 @@ function showResult(){
 
   var n=[];
   if(cru){
-    n.push("Aquests són els filaments que tens carregats al projecte. Quan me'l passis tallat et diré els grams de cadascun.");
+    n.push("Aquests són els filaments que tens carregats al projecte. Quan me'l passis amb els números calculats et diré els grams de cadascun.");
   } else if(invCarregat===true){
     n.push("Això és el que quedaria a cada bobina, però <b>no toco l'inventari</b>: els grams els has de descomptar tu a l'altra app.");
     if(senseBobina) n.push(senseBobina+" color"+(senseBobina===1?"":"s")+" sense bobina prou semblant — puja el llindar als Ajustos si creus que n'hi ha alguna que hi va.");
@@ -1023,7 +1026,7 @@ function handleFile(file){
     parsed=out;
     var pl=currentPlate();
     if(out.unsliced){
-      $("read-status").textContent = "Fitxer obert: "+(pl?pl.filaments.length:0)+" filament"+((pl&&pl.filaments.length===1)?"":"s")+" carregats, però encara no està tallat.";
+      $("read-status").textContent = "Fitxer obert: "+(pl?pl.filaments.length:0)+" filament"+((pl&&pl.filaments.length===1)?"":"s")+" carregats, però encara hi falten els grams i el temps.";
     } else if(!pl || (!pl.seconds && !(pl.weight>0))){
       $("read-status").textContent = "He obert el fitxer però no hi he trobat ni temps ni grams. Mira «Què he llegit del fitxer» i passa-me'l.";
     } else {
@@ -1131,6 +1134,41 @@ $("copy-press").onclick=function(){
     navigator.clipboard.writeText(txt).then(function(){ toast("Copiat — enganxa-ho al pressupost"); },function(){ toast("No he pogut copiar-ho"); });
   } else toast("Aquest navegador no deixa copiar");
 };
+$("fes-press").onclick=function(){
+  var pl=currentPlate();
+  if(!pl){ toast("Primer llegeix un fitxer"); return; }
+  var titol = $("r-title").value.trim() || $("r-name").textContent || "";
+  var linies = pl.filaments.filter(function(f){ return (f.grams||0)>0; }).map(function(f){
+    var nom=f.color||"filament";
+    if(invCarregat===true && f.color){
+      var m=matchSpool(f.color, f.type);
+      if(m && m.dist<=settings.tol) nom=invNom(m.item);
+    }
+    return "· "+nom+" — "+(Math.round((f.grams||0)*10)/10).toFixed(1).replace(".",",")+" g";
+  });
+  var dades={
+    quan: Date.now(),
+    titol: titol,
+    segons: Math.round(pl.seconds||0),
+    grams: pl.weight||0,
+    peces: 1,
+    notes: "Del registre d'impressions · "+parsed.fileName+
+           (parsed.printer?" · "+parsed.printer:"")+
+           (linies.length>1 ? "\n"+linies.join("\n") : ""),
+    resum: "Vingut del registre d'impressions: "+(titol||parsed.fileName)+" · "+
+           fmtHM(pl.seconds)+" · "+fmtG(pl.weight||0)+
+           (pl.filaments.length>1?" · "+pl.filaments.length+" colors":"")+
+           ". Revisa les peces i el preu del material."
+  };
+  try{
+    localStorage.setItem("zenkai_pressupost_prefill", JSON.stringify(dades));
+  }catch(e){
+    toast("No he pogut passar les dades al pressupost");
+    return;
+  }
+  location.href="pressupost.html";
+};
+
 $("copy-diag").onclick=function(){
   if(!parsed){ return; }
   var t=diagText();

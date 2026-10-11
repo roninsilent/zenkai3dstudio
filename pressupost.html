@@ -209,7 +209,7 @@ textarea.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:
     <button class="btn" id="acct-signout">Tanca sessió</button>
   </div>
   <h1>Pressupost d'impressió 3D</h1>
-  <p class="sub">Filament i resina, cada un amb els seus costos — i el pintat de després quan toca. <span class="ver">v4 · components externs i edició</span></p>
+  <p class="sub">Filament i resina, cada un amb els seus costos — i el pintat de després quan toca. <span class="ver">v5 · rep dades del registre d'impressions</span></p>
 </header>
 
 <nav role="tablist">
@@ -220,6 +220,12 @@ textarea.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:
 
 <main>
 <section id="view-calc">
+
+  <div class="editbar" id="prefillbar" hidden>
+    <span id="prefillbar-txt"></span>
+    <span class="spacer"></span>
+    <button class="btn" type="button" id="prefillbar-close">D'acord</button>
+  </div>
 
   <div class="editbar" id="editbar" hidden>
     <span id="editbar-txt"></span>
@@ -810,6 +816,42 @@ $("editbar-new").onclick=function(){
   toast("D'acord: quan el desis en sortirà un pressupost nou");
 };
 
+/* ---------------- dades vingudes del registre d'impressions ---------------- */
+var PREFILL_KEY="zenkai_pressupost_prefill";
+function aplicaPrefill(){
+  var cru=null;
+  try{ cru=localStorage.getItem(PREFILL_KEY); }catch(e){ return; }
+  if(!cru) return;
+  try{ localStorage.removeItem(PREFILL_KEY); }catch(e){}
+  var d=null;
+  try{ d=JSON.parse(cru); }catch(e){ return; }
+  if(!d || typeof d!=="object") return;
+  if(d.quan && (Date.now()-d.quan) > 20*60*1000) return;   /* caduca als 20 min */
+
+  setTipus("fdm");
+  if(d.titol) $("q-client").value=String(d.titol).slice(0,120);
+  /* amb segons sencers no hi ha error de decimals; accepto hores per compatibilitat */
+  var seg = (d.segons!=null) ? Math.max(0, Math.round(d.segons)) : Math.round(Math.max(0, d.hores||0)*3600);
+  var h=Math.floor(seg/3600), m=Math.round((seg%3600)/60);
+  if(m===60){ h+=1; m=0; }
+  $("q-temps").value = h||"";
+  $("q-temps-min").value = m||"";
+  if(d.grams>0) $("q-material").value = Math.round(d.grams*10)/10;
+  if(d.peces>0) $("q-peces").value = Math.max(1,Math.round(d.peces));
+  if(d.notes){
+    var n=$("q-notes").value;
+    $("q-notes").value = (n? n+"\n" : "") + String(d.notes).slice(0,600);
+  }
+  setEditing(null);
+  recalc();
+  $("prefillbar-txt").textContent = d.resum || "Dades carregades des del registre d'impressions.";
+  $("prefillbar").hidden=false;
+  go("calc");
+  try{ window.scrollTo(0,0); }catch(e){}
+  toast("Omplert des del registre d'impressions");
+}
+$("prefillbar-close").onclick=function(){ $("prefillbar").hidden=true; };
+
 /* ---------------- desar / historial ---------------- */
 function saveQuote(){
   var inp=currentInput(), r=calc(inp);
@@ -1005,6 +1047,7 @@ $("nou").onclick=function(){
   Array.prototype.forEach.call($("pintat-presets").querySelectorAll("button"),function(x){x.setAttribute("aria-pressed","false");});
   extres=[]; renderExtres(); $("q-extres-marge").checked=true;
   setEditing(null);
+  $("prefillbar").hidden=true;
   recalc();
 };
 $("save-quote").onclick=saveQuote;
@@ -1323,6 +1366,7 @@ var ZCFG = {
     fillSettingsForm();
     renderHist();
     connectDb();
+    aplicaPrefill();
   }
 };
 
