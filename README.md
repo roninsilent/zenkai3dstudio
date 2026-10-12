@@ -82,3 +82,6 @@ imports i els enllaços als PDF només viuen en aquest fitxer.
 Com que l'app només té permís `drive.file`, només veu el fitxer si l'ha creat
 ella. El primer cop que l'obres en crea un de buit; qui actualitzi les factures
 ha d'escriure a **totes** les còpies que es diguin `zenkai3d-factures.json`.
+
+Cada dilluns al matí una tasca programada de Claude busca factures noves al
+correu (via Composio), en desa el PDF al Drive i actualitza totes les còpies.
