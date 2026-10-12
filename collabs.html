@@ -97,6 +97,8 @@ input[type=search]{flex:1 1 190px;min-width:0}
 .badge.b-descartada{text-decoration:line-through;opacity:.6}
 .badge.t-material{color:var(--brand-blue);border-color:var(--brand-blue);background:color-mix(in srgb,var(--brand-blue) 10%,transparent)}
 .badge.t-disseny{color:var(--brand-orange);border-color:var(--brand-orange);background:color-mix(in srgb,var(--brand-orange) 10%,transparent)}
+.badge.t-hardware{color:var(--ink);border-color:var(--ink-soft);background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.badge.t-concurs{color:var(--good);border-color:var(--good);background:color-mix(in srgb,var(--good) 10%,transparent)}
 .tipusline{margin-top:4px}
 .thumbs{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 0}
 .thumb{position:relative;width:74px;height:110px;border:1px solid var(--line-strong);border-radius:var(--r);overflow:hidden;background:var(--paper)}
@@ -313,8 +315,10 @@ nav::-webkit-scrollbar{display:none}
     <select id="f-estat"><option value="">Tots els estats</option></select>
     <select id="f-tipus">
       <option value="">Tots els tipus</option>
-      <option value="material">Material</option>
+      <option value="material">Filament</option>
+      <option value="hardware">Hardware</option>
       <option value="disseny">Disseny</option>
+      <option value="concurs">Concurs</option>
       <option value="altre">Altre</option>
     </select>
     <span class="spacer"></span>
@@ -372,8 +376,10 @@ nav::-webkit-scrollbar{display:none}
   <div class="grid2" style="margin-bottom:12px">
     <label class="f">Tipus
       <select id="ig-tipus">
-        <option value="material">Material — m'envien producte</option>
+        <option value="material">Filament — m\'envien filament o resina</option>
+        <option value="hardware">Hardware — impressora, eines o accessoris</option>
         <option value="disseny">Disseny — imprimeixo un model seu</option>
+        <option value="concurs">Concurs — premi guanyat</option>
         <option value="altre">Altre</option>
       </select>
     </label>
@@ -424,8 +430,10 @@ nav::-webkit-scrollbar{display:none}
       <label class="f full">Marca / empresa <input type="text" id="e-marca" placeholder="p. ex. Sunlu"></label>
       <label class="f full">Tipus de col·laboració
         <select id="e-tipus">
-          <option value="material">Material — m'envien filament, resina o maquinari</option>
-          <option value="disseny">Disseny — imprimeixo el model d'un dissenyador</option>
+          <option value="material">Filament — m\'envien filament o resina</option>
+          <option value="hardware">Hardware — m\'envien impressora, eines o accessoris</option>
+          <option value="disseny">Disseny — imprimeixo el model d\'un dissenyador</option>
+          <option value="concurs">Concurs — premi guanyat en un sorteig</option>
           <option value="altre">Altre</option>
         </select>
       </label>
@@ -495,7 +503,7 @@ var ESTATS = {
   cobrat:"Cobrat", descartada:"Descartada"
 };
 var ACTIUS = ["acceptada","producte","produccio","revisio","publicat"];
-var TIPUS = { material:"Material", disseny:"Disseny", altre:"Altre" };
+var TIPUS = { material:"Filament", hardware:"Hardware", disseny:"Disseny", concurs:"Concurs", altre:"Altre" };
 
 function $(id){ return document.getElementById(id); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
