@@ -13,14 +13,15 @@ compte amb què inicies sessió.
 | `pressupost.html` | Pressupost d'impressió 3D |
 | `collabs.html` | Col·laboracions amb marques |
 | `instagram.html` | Instagram dia a dia: reels, abast i seguidors (només llegeix) |
+| `factures.html` | Factures de casa: llum, aigua i telèfon (només llegeix) |
 | `.nojekyll` | Perquè GitHub Pages no toqui res |
 
-Pugeu els cinc al mateix repositori, tots al mateix nivell.
+Pugeu-los tots al mateix repositori, al mateix nivell.
 
 ## Publicar a GitHub Pages
 
 1. Repositori nou a GitHub.
-2. Puja-hi els cinc fitxers.
+2. Puja-hi tots els fitxers.
 3. **Settings → Pages** → *Deploy from a branch* → `main` / `(root)` → Desa.
 4. Al cap d'un minut: `https://elteuusuari.github.io/elrepositori/`
 
@@ -71,3 +72,13 @@ Drive de zenkai3dstudio@gmail.com. Cada matí una tasca programada de Claude
 treu les dades d'Instagram (via Composio) i actualitza aquest fitxer. Si l'app
 no el troba la primera vegada, el crea buit i l'actualització de l'endemà
 l'omple.
+
+## Factures de casa
+
+`factures.html` tampoc no hi escriu res: llegeix `zenkai3d-factures.json` del
+mateix Drive. Les dades no són al repositori (que és públic): l'adreça, els
+imports i els enllaços als PDF només viuen en aquest fitxer.
+
+Com que l'app només té permís `drive.file`, només veu el fitxer si l'ha creat
+ella. El primer cop que l'obres en crea un de buit; qui actualitzi les factures
+ha d'escriure a **totes** les còpies que es diguin `zenkai3d-factures.json`.
