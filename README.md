@@ -12,6 +12,7 @@ compte amb què inicies sessió.
 | `inventari.html` | Inventari de filament |
 | `pressupost.html` | Pressupost d'impressió 3D |
 | `collabs.html` | Col·laboracions amb marques |
+| `instagram.html` | Instagram dia a dia: reels, abast i seguidors (només llegeix) |
 | `.nojekyll` | Perquè GitHub Pages no toqui res |
 
 Pugeu els cinc al mateix repositori, tots al mateix nivell.
@@ -62,3 +63,11 @@ Tot passa dins del navegador, amb Tesseract.js (codi obert):
 
 Amb text net funciona bé; amb lletra estilitzada, fosca o fotos de biaix
 pot fallar. Sempre és revisable i editable a mà.
+
+## Instagram
+
+`instagram.html` no hi escriu res: només llegeix `zenkai3d-instagram.json` del
+Drive de zenkai3dstudio@gmail.com. Cada matí una tasca programada de Claude
+treu les dades d'Instagram (via Composio) i actualitza aquest fitxer. Si l'app
+no el troba la primera vegada, el crea buit i l'actualització de l'endemà
+l'omple.
