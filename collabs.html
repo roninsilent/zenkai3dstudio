@@ -109,6 +109,7 @@ input[type=search]{flex:1 1 190px;min-width:0}
 .collab-row:last-child{border-bottom:1px solid var(--line)}
 .collab-row:hover{background:rgba(0,0,0,.015)}
 .collab-row.done{opacity:.55}
+nav .ncount{font-weight:400;color:var(--ink-soft);margin-left:5px;font-variant-numeric:tabular-nums}
 .cmain{flex:1;min-width:0}
 .cmain .name{font-weight:600}
 .cmain .sub{margin-top:2px;color:var(--ink-soft);font-size:12.5px}
@@ -184,7 +185,7 @@ textarea.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:
   .toolbar .spacer{display:none}
   .toolbar>.btn{flex:1 1 100%}
   input[type=search]{flex:1 1 100%}
-  #f-estat,#f-tipus{flex:1 1 calc(50% - 4px);min-width:0}
+  #f-estat,#f-tipus,#f2-estat,#f2-tipus{flex:1 1 calc(50% - 4px);min-width:0}
 
   /* files de la llista: el nom mana, l'estat baixa a sota */
   .collab-row{gap:10px;padding:13px 0;align-items:flex-start}
@@ -303,6 +304,7 @@ nav::-webkit-scrollbar{display:none}
 <div class="navwrap"><nav role="tablist">
   <button role="tab" data-view="llista" aria-selected="true">Col·laboracions</button>
   <button role="tab" data-view="pendent" aria-selected="false">Pendent</button>
+  <button role="tab" data-view="tancades" aria-selected="false">Tancades<span class="ncount" id="n-tancades"></span></button>
   <button role="tab" data-view="correu" aria-selected="false">Correu</button>
   <button role="tab" data-view="instagram" aria-selected="false">Instagram</button>
   <button role="tab" data-view="importa" aria-selected="false">Importa</button>
@@ -329,6 +331,31 @@ nav::-webkit-scrollbar{display:none}
     <b>Encara no tens cap col·laboració desada</b>
     Quan una marca t'accepti una proposta — per correu, Instagram o TikTok — crea-la aquí i tindràs en un sol lloc què t'han enviat, què els deus i la data de lliurament.
     <div style="margin-top:14px"><button class="btn primary" data-goto-add>Nova col·laboració</button></div>
+  </div>
+</section>
+
+<section id="view-tancades" hidden>
+  <p class="hint">Les cobrades i les descartades, de la més recent a la més antiga. Si n'obres una i li canvies l'estat, torna a Col·laboracions.</p>
+  <div class="toolbar">
+    <input type="search" id="q2" placeholder="Cerca una marca…">
+    <select id="f2-estat">
+      <option value="">Tots els estats</option>
+      <option value="cobrat">Cobrat</option>
+      <option value="descartada">Descartada</option>
+    </select>
+    <select id="f2-tipus">
+      <option value="">Tots els tipus</option>
+      <option value="material">Filament</option>
+      <option value="hardware">Hardware</option>
+      <option value="disseny">Disseny</option>
+      <option value="concurs">Concurs</option>
+      <option value="altre">Altre</option>
+    </select>
+  </div>
+  <div id="tancades"></div>
+  <div class="empty-state" id="tancades-empty" hidden>
+    <b>Encara no n'hi ha cap de tancada</b>
+    Quan marquis una col·laboració com a cobrada o descartada, passarà aquí.
   </div>
 </section>
 
@@ -503,6 +530,7 @@ var ESTATS = {
   cobrat:"Cobrat", descartada:"Descartada"
 };
 var ACTIUS = ["acceptada","producte","produccio","revisio","publicat"];
+var TANCATS = ["cobrat","descartada"];
 var TIPUS = { material:"Filament", hardware:"Hardware", disseny:"Disseny", concurs:"Concurs", altre:"Altre" };
 
 function $(id){ return document.getElementById(id); }
@@ -632,6 +660,7 @@ function progress(c){
   return {fet:fet, total:list.length};
 }
 function isActiu(c){ return ACTIUS.indexOf(c.estat)>=0; }
+function isTancat(c){ return TANCATS.indexOf(c.estat)>=0; }
 function pendentsCount(c){
   var a=(c.entregables||[]).filter(function(x){return !x.fet;}).length;
   var b=(c.rebuts||[]).filter(function(x){return !x.fet;}).length;
@@ -647,15 +676,16 @@ function renderHeader(){
 }
 
 /* ---------------- render: llista ---------------- */
+function passaFiltre(c, q, f, ft){
+  if(f && c.estat!==f) return false;
+  if(ft && (c.tipus||"material")!==ft) return false;
+  if(!q) return true;
+  return (c.marca+" "+(c.contacte||"")+" "+(c.notes||"")+" "+(c.compensacio||"")).toLowerCase().indexOf(q)>=0;
+}
 function visible(){
   var q=$("q").value.trim().toLowerCase(), f=$("f-estat").value, ft=$("f-tipus").value;
-  var list=collabs.filter(function(c){
-    if(f && c.estat!==f) return false;
-    if(ft && (c.tipus||"material")!==ft) return false;
-    if(!q) return true;
-    return (c.marca+" "+(c.contacte||"")+" "+(c.notes||"")).toLowerCase().indexOf(q)>=0;
-  });
-  var order = ["produccio","revisio","producte","acceptada","proposta","publicat","cobrat","descartada"];
+  var list=collabs.filter(function(c){ return !isTancat(c) && passaFiltre(c, q, f, ft); });
+  var order = ["produccio","revisio","producte","acceptada","proposta","publicat"];
   list.sort(function(a,b){
     var da=order.indexOf(a.estat), db=order.indexOf(b.estat);
     if(da!==db) return da-db;
@@ -663,28 +693,55 @@ function visible(){
   });
   return list;
 }
-function renderLlista(){
-  var box=$("llista"), list=visible();
-  $("llista-empty").hidden = collabs.length>0;
-  box.innerHTML = list.map(function(c){
-    var p=progress(c);
-    var pct = p.total ? Math.round(p.fet/p.total*100) : 0;
-    var done = c.estat==="cobrat"||c.estat==="descartada";
-    return '<div class="collab-row'+(done?' done':'')+'" data-uid="'+esc(c.uid)+'">'+
-      '<div class="cmain"><div class="name">'+esc(c.marca||"Sense nom")+'</div>'+
-      '<div class="sub">'+(c.contacte?esc(c.contacte)+' · ':'')+esc({email:"Correu",instagram:"Instagram",tiktok:"TikTok",altre:"Altre"}[c.canal]||"")+
-      (c.dataLliurament?' · lliurament '+fmtDate(c.dataLliurament):'')+'</div></div>'+
-      '<div class="cright"><span class="badge b-'+esc(c.estat)+'">'+esc(ESTATS[c.estat]||c.estat)+'</span>'+
-      '<div class="tipusline"><span class="badge t-'+esc(c.tipus||"material")+'">'+esc(TIPUS[c.tipus||"material"]||"Material")+'</span></div>'+
-      (p.total?'<div class="progress" title="'+p.fet+'/'+p.total+' entregables"><span style="width:'+pct+'%"></span></div>':'')+
-      '</div></div>';
-  }).join("");
+function fmtDateAny(iso){
+  if(!iso) return "";
+  try{ var d=new Date(iso+"T00:00:00"); return d.toLocaleDateString("ca-ES",{day:"numeric",month:"short",year:"numeric"}); }catch(e){ return iso; }
+}
+function rowHtml(c, tancada){
+  var p=progress(c);
+  var pct = p.total ? Math.round(p.fet/p.total*100) : 0;
+  var quan = c.dataLliurament ? ' · lliurament '+(tancada?fmtDateAny(c.dataLliurament):fmtDate(c.dataLliurament))
+           : (tancada && c.dataAcceptacio ? ' · '+fmtDateAny(c.dataAcceptacio) : '');
+  return '<div class="collab-row" data-uid="'+esc(c.uid)+'">'+
+    '<div class="cmain"><div class="name">'+esc(c.marca||"Sense nom")+'</div>'+
+    '<div class="sub">'+(c.contacte?esc(c.contacte)+' · ':'')+esc({email:"Correu",instagram:"Instagram",tiktok:"TikTok",altre:"Altre"}[c.canal]||"")+
+    quan+'</div></div>'+
+    '<div class="cright"><span class="badge b-'+esc(c.estat)+'">'+esc(ESTATS[c.estat]||c.estat)+'</span>'+
+    '<div class="tipusline"><span class="badge t-'+esc(c.tipus||"material")+'">'+esc(TIPUS[c.tipus||"material"]||"Material")+'</span></div>'+
+    (p.total?'<div class="progress" title="'+p.fet+'/'+p.total+' entregables"><span style="width:'+pct+'%"></span></div>':'')+
+    '</div></div>';
+}
+function bindRows(box){
   Array.prototype.forEach.call(box.querySelectorAll(".collab-row"),function(row){
     row.onclick=function(){ openEditor(row.dataset.uid); };
   });
+}
+function renderLlista(){
+  var box=$("llista"), list=visible();
+  var oberts=collabs.filter(function(c){ return !isTancat(c); }).length;
+  $("llista-empty").hidden = collabs.length>0;
+  box.innerHTML = list.map(function(c){ return rowHtml(c, false); }).join("") ||
+    (collabs.length && !oberts ? '<p class="hint">Totes les col·laboracions estan tancades. Les tens a la pestanya Tancades.</p>' : '');
+  bindRows(box);
   var sel=$("f-estat"), cur=sel.value;
-  sel.innerHTML='<option value="">Tots els estats</option>'+Object.keys(ESTATS).map(function(k){
+  sel.innerHTML='<option value="">Tots els estats</option>'+Object.keys(ESTATS).filter(function(k){ return TANCATS.indexOf(k)<0; }).map(function(k){
     return '<option value="'+k+'"'+(k===cur?' selected':'')+'>'+esc(ESTATS[k])+'</option>'; }).join("");
+}
+
+/* ---------------- render: tancades ---------------- */
+function renderTancades(){
+  var box=$("tancades");
+  var q=$("q2").value.trim().toLowerCase(), f=$("f2-estat").value, ft=$("f2-tipus").value;
+  var tots=collabs.filter(isTancat);
+  var list=tots.filter(function(c){ return passaFiltre(c, q, f, ft); });
+  list.sort(function(a,b){
+    var da=a.dataLliurament||a.dataAcceptacio||"", db=b.dataLliurament||b.dataAcceptacio||"";
+    return db.localeCompare(da);
+  });
+  box.innerHTML = list.map(function(c){ return rowHtml(c, true); }).join("");
+  bindRows(box);
+  $("tancades-empty").hidden = tots.length>0;
+  $("n-tancades").textContent = tots.length ? String(tots.length) : "";
 }
 
 /* ---------------- render: pendent ---------------- */
@@ -720,7 +777,7 @@ function renderPendent(){
   });
 }
 
-function renderAll(){ renderHeader(); renderLlista(); renderPendent(); }
+function renderAll(){ renderHeader(); renderLlista(); renderTancades(); renderPendent(); }
 
 /* ---------------- editor: checklist genèric ---------------- */
 function renderChecklistEditor(containerId, arr){
@@ -845,6 +902,8 @@ $("e-save").onclick=function(){
     fitxers:edFitxers,
     notes:$("e-notes").value.trim()||null
   };
+  var abans=editingId ? byUid(editingId) : null;
+  var eraTancada=!!(abans && isTancat(abans)), araTancada=isTancat(data);
   if(editingId){
     collabs=collabs.map(function(c){ return c.uid===editingId ? Object.assign({},c,data) : c; });
   }else{
@@ -853,7 +912,7 @@ $("e-save").onclick=function(){
     collabs.push(data);
   }
   closeEditor(); persist();
-  toast("Desat");
+  toast(araTancada && !eraTancada ? "Desat · ara és a Tancades" : (!araTancada && eraTancada ? "Desat · torna a Col·laboracions" : "Desat"));
 };
 $("e-del").onclick=function(){
   if(!confirm("Vols eliminar aquesta col·laboració? No es pot desfer.")) return;
@@ -1340,13 +1399,16 @@ $("import-file-input").onchange=function(e){
 };
 
 function go(v){
-  ["llista","pendent","correu","instagram","importa"].forEach(function(k){ $("view-"+k).hidden=(k!==v); });
+  ["llista","pendent","tancades","correu","instagram","importa"].forEach(function(k){ $("view-"+k).hidden=(k!==v); });
   document.querySelectorAll("nav button").forEach(function(b){ b.setAttribute("aria-selected", String(b.dataset.view===v)); });
 }
 document.querySelectorAll("nav button").forEach(function(b){ b.onclick=function(){ go(b.dataset.view); }; });
 $("q").addEventListener("input", renderLlista);
 $("f-estat").addEventListener("change", renderLlista);
 $("f-tipus").addEventListener("change", renderLlista);
+$("q2").addEventListener("input", renderTancades);
+$("f2-estat").addEventListener("change", renderTancades);
+$("f2-tipus").addEventListener("change", renderTancades);
 
 /* ---------------- arrencada ---------------- */
 

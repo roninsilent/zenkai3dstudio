@@ -171,6 +171,41 @@ table.bd td b{font-weight:600}
 
 .empty-state{text-align:center;padding:36px 20px;color:var(--ink-soft);font-size:13.5px;display:flex;flex-direction:column;gap:6px;border:1px dashed var(--line-strong);border-radius:var(--r)}
 .empty-state b{color:var(--ink);font-size:15px}
+.resum{margin:0 0 16px;max-width:68ch}
+.resum p{margin:0 0 8px;font-size:16px;line-height:1.55}
+.resum b{font-weight:700}
+.fer{list-style:none;margin:0 0 8px;padding:0;counter-reset:f}
+.fer li{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.fer li:last-child{border-bottom:1px solid var(--line)}
+.fer li::before{counter-increment:f;content:counter(f);flex:none;width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--paper);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.fer b{display:block;font-size:14.5px}
+.fer span{display:block;font-size:13px;color:var(--ink-soft);margin-top:2px;line-height:1.45}
+.conc{display:flex;gap:11px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.conc:last-child{border-bottom:1px solid var(--line)}
+.conc .trofeu{flex:none;width:30px;height:30px;border-radius:50%;background:rgba(230,115,36,.12);display:flex;align-items:center;justify-content:center}
+.conc .m{flex:1;min-width:0}
+.conc .m b{display:block;font-size:14px}
+.conc .m small{display:block;font-size:12px;color:var(--ink-soft)}
+.conc .e{flex:none;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid var(--line-strong);color:var(--ink-soft);white-space:nowrap}
+.conc .e.pend{border-color:var(--brand-orange);color:var(--brand-orange)}
+.pla ol{margin:8px 0 0;padding-left:20px}
+.pla li{margin:6px 0;font-size:14.5px;line-height:1.45}
+.rec{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:16px;margin-bottom:12px}
+.rec h3{display:flex;gap:10px;align-items:center;margin:0 0 6px;font-size:16px;font-weight:600;letter-spacing:-.01em}
+.rec .num{flex:none;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--brand-blue);color:var(--brand-blue);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.rec .per{font-size:13.5px;color:var(--ink-soft);margin:0 0 8px;line-height:1.5}
+.rec .fes{font-size:14px;margin:10px 0 0;padding:9px 11px;border-left:3px solid var(--brand-blue);background:rgba(62,150,194,.08);line-height:1.45}
+.barres{margin:6px 0 4px}
+.bar-row{display:grid;grid-template-columns:78px 1fr 64px;gap:8px;align-items:center;font-size:12.5px;margin:6px 0}
+.bar-row .l{color:var(--ink-soft)}
+.bar-row .tr{height:12px;background:var(--hub);border-radius:3px;overflow:hidden;border:1px solid var(--line)}
+.bar-row .tr i{display:block;height:100%;background:var(--brand-blue)}
+.bar-row .v{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+ul.mini{margin:0;padding-left:18px;font-size:13.5px}
+ul.mini li{margin:4px 0}
+ul.mini a{font-weight:600;text-decoration:none}
+ul.mini a:hover{text-decoration:underline}
+ul.mini small{color:var(--ink-soft);font-size:12px}
 .foot{margin-top:34px;font-size:12px;color:var(--ink-soft);line-height:1.5}
 
 .gate{position:fixed;inset:0;background:var(--paper);z-index:60;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -227,7 +262,8 @@ table.bd td b{font-weight:600}
 </header>
 
 <nav role="tablist" id="tabs">
-  <button role="tab" data-view="avui" aria-selected="true">Avui</button>
+  <button role="tab" data-view="resum" aria-selected="true">Resum</button>
+  <button role="tab" data-view="creixer" aria-selected="false">Créixer</button>
   <button role="tab" data-view="dies" aria-selected="false">Dia a dia</button>
   <button role="tab" data-view="reels" aria-selected="false">Reels</button>
   <button role="tab" data-view="base" aria-selected="false">La base</button>
@@ -239,12 +275,26 @@ table.bd td b{font-weight:600}
   <span>S'omplen cada matí. Si acabes d'obrir l'app per primer cop, demà ja hi seran, o demana a Claude que les actualitzi ara.</span>
 </div>
 
-<section id="view-avui">
+<section id="view-resum">
+  <div class="resum" id="resum"></div>
   <div class="statrow" id="kpis"></div>
   <p class="hint" id="kpi-note"></p>
+  <h2>Què fer avui</h2>
+  <ol class="fer" id="fer"></ol>
+  <div id="concursos-box" hidden>
+    <h2>Concursos guanyats</h2>
+    <p class="hint" id="conc-hint"></p>
+    <div id="concursos"></div>
+  </div>
   <h2>Últims reels</h2>
   <p class="hint" id="ultims-hint"></p>
   <div id="ultims"></div>
+</section>
+
+<section id="view-creixer" hidden>
+  <p class="hint">Recomanacions tretes de les teves dades des d'abril de 2025. Els números es recalculen cada dia.</p>
+  <div class="card pla"><h3>El pla</h3><ol id="pla"></ol></div>
+  <div id="recs"></div>
 </section>
 
 <section id="view-dies" hidden>
@@ -365,6 +415,7 @@ function igUrl(codi) { return "https://www.instagram.com/reel/" + encodeURICompo
 
 /* ---------- dades ---------- */
 var D = null;
+var CONC = null, CONC_KEY = "zenkai_ig_concursos_v1";
 var METRIQUES = [
   { k: "abast", n: "Abast", d: "Comptes diferents que van veure alguna cosa teva aquell dia." },
   { k: "visualitzacions", n: "Visualitzacions", d: "Cops que es va reproduir o mostrar el teu contingut." },
@@ -401,6 +452,7 @@ function normalitza(raw) {
   X.recents = X.base.filter(function (r) { return r.data >= addDays(X.avui, -90); });
   X.med = meds(X.base);
   X.medRec = meds(X.recents);
+  X.an = analisi(X);
   return X;
 }
 function meds(rs) {
@@ -412,14 +464,14 @@ function meds(rs) {
 }
 
 /* ---------- pestanyes ---------- */
-var vista = "avui";
+var vista = "resum";
 document.querySelectorAll("#tabs button").forEach(function (b) {
   b.addEventListener("click", function () { mostra(b.dataset.view); });
 });
 function mostra(v) {
   vista = v;
   document.querySelectorAll("#tabs button").forEach(function (b) { b.setAttribute("aria-selected", b.dataset.view === v ? "true" : "false"); });
-  ["avui", "dies", "reels", "base"].forEach(function (k) { $("view-" + k).hidden = !D || k !== v; });
+  ["resum", "creixer", "dies", "reels", "base"].forEach(function (k) { $("view-" + k).hidden = !D || k !== v; });
   if (D) pinta();
 }
 function segon(id, cb) {
@@ -465,7 +517,8 @@ function carrega(raw) {
   mostra(vista);
 }
 function pinta() {
-  if (vista === "avui") pintaAvui();
+  if (vista === "resum") pintaResum();
+  else if (vista === "creixer") pintaCreixer();
   else if (vista === "dies") pintaDies();
   else if (vista === "reels") pintaReels();
   else pintaBase();
@@ -503,13 +556,13 @@ function pintaAvui() {
 
   $("ultims-hint").textContent = "Comparats amb la mediana dels " + n0(D.med.n) + " reels des d'abril de 2025 que ja tenen una setmana: " + n0(D.med.visualitzacions) + " visualitzacions i un " + n1(D.med.skip_pct) + " % que el passa en 3 segons. La línia de cada reel mostra com creix dia a dia durant els seus primers 60 dies.";
   var u = $("ultims"); u.replaceChildren();
-  D.reels.slice(0, 6).forEach(function (r) { u.appendChild(targetaReel(r)); });
+  D.reels.slice(0, 4).forEach(function (r) { u.appendChild(targetaReel(r)); });
 }
 function targetaReel(r) {
   var c = el("div", "reel" + (r.orig ? " rep" : ""));
   var top = el("div", "reel-top");
   var t = el("div", "t");
-  var a = el("a", "", r.titol || "(sense text)"); a.href = igUrl(r.codi); a.target = "_blank"; a.rel = "noopener";
+  var a = el("a", "", titolNet(r.titol)); a.href = igUrl(r.codi); a.target = "_blank"; a.rel = "noopener";
   t.appendChild(a);
   var edat = diesEntre(r.data, D.avui);
   t.appendChild(el("small", "", fDia(r.data) + " · " + r.hora + (edat < 7 ? " · fa " + (edat === 0 ? "unes hores" : edat === 1 ? "1 dia" : edat + " dies") + ", encara creix" : "")));
@@ -517,7 +570,7 @@ function targetaReel(r) {
   var v = el("div", "v");
   v.appendChild(el("b", "", n0(r.visualitzacions)));
   var p = pctTxt(r.visualitzacions, D.med.visualitzacions);
-  v.appendChild(el("small", edat < 7 ? "muted" : p.c, p.t === "—" ? "visualitzacions" : p.t + " vs mediana"));
+  v.appendChild(el("small", edat < 7 ? "muted" : p.c, edat < 2 || p.t === "—" ? "visualitzacions" : p.t + " vs mediana"));
   top.appendChild(v);
   c.appendChild(top);
   var m = el("div", "mets");
@@ -544,6 +597,304 @@ function sparkReel(r) {
   var guany = ultim.visualitzacions - primer.visualitzacions;
   w.appendChild(el("span", "", "+" + n0(guany) + " visualitzacions entre el " + fCurta(primer.data) + " i el " + fCurta(ultim.data)));
   return w;
+}
+
+/* ---------- ANÀLISI (per al resum i les recomanacions) ---------- */
+var DIES_NOM = ["diumenge", "dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte"];
+function setmanaDe(s) { var d = pd(s); var wd = (d.getUTCDay() + 6) % 7; return addDays(s, -wd); }
+function suma(arr, k) { return arr.reduce(function (s, d) { return s + (ok(d[k]) ? d[k] : 0); }, 0); }
+function titolNet(t) {
+  t = (t || "").trim();
+  if (t.length >= 88) { var i = t.lastIndexOf(" ", 86); t = t.slice(0, i > 40 ? i : 86).replace(/[\s.,;:…-]+$/, "") + "…"; }
+  return t || "(sense text)";
+}
+function curt(t, n) { t = (t || "(sense text)").trim(); n = n || 60; return t.length > n ? t.slice(0, n - 1).trim() + "…" : t; }
+function analisi(X) {
+  var A = {};
+  var W = {};
+  X.dies.forEach(function (d) {
+    var k = setmanaDe(d.data);
+    var w = W[k] || (W[k] = { k: k, abast: 0, okA: 0, reels: 0 });
+    if (ok(d.abast)) { w.abast += d.abast; w.okA++; }
+  });
+  X.reels.forEach(function (r) { var w = W[setmanaDe(r.data)]; if (w) w.reels++; });
+  var plenes = Object.keys(W).map(function (k) { return W[k]; }).filter(function (w) { return w.okA === 7; });
+  A.setm = [0, 1, 2, 3, 4].map(function (n) {
+    var ws = plenes.filter(function (w) { return n < 4 ? w.reels === n : w.reels >= 4; });
+    return { n: n, setmanes: ws.length, abast: median(ws.map(function (w) { return w.abast; })) };
+  });
+  var asc = X.reels.slice().sort(function (a, b) { return (a.data + a.hora).localeCompare(b.data + b.hora); });
+  var enBase = {}; X.base.forEach(function (r) { enBase[r.codi] = 1; });
+  var G = { 1: [], 2: [], 3: [], 4: [] };
+  asc.forEach(function (r, i) {
+    if (!i || !enBase[r.codi]) return;
+    var g = diesEntre(asc[i - 1].data, r.data);
+    if (g >= 1) G[Math.min(g, 4)].push(r.visualitzacions);
+  });
+  A.gaps = {}; [1, 2, 3, 4].forEach(function (g) { A.gaps[g] = { n: G[g].length, v: median(G[g]) }; });
+  var WD = [[], [], [], [], [], [], []];
+  X.base.forEach(function (r) { WD[pd(r.data).getUTCDay()].push(r.visualitzacions); });
+  var cands = WD.map(function (a, i) { return { d: i, n: a.length, v: median(a) }; }).filter(function (x) { return x.n >= 12; })
+    .sort(function (a, b) { return b.v - a.v; });
+  A.millorDia = null;
+  if (cands.length) {
+    var b = cands[0];
+    var altres = median(X.base.filter(function (r) { return pd(r.data).getUTCDay() !== b.d; }).map(function (r) { return r.visualitzacions; }));
+    if (altres && b.v >= altres * 1.35) A.millorDia = { d: b.d, n: b.n, v: b.v, altres: altres };
+  }
+  var s = X.base.map(function (r) { return r.skip_pct; }).filter(ok).sort(function (a, b) { return a - b; });
+  var qq = function (p) { var i = (s.length - 1) * p, lo = Math.floor(i); return s[lo] + (s[Math.min(lo + 1, s.length - 1)] - s[lo]) * (i - lo); };
+  A.c1 = s.length ? qq(1 / 3) : null; A.c2 = s.length ? qq(2 / 3) : null;
+  function grup(f) {
+    var rs = X.base.filter(function (r) { return ok(r.skip_pct) && f(r.skip_pct); });
+    return { n: rs.length, v: median(rs.map(function (r) { return r.visualitzacions; })), sh: median(rs.map(function (r) { return r.compartits; })) };
+  }
+  A.terc = [grup(function (v) { return v <= A.c1; }), grup(function (v) { return v > A.c2; })];
+  A.models = X.base.filter(function (r) { return r.data >= addDays(X.avui, -180) && r.visualitzacions >= 1000 && ok(r.skip_pct); })
+    .sort(function (a, b) { return a.skip_pct - b.skip_pct; }).slice(0, 3);
+  var Q = {};
+  X.base.forEach(function (r) {
+    if (!r.visualitzacions) return;
+    var k = r.data.slice(0, 4) + " T" + Math.ceil(+r.data.slice(5, 7) / 3);
+    (Q[k] = Q[k] || []).push(r.compartits / r.visualitzacions * 1000);
+  });
+  A.sh1k = Object.keys(Q).sort().map(function (k) { return { q: k, v: median(Q[k]) }; });
+  A.topShare = X.base.filter(function (r) { return r.visualitzacions >= 1500; })
+    .map(function (r) { return { r: r, v: r.compartits / r.visualitzacions * 1000 }; })
+    .sort(function (a, b) { return b.v - a.v; }).slice(0, 5);
+  var reps = X.reels.filter(function (r) { return r.orig; });
+  A.reps = { n: reps.length, v1: median(reps.map(function (r) { return r.orig.visualitzacions; })), v2: median(reps.map(function (r) { return r.visualitzacions; })) };
+  var d90 = X.dies.filter(function (d) { return d.data > addDays(X.avui, -91); });
+  var vis = suma(d90, "visites_perfil"), nous = suma(d90, "seguidors_nous");
+  A.conv = { vis: vis, nous: nous, r: vis ? nous / vis * 100 : null };
+  A.reels28 = X.reels.filter(function (r) { return r.data > addDays(X.avui, -28); }).length;
+  if (A.millorDia) {
+    var b2 = A.millorDia.d;
+    A.trio = [(b2 + 3) % 7, (b2 + 5) % 7, b2].map(function (i) { return DIES_NOM[i]; });
+  }
+  return A;
+}
+function paragraf(parts) {
+  var p = el("p");
+  parts.forEach(function (x) { if (Array.isArray(x)) p.appendChild(el("b", "", x[0])); else p.appendChild(document.createTextNode(x)); });
+  return p;
+}
+function canviText(a, b, unitat) {
+  if (!ok(a) || !ok(b) || !b) return "";
+  var p = (a / b - 1) * 100;
+  if (Math.abs(p) < 3) return ", igual que " + unitat;
+  return ", un " + n0(Math.abs(p)) + " % " + (p > 0 ? "més" : "menys") + " que " + unitat;
+}
+
+/* ---------- RESUM ---------- */
+function pintaResum() {
+  var A = D.an;
+  var ult = D.dies[D.dies.length - 1], dia = ult ? ult.data : D.avui;
+  var set7 = finestra(7, dia), prev7 = finestra(7, addDays(dia, -7));
+  var a7 = mean(set7.map(function (d) { return d.abast; })), a7p = mean(prev7.map(function (d) { return d.abast; }));
+  var reels7 = D.reels.filter(function (r) { return r.data > addDays(D.avui, -7); }).length;
+  var nous7 = suma(set7, "seguidors_nous");
+  var sem = [];
+  for (var i = 1; i <= 12; i++) {
+    var w = finestra(7, addDays(dia, -7 * i));
+    if (w.length === 7 && w.every(function (d) { return ok(d.seguidors_nous); })) sem.push(suma(w, "seguidors_nous"));
+  }
+  var mNous = mean(sem);
+  var box = $("resum"); box.replaceChildren();
+  box.appendChild(paragraf(["En els últims 7 dies has publicat ", [reels7 + (reels7 === 1 ? " reel" : " reels")],
+    " i has arribat a ", [n0(a7)], " comptes al dia de mitjana" + canviText(a7, a7p, "la setmana anterior") + "."]));
+  box.appendChild(paragraf(["Tens ", [n0(D.compte.followers_count)], " seguidors. Aquesta setmana t'han començat a seguir ", [n0(nous7)],
+    " comptes nous" + (ok(mNous) ? " (la mitjana de les 12 setmanes anteriors és " + n0(mNous) + ")" : "") + "."]));
+  var r0 = D.reels[0];
+  if (r0) {
+    var ed = diesEntre(r0.data, D.avui);
+    var cua = ".";
+    if (ed >= 7 && ok(D.med.visualitzacions)) {
+      var p = (r0.visualitzacions / D.med.visualitzacions - 1) * 100;
+      cua = ", un " + n0(Math.abs(p)) + " % " + (p >= 0 ? "per sobre" : "per sota") + " de la teva mediana.";
+    } else cua = ", i encara creix.";
+    box.appendChild(paragraf(["L'últim reel, «" + curt(r0.titol, 55) + "», " + (ed === 0 ? "és d'avui" : "fa " + ed + (ed === 1 ? " dia" : " dies")) + " i porta ",
+      [n0(r0.visualitzacions)], " visualitzacions" + cua]));
+  }
+  var w1 = A.setm[1].abast, w3 = A.setm[3].abast;
+  if (ok(w1) && ok(w3)) {
+    box.appendChild(paragraf(["En les últimes 4 setmanes n'has publicat ", [String(A.reels28)],
+      ". Les setmanes amb 3 reels arribes a ", [n0(w3)], " comptes; les d'un, a ", [n0(w1)], "."]));
+  }
+
+  pintaFer();
+  pintaConcursos();
+  pintaAvui();
+}
+function pintaFer() {
+  var A = D.an, items = [];
+  var r0 = D.reels[0];
+  var dl = r0 ? diesEntre(r0.data, D.avui) : 99;
+  var g = A.gaps;
+  if (dl >= 3) items.push(["Publica avui", "Fa " + dl + " dies del darrer reel." + (ok(g[3].v) ? " Els reels que surten 3 dies després de l'anterior tenen una mediana de " + n0(g[3].v) + " visualitzacions." : "")]);
+  else if (dl === 2) items.push(["Avui és bon dia per publicar", "Fa 2 dies del darrer." + (ok(g[1].v) && ok(g[3].v) ? " Deixar-ne 2 o 3 entre reels t'ha funcionat millor que publicar l'endemà (mediana de " + n0(Math.max(g[2].v || 0, g[3].v)) + " contra " + n0(g[1].v) + ")." : "")]);
+  else if (dl === 1) items.push(["El següent, d'aquí 1 o 2 dies", "Ahir vas publicar." + (ok(g[1].v) && ok(g[3].v) ? " Els reels que surten l'endemà de l'anterior fan una mediana de " + n0(g[1].v) + " visualitzacions; als 3 dies, " + n0(g[3].v) + "." : "")]);
+  else items.push(["Avui ja has publicat", "Deixa passar 2 o 3 dies abans del següent. Mentrestant, mira com creix «" + curt(r0.titol, 40) + "» a la pestanya Reels."]);
+
+  var dll = setmanaDe(D.avui);
+  var fetsSet = D.reels.filter(function (r) { return r.data >= dll; }).length;
+  var queden = 7 - ((pd(D.avui).getUTCDay() + 6) % 7) - (dl === 0 ? 1 : 0);
+  if (fetsSet < 3) {
+    var falten = 3 - fetsSet;
+    items.push(["Aquesta setmana en portes " + fetsSet + " de 3", falten <= queden ? "Te'n falten " + falten + " i queden " + queden + (queden === 1 ? " dia" : " dies") + " de setmana." : "Ja no hi arribes: apunta a 3 la setmana que ve."]);
+  } else {
+    var w3 = A.setm[3].abast, w4 = A.setm[4].abast;
+    items.push(["Ja tens els 3 reels de la setmana", ok(w3) && ok(w4) && w4 <= w3 * 1.1 ? "Publicar-ne més no t'ha donat més abast: les setmanes de 4 o més arriben a " + n0(w4) + " comptes, i les de 3, a " + n0(w3) + ". Guarda el que tinguis per a la setmana que ve." : "Guarda el que tinguis per a la setmana que ve."]);
+  }
+
+  var rec = D.reels.filter(function (r) { var e = diesEntre(r.data, D.avui); return e >= 1 && e <= 7 && r.visualitzacions >= 300 && ok(r.skip_pct); })[0];
+  if (rec && ok(A.c2) && rec.skip_pct > A.c2) items.push(["Revisa com comença «" + curt(rec.titol, 40) + "»", "El " + n1(rec.skip_pct) + " % el passa abans dels 3 segons, dels pitjors que tens. Al següent, obre amb la peça acabada."]);
+  else if (rec && ok(A.c1) && rec.skip_pct <= A.c1) items.push(["«" + curt(rec.titol, 40) + "» reté bé", "Només el passa el " + n1(rec.skip_pct) + " % en 3 segons. Fes servir el mateix inici al següent."]);
+
+  if (A.millorDia) {
+    var avuiD = pd(D.avui).getUTCDay();
+    if (avuiD === A.millorDia.d || (avuiD + 1) % 7 === A.millorDia.d) {
+      var nom = DIES_NOM[A.millorDia.d];
+      items.push([(avuiD === A.millorDia.d ? "Avui" : "Demà") + " és " + nom + ", el teu millor dia", "Els reels de " + nom + " fan una mediana de " + n0(A.millorDia.v) + " visualitzacions, contra " + n0(A.millorDia.altres) + " la resta de dies. Si tens una peça forta, publica-la " + (avuiD === A.millorDia.d ? "avui" : "demà") + "."]);
+    }
+  }
+  var pend = (CONC || []).filter(function (c) { return c.estat !== "cobrat" && c.estat !== "descartada"; });
+  if (pend.length) items.push([pend.length === 1 ? "Tens un premi per rebre" : "Tens " + pend.length + " premis per rebre", pend.map(function (c) { return c.marca; }).join(" · ") + ". Quan arribi, marca'l a l'app de col·laboracions."]);
+
+  var ol = $("fer"); ol.replaceChildren();
+  items.slice(0, 5).forEach(function (it) {
+    var li = el("li"); var d = el("div"); d.appendChild(el("b", "", it[0])); d.appendChild(el("span", "", it[1])); li.appendChild(d); ol.appendChild(li);
+  });
+}
+function iconaTrofeu() {
+  var s = svg("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", "stroke-width": 1.8, "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" });
+  s.style.stroke = "var(--brand-orange)";
+  ["M8 21h8", "M12 17v4", "M7 4h10v5a5 5 0 0 1-10 0z", "M17 6h3v1a3 3 0 0 1-3 3", "M7 6H4v1a3 3 0 0 0 3 3"].forEach(function (dd) { s.appendChild(svg("path", { d: dd })); });
+  return s;
+}
+function pintaConcursos() {
+  var box = $("concursos-box");
+  if (!CONC || !CONC.length) { box.hidden = true; return; }
+  box.hidden = false;
+  var cs = CONC.slice().sort(function (a, b) { return (b.dataAcceptacio || "").localeCompare(a.dataAcceptacio || ""); });
+  var pend = cs.filter(function (c) { return c.estat !== "cobrat"; }).length;
+  $("conc-hint").textContent = cs.length + " concursos i sortejos guanyats" + (pend ? ", " + pend + " amb el premi per rebre" : "") + ". Surten de l'app de col·laboracions.";
+  var host = $("concursos"); host.replaceChildren();
+  cs.forEach(function (c) {
+    var row = el("div", "conc");
+    var ic = el("span", "trofeu"); ic.appendChild(iconaTrofeu()); row.appendChild(ic);
+    var m = el("div", "m");
+    m.appendChild(el("b", "", c.marca || "Concurs"));
+    m.appendChild(el("small", "", (c.compensacio || "Premi") + (c.dataAcceptacio ? " · " + fData(c.dataAcceptacio) : "")));
+    row.appendChild(m);
+    var rebut = c.estat === "cobrat";
+    row.appendChild(el("span", "e" + (rebut ? "" : " pend"), rebut ? "Rebut" : "Per rebre"));
+    host.appendChild(row);
+  });
+}
+
+/* ---------- CRÉIXER ---------- */
+function targetaRec(num, titol, per, fes, extra) {
+  var c = el("div", "rec");
+  var h = el("h3"); h.appendChild(el("span", "num", String(num))); h.appendChild(document.createTextNode(titol)); c.appendChild(h);
+  if (per) c.appendChild(el("p", "per", per));
+  if (extra) c.appendChild(extra);
+  if (fes) { var f = el("p", "fes"); f.appendChild(el("b", "", "Què fer: ")); f.appendChild(document.createTextNode(fes)); c.appendChild(f); }
+  return c;
+}
+function barres(rows, fmt) {
+  var max = Math.max.apply(null, rows.map(function (r) { return r.v || 0; }).concat([1]));
+  var w = el("div", "barres");
+  rows.forEach(function (r) {
+    var row = el("div", "bar-row");
+    row.appendChild(el("span", "l", r.l));
+    var tr = el("span", "tr"); var i = el("i"); i.style.width = ok(r.v) ? (r.v / max * 100).toFixed(1) + "%" : "0"; if (r.fort) i.style.background = "var(--brand-orange)"; tr.appendChild(i); row.appendChild(tr);
+    row.appendChild(el("span", "v", ok(r.v) ? fmt(r.v) : "—"));
+    w.appendChild(row);
+  });
+  return w;
+}
+function llistaReels(arr, etiqueta) {
+  var ul = el("ul", "mini");
+  arr.forEach(function (x) {
+    var r = x.r || x;
+    var li = el("li");
+    var a = el("a", "", curt(r.titol, 52)); a.href = igUrl(r.codi); a.target = "_blank"; a.rel = "noopener";
+    li.appendChild(a); li.appendChild(el("small", "", " · " + fCurta(r.data) + " ’" + r.data.slice(2, 4) + " · " + etiqueta(x)));
+    ul.appendChild(li);
+  });
+  return ul;
+}
+function pintaCreixer() {
+  var A = D.an;
+  var pla = $("pla"); pla.replaceChildren();
+  function lin(b, t) { var li = el("li"); li.appendChild(el("b", "", b)); li.appendChild(document.createTextNode(t)); pla.appendChild(li); }
+  lin("3 reels per setmana", ", mai en dies seguits" + (A.trio ? " (per exemple " + A.trio.join(", ").replace(/, ([^,]*)$/, " i $1") + ")." : "."));
+  lin("Els 3 primers segons", ": obre sempre amb la peça acabada.");
+  lin("Res repetit", ": cada reel, una peça que no hagis publicat.");
+  lin("Un de cada tres, alguna cosa que només fas tu", ": un disseny propi, el treball de color al slicer o una prova de marca.");
+
+  var host = $("recs"); host.replaceChildren();
+  var n = 1;
+  var S = A.setm;
+  var rows = [["Cap reel", 0], ["1 reel", 1], ["2 reels", 2], ["3 reels", 3], ["4 o més", 4]].map(function (x) {
+    return { l: x[0], v: S[x[1]].abast, fort: x[1] === 3 };
+  });
+  var perSem = (A.reels28 / 4);
+  var pla3 = ok(S[3].abast) && ok(S[4].abast) && S[4].abast <= S[3].abast * 1.1;
+  host.appendChild(targetaRec(n++, "Publica 3 reels per setmana",
+    "Abast total de la setmana segons quants reels hi publiques (mediana des d'abril de 2025)." + (pla3 ? " De 3 a 4 o més ja no puja." : "") + " Les últimes 4 setmanes n'has publicat " + A.reels28 + ", " + NF1.format(perSem) + " per setmana.",
+    pla3 ? "Planifica 3 reels cada setmana. Si en tens més de llestos, guarda'ls per a la setmana següent." : "Planifica com a mínim 3 reels cada setmana.", barres(rows, n0)));
+
+  var g = A.gaps;
+  var millorG = [1, 2, 3, 4].filter(function (k) { return g[k].n >= 10 && ok(g[k].v); }).sort(function (a, b) { return g[b].v - g[a].v; })[0];
+  var titG = millorG === 1 ? "Publicar dies seguits no et resta" : millorG === 4 ? "Deixa 4 dies o més entre reels" : millorG === 3 ? "No publiquis dies seguits" : millorG ? "Deixa " + millorG + " dies entre reels" : "Reparteix els reels";
+  host.appendChild(targetaRec(n++, titG,
+    "Visualitzacions (mediana) segons els dies que han passat des del reel anterior." + (millorG === 3 ? " Amb 3 reels per setmana no es poden deixar 3 dies entre tots: un espai pot ser de 3 dies i els altres dos, de 2." : ""),
+    A.trio ? "Tria tres dies separats, com ara " + A.trio.join(", ").replace(/, ([^,]*)$/, " i $1") + "." : "Reparteix els 3 reels de la setmana deixant dies entre ells.",
+    barres([{ l: "L'endemà", v: g[1].v, fort: millorG === 1 }, { l: "2 dies", v: g[2].v, fort: millorG === 2 }, { l: "3 dies", v: g[3].v, fort: millorG === 3 }, { l: "4 o més", v: g[4].v, fort: millorG === 4 }], n0)));
+
+  if (ok(A.c1) && A.terc[0].n && A.terc[1].n) {
+    var t0 = A.terc[0], t2 = A.terc[1];
+    var ex = el("div");
+    if (A.models.length) { ex.appendChild(el("p", "per", "Els que millor han retingut els últims 6 mesos:")); ex.appendChild(llistaReels(A.models, function (r) { return "passat " + n1(r.skip_pct) + " %"; })); }
+    host.appendChild(targetaRec(n++, "Guanya els 3 primers segons",
+      "Els reels que menys gent passa en 3 segons (fins al " + n0(A.c1) + " %) fan una mediana de " + n0(t0.v) + " visualitzacions i " + nsm(t0.sh) + " compartits. Els que més (a partir del " + n0(A.c2) + " %), " + n0(t2.v) + " i " + nsm(t2.sh) + ".",
+      "Obre amb la peça acabada i en moviment. El procés, després.", ex));
+  }
+
+  if (A.sh1k.length > 1) {
+    var primer = A.sh1k[0], ultim = A.sh1k[A.sh1k.length - 1];
+    var ex2 = el("div");
+    if (A.topShare.length) { ex2.appendChild(el("p", "per", "Els que més s'envien per cada 1.000 visualitzacions:")); ex2.appendChild(llistaReels(A.topShare, function (x) { return n1(x.v) + " per 1.000"; })); }
+    var lq = function (q) { var p = q.split(" "); return p[1] + " de " + p[0]; };
+    host.appendChild(targetaRec(n++, "Fes reels que la gent enviï",
+      "Cada cop que algú envia un reel, arriba a algú que potser encara no et segueix. Ara et comparteixen " + n1(ultim.v) + " vegades cada 1.000 visualitzacions (" + lq(ultim.q) + "); al " + lq(primer.q) + " eren " + n1(primer.v) + ".",
+      "Mira què tenen en comú els que més s'envien i fes-ne més d'aquest tipus.", ex2));
+  }
+
+  if (A.reps.n) {
+    host.appendChild(targetaRec(n++, "No repeteixis reels",
+      "Has repetit " + A.reps.n + (A.reps.n === 1 ? " reel" : " reels") + ". La primera vegada van fer una mediana de " + n0(A.reps.v1) + " visualitzacions; la segona, " + n0(A.reps.v2) + ".",
+      "Si vols tornar a ensenyar una peça, grava-la de nou: un altre angle, un altre moment del procés o al costat d'una peça nova.", null));
+  }
+
+  if (A.millorDia) {
+    var nom = DIES_NOM[A.millorDia.d];
+    host.appendChild(targetaRec(n++, "Prova de guardar la peça forta per al " + nom,
+      "Els " + A.millorDia.n + " reels publicats en " + nom + " fan una mediana de " + n0(A.millorDia.v) + " visualitzacions, contra " + n0(A.millorDia.altres) + " la resta de dies. Són pocs reels i pot ser casualitat.",
+      "Durant un mes, publica el millor de la setmana en " + nom + " i mira si es manté.", null));
+  }
+
+  host.appendChild(targetaRec(n++, "Ensenya el que només fas tu",
+    "En qualitat d'impressió pura, els comptes grans tenen avantatge. Tu tens coses que ells no ensenyen: dissenys propis a MakerWorld, el color i el muntatge en multicolor FDM, i les proves de marques.",
+    "Un de cada tres reels, una d'aquestes.", null));
+
+  if (A.conv.vis) {
+    host.appendChild(targetaRec(n++, "Converteix visites en seguidors",
+      "Els últims 90 dies: " + n0(A.conv.vis) + " visites al perfil i " + n0(A.conv.nous) + " seguidors nous, " + n1(A.conv.r) + " per cada 100 visites.",
+      "Que la bio digui en una línia què fas i fixa al perfil els 3 reels que més han funcionat.", null));
+  }
 }
 
 /* ---------- DIA A DIA ---------- */
@@ -682,7 +1033,7 @@ function pintaReels() {
     var row = el("div", "rrow");
     var b = el("button"); b.type = "button"; b.setAttribute("aria-expanded", obert === r.codi ? "true" : "false");
     b.appendChild(el("span", "rdot" + (r.orig ? " rep" : "")));
-    var mn = el("span", "rmain"); mn.appendChild(el("span", "n", r.titol || "(sense text)")); mn.appendChild(el("small", "", fData(r.data) + " · " + r.hora));
+    var mn = el("span", "rmain"); mn.appendChild(el("span", "n", titolNet(r.titol))); mn.appendChild(el("small", "", fData(r.data) + " · " + r.hora));
     b.appendChild(mn);
     var vv = el("span", "rval"); vv.appendChild(el("b", "", n0(r.visualitzacions)));
     vv.appendChild(el("small", "", ordre === "compartits" ? n0(r.compartits) + " compartits" : "passat " + n1(r.skip_pct) + " %"));
@@ -777,6 +1128,10 @@ function graficTrim(host, qs) {
 }
 
 /* ---------- memòria cau ---------- */
+(function () {
+  var cc = lsGet(CONC_KEY);
+  if (cc) { try { CONC = JSON.parse(cc); } catch (e) { lsDel(CONC_KEY); } }
+})();
 (function () {
   var c = lsGet(CACHE_KEY);
   if (c) { try { carrega(JSON.parse(c)); } catch (e) { lsDel(CACHE_KEY); } }
@@ -884,12 +1239,32 @@ function llegeixDrive() {
       try { data = t ? JSON.parse(t) : {}; } catch (e) { data = {}; }
       if (data && data.versio) lsSet(CACHE_KEY, JSON.stringify(data));
       carrega(data);
+      llegeixConcursos();
     })
     .catch(function (e) {
       if (e && e.code === "g_401") { gToken = null; showLogin("La sessió de Google ha caducat; torna a entrar-hi."); return; }
       toast("No he pogut llegir el Drive ara mateix." + (D ? " Et mostro les últimes dades guardades." : ""));
       if (!D) { $("buit").hidden = false; }
     });
+}
+
+/* Els concursos guanyats surten de l'app de col·laboracions (mateix Drive, mateixa sessió). */
+function llegeixConcursos() {
+  var q = encodeURIComponent("name='zenkai3d-collaboracions.json' and trashed=false");
+  driveFetch("https://www.googleapis.com/drive/v3/files?q=" + q + "&fields=files(id,name)&orderBy=" + encodeURIComponent("modifiedTime desc") + "&spaces=drive")
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d.files || !d.files.length) return null;
+      return driveFetch("https://www.googleapis.com/drive/v3/files/" + d.files[0].id + "?alt=media").then(function (r) { return r.text(); });
+    })
+    .then(function (t) {
+      if (!t) return;
+      var j = JSON.parse(t);
+      CONC = (j.collabs || []).filter(function (c) { return c.tipus === "concurs"; });
+      lsSet(CONC_KEY, JSON.stringify(CONC));
+      if (D) pinta();
+    })
+    .catch(function () {});
 }
 
 gateInit();
