@@ -81,7 +81,9 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
 .reels .t{flex:1;min-width:0}
 .reels .t p{margin:0;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
 .reels .t small{display:block;color:var(--ink-soft);font-size:12.5px;margin-top:3px}
-.reels .v{font-weight:800;white-space:nowrap}
+.reels .v{display:flex;flex-direction:column;align-items:flex-end;text-align:right;white-space:nowrap}
+.reels .v b{font-weight:800}
+.reels .v small{font-size:11.5px;color:var(--ink-soft);font-weight:500;margin-top:1px}
 
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
 .chips li{border:1px solid var(--line-strong);background:var(--surface);border-radius:20px;padding:5px 12px;font-size:13.5px;font-weight:600}
@@ -101,6 +103,32 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
 .state{border:1px dashed var(--line-strong);border-radius:var(--r);padding:14px;color:var(--ink-soft);font-size:14px}
 footer{margin-top:40px;font-size:12px;color:var(--ink-soft)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+.lang{margin-left:auto;display:inline-flex;border:1px solid var(--line-strong);border-radius:20px;overflow:hidden;background:var(--surface);flex:none}
+.lang button{font:inherit;font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--ink-soft);background:none;border:0;
+  padding:5px 10px;cursor:pointer;min-width:38px}
+.lang button+button{border-left:1px solid var(--line)}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.lang button:hover{color:var(--ink)}
+.lang button[aria-pressed="true"]:hover{color:var(--paper)}
+.lang button:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+@media(max-width:420px){.brandname{display:none}}
+
+.aff{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.affc{border:1px solid var(--line);border-left:3px solid var(--brand-orange);border-radius:var(--r);background:var(--surface);
+  padding:14px 15px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.affc .top{display:flex;align-items:baseline;gap:10px}
+.affc .top b{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.affc .pct{margin-left:auto;font-weight:800;font-size:20px;letter-spacing:-.02em;color:var(--brand-orange);white-space:nowrap}
+.affc p{margin:0;color:var(--ink-soft);font-size:14px}
+.affc .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.code{display:inline-flex;align-items:center;gap:8px;font:inherit;cursor:pointer;border:1px dashed var(--line-strong);
+  background:var(--paper);color:var(--ink);border-radius:var(--r);padding:7px 10px;min-width:0}
+.code b{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;letter-spacing:.04em;overflow-wrap:anywhere}
+.code span{font-size:12px;color:var(--ink-soft);white-space:nowrap}
+.code:hover{border-color:var(--ink)}
+.code:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.affc .btn{padding:7px 12px;font-size:13.5px}
 </style>
 </head>
 <body>
@@ -110,127 +138,326 @@ footer{margin-top:40px;font-size:12px;color:var(--ink-soft)}
   <div class="brandbar">
     <img class="brandmark" src="data:image/jpeg;base64,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" alt="">
     <span class="brandname"><b>ZENKAI</b><i>3D STUDIO</i></span>
-    <span class="upd" id="upd"></span>
+    <div class="lang" id="lang" role="group" aria-label="Language">
+      <button type="button" data-l="en" lang="en" title="English">EN</button>
+      <button type="button" data-l="es" lang="es" title="Español">ES</button>
+      <button type="button" data-l="ca" lang="ca" title="Català">CA</button>
+      <button type="button" data-l="de" lang="de" title="Deutsch">DE</button>
+    </div>
   </div>
-  <h1>Pop-culture figures, <em>printed and painted</em> on camera.</h1>
-  <p class="lede">Short vertical videos that take a 3D print from the build plate to a finished, painted piece. Anime, games and film, mostly.</p>
+  <h1 data-h="h1"></h1>
+  <p class="lede" data-t="lede"></p>
   <div class="cta">
-    <a class="btn primary" href="mailto:zenkai3dstudio@gmail.com?subject=Collaboration%20with%20Zenkai3D%20Studio">Work with me</a>
+    <a class="btn primary js-mail" href="mailto:zenkai3dstudio@gmail.com" data-t="cta"></a>
     <a class="btn" href="https://www.instagram.com/zenkai3d_studio/" target="_blank" rel="noopener">Instagram</a>
     <a class="btn" href="https://www.tiktok.com/@zenkai3d_studio" target="_blank" rel="noopener">TikTok</a>
+    <a class="btn" href="https://www.youtube.com/@zenkai3dstudio" target="_blank" rel="noopener">YouTube</a>
   </div>
 </header>
 
-<p class="state" id="state" hidden>The numbers are being refreshed. Try again in a minute, or write to <a href="mailto:zenkai3dstudio@gmail.com">zenkai3dstudio@gmail.com</a> and I'll send them over.</p>
+<p class="state" id="state" hidden></p>
 
 <section id="s-num" hidden>
-  <h2>Audience</h2>
+  <h2 data-t="audience"></h2>
   <div class="big" id="stats"></div>
-  <p class="foot" id="stats-foot"></p>
+  <p class="foot" data-t="statsFoot"></p>
 </section>
 
 <section id="s-top" hidden>
-  <h2>Best reels this year</h2>
+  <h2 data-t="top"></h2>
   <ol class="reels" id="top"></ol>
 </section>
 
 <section id="s-brands" hidden>
-  <h2>Brands I've worked with</h2>
+  <h2 data-t="brands"></h2>
   <ul class="chips" id="brands"></ul>
   <p class="prizes" id="prizes" hidden></p>
 </section>
 
+<section id="s-aff" hidden>
+  <h2 data-t="codes"></h2>
+  <p class="foot" style="margin:0 0 12px" data-t="codesHint"></p>
+  <div class="aff" id="aff"></div>
+</section>
+
 <section>
-  <h2>What a collaboration looks like</h2>
+  <h2 data-t="collab"></h2>
   <div class="offer">
-    <div><h3>Your material in a real build</h3><p>Filament or resin used on a full figure, from slicing to paint, with the material named in the video and the caption.</p></div>
-    <div><h3>New machines, put to work</h3><p>Unboxing, setup and first prints of a printer or accessory, filmed in the studio.</p></div>
-    <div><h3>One video, three networks</h3><p>Reels also go out on TikTok and as YouTube Shorts.</p></div>
-    <div><h3>Codes and links</h3><p>Discount or affiliate codes in the caption and the bio link.</p></div>
+    <div><h3 data-t="o1t"></h3><p data-t="o1"></p></div>
+    <div><h3 data-t="o2t"></h3><p data-t="o2"></p></div>
+    <div><h3 data-t="o3t"></h3><p data-t="o3"></p></div>
+    <div><h3 data-t="o4t"></h3><p data-t="o4"></p></div>
   </div>
 </section>
 
 <section>
-  <h2>Contact</h2>
+  <h2 data-t="contact"></h2>
   <div class="contact">
-    <p>Have a material, a machine or a model you'd like to see printed? Send me a line.</p>
-    <a class="btn primary mail" href="mailto:zenkai3dstudio@gmail.com?subject=Collaboration%20with%20Zenkai3D%20Studio">zenkai3dstudio@gmail.com</a>
+    <p data-t="contactLine"></p>
+    <a class="btn primary mail js-mail" href="mailto:zenkai3dstudio@gmail.com">zenkai3dstudio@gmail.com</a>
   </div>
 </section>
 
-<footer>Figures refresh every Monday from Instagram, TikTok and YouTube data.</footer>
+<footer><span data-t="footer"></span> <span id="upd"></span></footer>
 </div>
 
 <script>
 "use strict";
-var $=function(id){ return document.getElementById(id); };
-var esc=function(t){ return String(t==null?"":t).replace(/[&<>"]/g,function(c){
-  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); };
-var nf=new Intl.NumberFormat("en-US");
-function num(x){ return (x==null||x==="")?null:nf.format(x); }
-function compact(x){
-  if(x==null) return null;
-  if(x>=1e6) return (Math.round(x/1e5)/10)+"M";
-  if(x>=1e4) return Math.round(x/1e3)+"K";
-  return nf.format(x);
+var MAIL = "zenkai3dstudio@gmail.com";
+var T = {
+  en: {
+    title: "Zenkai3D Studio · Media kit",
+    h1: "Pop-culture figures, <em>printed and painted</em> on camera.",
+    lede: "Short vertical videos that take a 3D print from the build plate to a finished, painted piece. Anime, games and film, mostly.",
+    cta: "Work with me", subject: "Collaboration with Zenkai3D Studio",
+    state: "The numbers are being refreshed. Try again in a minute, or write to " + MAIL + " and I'll send them over.",
+    audience: "Audience", top: "Top reels, last 12 months", brands: "Brands I've worked with",
+    prizes: "Prize winner in <b>{n}</b> 3D printing and design contests.",
+    codes: "Discount codes", codesHint: "Shops I buy from myself. Ordering through these links gets you the discount and supports the channel.",
+    copy: "Copy code", copied: "Copied", shop: "Go to the shop",
+    off: function (p, first) { return p + "% off" + (first ? " your first order" : ""); },
+    collab: "What a collaboration looks like",
+    o1t: "Your material in a real build", o1: "Filament or resin used on a full figure, from slicing to paint, with the material named in the video and the caption.",
+    o2t: "New machines, put to work", o2: "Unboxing, setup and first prints of a printer or accessory, filmed in the studio.",
+    o3t: "One video, three networks", o3: "Reels also go out on TikTok and as YouTube Shorts.",
+    o4t: "Codes and links", o4: "Discount or affiliate codes in the caption and the bio link.",
+    contact: "Contact", contactLine: "Have a material, a machine or a model you'd like to see printed? Send me a line.",
+    footer: "Figures refresh every Monday from Instagram, TikTok and YouTube data.", upd: "Last update: {d}.",
+    igF: "Instagram followers", views12: "Views in the last 12 months", reelsN: "{n} reels",
+    medV: "Median views per reel", medR: "Median reach {n}",
+    eng: "Engagement rate", engS: "Likes, comments, shares and saves over reach",
+    shares: "Shares per reel", avg: "Average",
+    ttF: "TikTok followers", ttMed: "Median {n} views per video",
+    ytS: "YouTube subscribers", ytSh: "YouTube Shorts", shortsN: "{n} Shorts",
+    statsFoot: "Medians, engagement and shares cover reels posted between one week and three months ago, so a very new or very old post doesn't skew them.",
+    viewsW: "views"
+  },
+  es: {
+    title: "Zenkai3D Studio · Media kit",
+    h1: "Figuras de la cultura pop, <em>impresas y pintadas</em> frente a la cámara.",
+    lede: "Vídeos verticales cortos que llevan una impresión 3D de la placa a la pieza terminada y pintada. Sobre todo anime, videojuegos y cine.",
+    cta: "Trabajemos juntos", subject: "Colaboración con Zenkai3D Studio",
+    state: "Las cifras se están actualizando. Vuelve a probar en un minuto o escribe a " + MAIL + " y te las envío.",
+    audience: "Audiencia", top: "Los mejores reels de los últimos 12 meses", brands: "Marcas con las que he trabajado",
+    prizes: "Premiado en <b>{n}</b> concursos de impresión y diseño 3D.",
+    codes: "Códigos de descuento", codesHint: "Tiendas en las que compro yo mismo. Si pides desde estos enlaces, tienes el descuento y apoyas el canal.",
+    copy: "Copiar código", copied: "Copiado", shop: "Ir a la tienda",
+    off: function (p, first) { return p + " % de descuento" + (first ? " en tu primer pedido" : ""); },
+    collab: "Cómo es una colaboración",
+    o1t: "Tu material en una figura de verdad", o1: "Filamento o resina en una figura completa, del laminado a la pintura, con el material citado en el vídeo y en el texto.",
+    o2t: "Máquinas nuevas, a pleno rendimiento", o2: "Unboxing, puesta a punto y primeras impresiones de una impresora o un accesorio, grabado en el taller.",
+    o3t: "Un vídeo, tres redes", o3: "Los reels también se publican en TikTok y como YouTube Shorts.",
+    o4t: "Códigos y enlaces", o4: "Códigos de descuento o de afiliado en el texto y en el enlace de la bio.",
+    contact: "Contacto", contactLine: "¿Tienes un material, una máquina o un modelo que quieras ver impreso? Escríbeme.",
+    footer: "Las cifras se actualizan cada lunes con datos de Instagram, TikTok y YouTube.", upd: "Última actualización: {d}.",
+    igF: "Seguidores en Instagram", views12: "Visualizaciones en 12 meses", reelsN: "{n} reels",
+    medV: "Mediana de visualizaciones por reel", medR: "Mediana de alcance: {n}",
+    eng: "Tasa de interacción", engS: "Me gusta, comentarios, compartidos y guardados sobre el alcance",
+    shares: "Compartidos por reel", avg: "Media",
+    ttF: "Seguidores en TikTok", ttMed: "Mediana de {n} visualizaciones por vídeo",
+    ytS: "Suscriptores en YouTube", ytSh: "Shorts en YouTube", shortsN: "{n} Shorts",
+    statsFoot: "Las medianas, la interacción y los compartidos son de los reels publicados hace entre una semana y tres meses, para que uno muy nuevo o muy antiguo no las distorsione.",
+    viewsW: "visualizaciones"
+  },
+  ca: {
+    title: "Zenkai3D Studio · Dossier",
+    h1: "Figures de la cultura pop, <em>impreses i pintades</em> davant la càmera.",
+    lede: "Vídeos verticals curts que porten una impressió 3D de la placa a la peça acabada i pintada. Sobretot anime, videojocs i cinema.",
+    cta: "Treballem junts", subject: "Col·laboració amb Zenkai3D Studio",
+    state: "Les xifres s'estan actualitzant. Torna-ho a provar d'aquí a un minut o escriu a " + MAIL + " i te les envio.",
+    audience: "Audiència", top: "Els millors reels dels últims 12 mesos", brands: "Marques amb què he treballat",
+    prizes: "Premiat en <b>{n}</b> concursos d'impressió i disseny 3D.",
+    codes: "Codis de descompte", codesHint: "Botigues on compro jo mateix. Si compres des d'aquests enllaços, tens el descompte i dones suport al canal.",
+    copy: "Copia el codi", copied: "Copiat", shop: "Ves a la botiga",
+    off: function (p, first) { return p + " % de descompte" + (first ? " a la primera comanda" : ""); },
+    collab: "Com és una col·laboració",
+    o1t: "El teu material en una figura de debò", o1: "Filament o resina en una figura sencera, del laminat a la pintura, amb el material citat al vídeo i al text.",
+    o2t: "Màquines noves, a ple rendiment", o2: "Desembalatge, posada a punt i primeres impressions d'una impressora o un accessori, gravat al taller.",
+    o3t: "Un vídeo, tres xarxes", o3: "Els reels també surten a TikTok i com a YouTube Shorts.",
+    o4t: "Codis i enllaços", o4: "Codis de descompte o d'afiliat al text i a l'enllaç de la bio.",
+    contact: "Contacte", contactLine: "Tens un material, una màquina o un model que vulguis veure imprès? Escriu-me.",
+    footer: "Les xifres s'actualitzen cada dilluns amb dades d'Instagram, TikTok i YouTube.", upd: "Última actualització: {d}.",
+    igF: "Seguidors a Instagram", views12: "Visualitzacions en 12 mesos", reelsN: "{n} reels",
+    medV: "Mediana de visualitzacions per reel", medR: "Mediana d'abast: {n}",
+    eng: "Taxa d'interacció", engS: "M'agrada, comentaris, compartits i desats sobre l'abast",
+    shares: "Compartits per reel", avg: "Mitjana",
+    ttF: "Seguidors a TikTok", ttMed: "Mediana de {n} visualitzacions per vídeo",
+    ytS: "Subscriptors a YouTube", ytSh: "Shorts a YouTube", shortsN: "{n} Shorts",
+    statsFoot: "Les medianes, la interacció i els compartits són dels reels publicats fa entre una setmana i tres mesos, perquè un de molt nou o de molt antic no les distorsioni.",
+    viewsW: "visualitzacions"
+  },
+  de: {
+    title: "Zenkai3D Studio · Mediakit",
+    h1: "Popkultur-Figuren, <em>gedruckt und bemalt</em> vor der Kamera.",
+    lede: "Kurze Hochkant-Videos, die einen 3D-Druck von der Druckplatte bis zur fertig bemalten Figur zeigen. Vor allem Anime, Games und Film.",
+    cta: "Zusammenarbeit anfragen", subject: "Zusammenarbeit mit Zenkai3D Studio",
+    state: "Die Zahlen werden gerade aktualisiert. Versuchen Sie es in einer Minute erneut oder schreiben Sie an " + MAIL + ", dann schicke ich sie Ihnen.",
+    audience: "Reichweite", top: "Top-Reels der letzten 12 Monate", brands: "Marken, mit denen ich gearbeitet habe",
+    prizes: "Preisträger in <b>{n}</b> Wettbewerben für 3D-Druck und 3D-Design.",
+    codes: "Rabattcodes", codesHint: "Shops, in denen ich selbst einkaufe. Wer über diese Links bestellt, bekommt den Rabatt und unterstützt den Kanal.",
+    copy: "Code kopieren", copied: "Kopiert", shop: "Zum Shop",
+    off: function (p, first) { return p + " % Rabatt" + (first ? " auf die erste Bestellung" : ""); },
+    collab: "So sieht eine Zusammenarbeit aus",
+    o1t: "Ihr Material in einem echten Projekt", o1: "Filament oder Harz für eine komplette Figur, vom Slicen bis zur Bemalung, mit Nennung des Materials im Video und in der Beschreibung.",
+    o2t: "Neue Geräte im Praxiseinsatz", o2: "Unboxing, Einrichtung und erste Drucke eines Druckers oder Zubehörs, gefilmt im Studio.",
+    o3t: "Ein Video, drei Netzwerke", o3: "Die Reels erscheinen auch auf TikTok und als YouTube Shorts.",
+    o4t: "Codes und Links", o4: "Rabatt- oder Affiliate-Codes in der Beschreibung und im Bio-Link.",
+    contact: "Kontakt", contactLine: "Sie haben ein Material, ein Gerät oder ein Modell, das Sie gedruckt sehen möchten? Schreiben Sie mir.",
+    footer: "Die Zahlen werden jeden Montag mit Daten von Instagram, TikTok und YouTube aktualisiert.", upd: "Letzte Aktualisierung: {d}.",
+    igF: "Instagram-Follower", views12: "Aufrufe in 12 Monaten", reelsN: "{n} Reels",
+    medV: "Median der Aufrufe pro Reel", medR: "Median-Reichweite: {n}",
+    eng: "Interaktionsrate", engS: "Likes, Kommentare, Shares und Saves im Verhältnis zur Reichweite",
+    shares: "Shares pro Reel", avg: "Durchschnitt",
+    ttF: "TikTok-Follower", ttMed: "Median {n} Aufrufe pro Video",
+    ytS: "YouTube-Abonnenten", ytSh: "YouTube Shorts", shortsN: "{n} Shorts",
+    statsFoot: "Mediane, Interaktionen und Shares beziehen sich auf Reels, die vor einer Woche bis drei Monaten veröffentlicht wurden, damit sehr neue oder sehr alte Beiträge sie nicht verzerren.",
+    viewsW: "Aufrufe"
+  }
+};
+var LOC = { en: "en-GB", es: "es-ES", ca: "ca-ES", de: "de-DE" };
+var LANGS = ["en", "es", "ca", "de"], KEY = "zenkai_dossier_lang";
+var $ = function (id) { return document.getElementById(id); };
+var esc = function (t) { return String(t == null ? "" : t).replace(/[&<>"]/g, function (c) {
+  return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+var L = "en", D = null, C = null;
+
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function triaIdioma() {
+  var q = (new URLSearchParams(location.search).get("lang") || "").toLowerCase();
+  if (LANGS.indexOf(q) >= 0) return q;
+  var s = lsGet(KEY); if (LANGS.indexOf(s) >= 0) return s;
+  var nav = (navigator.languages || [navigator.language || ""]);
+  for (var i = 0; i < nav.length; i++) { var c = String(nav[i]).slice(0, 2).toLowerCase(); if (LANGS.indexOf(c) >= 0) return c; }
+  return "en";
 }
-function dia(iso){
-  if(!iso) return "";
-  var d=new Date(iso+"T12:00:00");
-  return isNaN(d)?iso:d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
+function t(k, vars) {
+  var s = (T[L] && T[L][k] != null) ? T[L][k] : T.en[k];
+  if (vars) Object.keys(vars).forEach(function (v) { s = String(s).split("{" + v + "}").join(vars[v]); });
+  return s;
+}
+function nf() {
+  try { return new Intl.NumberFormat(LOC[L], { useGrouping: "always" }); } catch (e) { return new Intl.NumberFormat(LOC[L]); }
+}
+function num(x) { return (x == null || x === "") ? null : nf().format(x); }
+function compact(x) {
+  if (x == null) return null;
+  if (L === "en" && x >= 1e4) return (x >= 1e6 ? (Math.round(x / 1e5) / 10) + "M" : Math.round(x / 1e3) + "K");
+  if (x >= 1e4) return nf().format(Math.round(x / 1e3) * 1e3);
+  return nf().format(x);
+}
+function dia(iso) {
+  if (!iso) return "";
+  var d = new Date(iso + "T12:00:00");
+  return isNaN(d) ? iso : d.toLocaleDateString(LOC[L], { day: "numeric", month: "short", year: "numeric" });
+}
+function stat(cls, label, value, small) {
+  if (value == null) return "";
+  return '<div class="stat ' + cls + '"><span>' + esc(label) + '</span><b>' + esc(value) + '</b>' + (small ? '<small>' + esc(small) + '</small>' : '') + '</div>';
 }
 
-function stat(cls,label,value,small){
-  if(value==null) return "";
-  return '<div class="stat '+cls+'"><span>'+esc(label)+'</span><b>'+esc(value)+'</b>'+(small?'<small>'+esc(small)+'</small>':'')+'</div>';
+function textos() {
+  document.documentElement.lang = L;
+  document.title = t("title");
+  Array.prototype.forEach.call(document.querySelectorAll("[data-t]"), function (el) { el.textContent = t(el.dataset.t); });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-h]"), function (el) { el.innerHTML = t(el.dataset.h); });
+  Array.prototype.forEach.call(document.querySelectorAll(".js-mail"), function (a) {
+    a.href = "mailto:" + MAIL + "?subject=" + encodeURIComponent(t("subject"));
+  });
+  Array.prototype.forEach.call($("lang").querySelectorAll("button"), function (b) {
+    b.setAttribute("aria-pressed", String(b.dataset.l === L));
+  });
+  $("state").textContent = t("state");
 }
 
-function pinta(d){
-  var ig=d.instagram||{}, tk=d.tiktok||{}, yt=d.youtube||{};
-  $("upd").textContent="Updated "+dia(d.actualitzat);
+function pinta() {
+  if (!D) return;
+  var ig = D.instagram || {}, tk = D.tiktok || {}, yt = D.youtube || {};
+  $("upd").textContent = D.actualitzat ? t("upd", { d: dia(D.actualitzat) }) : "";
 
-  var h="";
-  h+=stat("ig","Instagram followers",num(ig.seguidors),ig.usuari?"@"+ig.usuari:"");
-  h+=stat("ig","Views in the last 12 months",compact(ig.vistes_12m),ig.reels_12m?ig.reels_12m+" reels":"");
-  h+=stat("ig","Median views per reel",num(ig.mediana_vistes),ig.mediana_abast?"Median reach "+num(ig.mediana_abast):"");
-  h+=stat("ig","Engagement rate",ig.interaccio_pct!=null?ig.interaccio_pct+"%":null,"Likes, comments, shares and saves over reach");
-  h+=stat("ig","Shares per reel",ig.compartits_mitjana!=null?String(ig.compartits_mitjana):null,"Average");
-  h+=stat("tt","TikTok followers",num(tk.seguidors),tk.mediana_vistes?"Median "+num(tk.mediana_vistes)+" views per video":"");
-  if(yt.subscriptors||yt.shorts){
-    h+=stat("yt",yt.subscriptors?"YouTube subscribers":"YouTube Shorts",num(yt.subscriptors||yt.shorts),
-      yt.subscriptors&&yt.shorts?yt.shorts+" Shorts":"");
+  var h = "";
+  h += stat("ig", t("igF"), num(ig.seguidors), ig.usuari ? "@" + ig.usuari : "");
+  h += stat("ig", t("views12"), compact(ig.vistes_12m), ig.reels_12m ? t("reelsN", { n: ig.reels_12m }) : "");
+  h += stat("ig", t("medV"), num(ig.mediana_vistes), ig.mediana_abast ? t("medR", { n: num(ig.mediana_abast) }) : "");
+  h += stat("ig", t("eng"), ig.interaccio_pct != null ? nf().format(ig.interaccio_pct) + (L === "en" ? "%" : " %") : null, t("engS"));
+  h += stat("ig", t("shares"), ig.compartits_mitjana != null ? nf().format(ig.compartits_mitjana) : null, t("avg"));
+  h += stat("tt", t("ttF"), num(tk.seguidors), tk.mediana_vistes ? t("ttMed", { n: num(tk.mediana_vistes) }) : "");
+  if (yt.subscriptors || yt.shorts) {
+    h += stat("yt", yt.subscriptors ? t("ytS") : t("ytSh"), num(yt.subscriptors || yt.shorts),
+      yt.subscriptors && yt.shorts ? t("shortsN", { n: yt.shorts }) : "");
   }
-  if(h){
-    $("stats").innerHTML=h;
-    $("stats-foot").textContent="Medians, engagement and shares cover reels posted between one week and three months ago, so a fresh post or an old one doesn't skew them.";
-    $("s-num").hidden=false;
-  }
+  $("stats").innerHTML = h;
+  $("s-num").hidden = !h;
 
-  var top=d.top||[];
-  if(top.length){
-    $("top").innerHTML=top.map(function(r){
-      return '<li><a href="'+esc(r.url)+'" target="_blank" rel="noopener"><span class="t"><p>'+esc(r.titol)+'</p><small>'+esc(dia(r.data))+'</small></span>'+
-        '<span class="v">'+esc(num(r.vistes))+' views</span></a></li>';
-    }).join("");
-    $("s-top").hidden=false;
-  }
+  var top = D.top || [];
+  $("top").innerHTML = top.map(function (r) {
+    return '<li><a href="' + esc(r.url) + '" target="_blank" rel="noopener"><span class="t"><p>' + esc(r.titol) + '</p><small>' + esc(dia(r.data)) + '</small></span>' +
+      '<span class="v"><b>' + esc(num(r.vistes)) + '</b><small>' + esc(t("viewsW")) + '</small></span></a></li>';
+  }).join("");
+  $("s-top").hidden = !top.length;
 
-  var br=d.marques||[];
-  if(br.length){
-    $("brands").innerHTML=br.map(function(m){ return "<li>"+esc(m)+"</li>"; }).join("");
-    $("s-brands").hidden=false;
-  }
-  if(d.premis){
-    $("prizes").innerHTML="Prize winner in <b>"+esc(d.premis)+"</b> 3D printing and design contests.";
-    $("prizes").hidden=false;
-    $("s-brands").hidden=false;
-  }
+  var br = (C && C.marques) || [];
+  $("brands").innerHTML = br.map(function (m) { return "<li>" + esc(m) + "</li>"; }).join("");
+  if (D.premis) { $("prizes").innerHTML = t("prizes", { n: esc(D.premis) }); }
+  $("prizes").hidden = !D.premis;
+  $("s-brands").hidden = !br.length && !D.premis;
 }
 
-fetch("dossier.json?t="+Date.now(),{cache:"no-store"})
-  .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
-  .then(pinta)
-  .catch(function(){ $("state").hidden=false; });
+function pintaAfiliats() {
+  var af = ((C && C.afiliats) || []).filter(function (a) { return a && a.marca && a.url; });
+  $("s-aff").hidden = !af.length;
+  $("aff").innerHTML = af.map(function (a, i) {
+    var desc = a.pct ? t("off")(a.pct, !!a.primera) : "";
+    var nota = a.nota ? (a.nota[L] || a.nota.en || "") : "";
+    return '<div class="affc"><div class="top"><b>' + esc(a.marca) + '</b>' +
+      (a.pct ? '<span class="pct">−' + esc(a.pct) + (L === "en" ? "%" : " %") + '</span>' : '') + '</div>' +
+      ((desc || nota) ? '<p>' + esc([desc, nota].filter(Boolean).join(". ")) + '</p>' : '') +
+      '<div class="acts">' +
+      (a.codi ? '<button type="button" class="code" data-i="' + i + '"><b>' + esc(a.codi) + '</b><span>' + esc(t("copy")) + '</span></button>' : '') +
+      '<a class="btn primary" href="' + esc(a.url) + '" target="_blank" rel="noopener sponsored">' + esc(t("shop")) + ' ↗</a>' +
+      '</div></div>';
+  }).join("");
+  Array.prototype.forEach.call($("aff").querySelectorAll(".code"), function (b) {
+    b.onclick = function () {
+      var codi = af[+b.dataset.i].codi, sp = b.querySelector("span");
+      var fet = function () { sp.textContent = t("copied"); setTimeout(function () { sp.textContent = t("copy"); }, 1600); };
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(codi).then(fet, function () { copiaVell(codi); fet(); }); }
+        else { copiaVell(codi); fet(); }
+      } catch (e) { copiaVell(codi); fet(); }
+    };
+  });
+}
+function copiaVell(s) {
+  try {
+    var ta = document.createElement("textarea"); ta.value = s; ta.setAttribute("readonly", "");
+    ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); document.body.removeChild(ta);
+  } catch (e) {}
+}
+
+function canvia(l) {
+  if (LANGS.indexOf(l) < 0) return;
+  L = l; lsSet(KEY, l);
+  try { var u = new URL(location.href); u.searchParams.set("lang", l); history.replaceState(null, "", u); } catch (e) {}
+  textos(); pinta(); pintaAfiliats();
+}
+Array.prototype.forEach.call($("lang").querySelectorAll("button"), function (b) {
+  b.onclick = function () { canvia(b.dataset.l); };
+});
+
+L = triaIdioma();
+textos();
+function json(u) {
+  return fetch(u + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+}
+json("dossier-config.json").then(function (c) { C = c; }, function () { C = null; }).then(function () {
+  pintaAfiliats();
+  return json("dossier.json").then(function (d) {
+    D = d;
+    pinta();
+  });
+}).catch(function () { $("state").hidden = false; });
 </script>
 </body>
 </html>

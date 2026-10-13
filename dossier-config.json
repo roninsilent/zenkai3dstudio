@@ -1,0 +1,19 @@
+{
+ "marques": [
+  "Anycubic",
+  "Creality",
+  "Polymaker",
+  "eSUN",
+  "BIQU",
+  "Meshy"
+ ],
+ "afiliats": [
+  {
+   "marca": "Polymaker",
+   "url": "https://shop.polymaker.com/ZENKAI3DSTUDIO",
+   "codi": "ZENKAI3DSTUDIO",
+   "pct": 15,
+   "primera": true
+  }
+ ]
+}
