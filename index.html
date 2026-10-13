@@ -193,7 +193,10 @@ function fitxaDe(nom){
     return r.text();
   }).then(function(t){
     var ti=(t.match(/<title[^>]*>([^<]*)<\/title>/i)||[])[1];
-    var de=(t.match(/<meta\s+name=["']description["']\s+content=["']([^"']*)["']/i)||[])[1];
+    /* la cometa de tancament ha de ser la mateixa que la d'obertura:
+       si no, una descripció amb apòstrofs es talla pel mig */
+    var md=t.match(/<meta\s+name=["']description["']\s+content=(["'])([\s\S]*?)\1/i);
+    var de=md?md[2]:null;
     return { titol:(ti||"").trim()||null, desc:(de||"").trim()||null };
   }).catch(function(){ return { titol:null, desc:null }; });
 }
