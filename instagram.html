@@ -287,6 +287,11 @@ ul.mini small{color:var(--ink-soft);font-size:12px}
   <p class="hint" id="kpi-note"></p>
   <h2>Què fer avui</h2>
   <ol class="fer" id="fer"></ol>
+  <div id="idees-box" hidden>
+    <h2>Idees per a aquesta setmana</h2>
+    <p class="hint" id="idees-hint"></p>
+    <ol class="fer" id="idees"></ol>
+  </div>
   <div id="concursos-box" hidden>
     <h2>Concursos guanyats</h2>
     <p class="hint" id="conc-hint"></p>
@@ -772,6 +777,7 @@ function pintaResum() {
   }
 
   pintaFer();
+  pintaIdees();
   pintaConcursos();
   pintaAvui();
 }
@@ -891,12 +897,30 @@ function pintaFer() {
       items.push([(avuiD === A.millorDia.d ? "Avui" : "Demà") + " és " + nom + ", el teu millor dia", "Els reels de " + nom + " fan una mediana de " + n0(A.millorDia.v) + " visualitzacions, contra " + n0(A.millorDia.altres) + " la resta de dies. Si tens una peça forta, publica-la " + (avuiD === A.millorDia.d ? "avui" : "demà") + "."]);
     }
   }
-  var pend = (CONC || []).filter(function (c) { return c.estat !== "cobrat" && c.estat !== "descartada"; });
+  var oberts = (CONC || []).filter(function (c) { return c.estat === "obert" && c.dataLliurament && c.dataLliurament >= D.avui && c.dataLliurament <= addDays(D.avui, 10); })
+    .sort(function (a, b) { return a.dataLliurament.localeCompare(b.dataLliurament); });
+  if (oberts.length) items.push([oberts.length === 1 ? "Un concurs tanca aviat" : oberts.length + " concursos tanquen aviat",
+    oberts.map(function (c) { return c.marca + " (" + fCurta(c.dataLliurament) + ")"; }).join("; ") + ". Els detalls, a l'app de col·laboracions."]);
+  var pend = (CONC || []).filter(function (c) { return c.estat !== "cobrat" && c.estat !== "descartada" && c.estat !== "obert"; });
   if (pend.length) items.push([pend.length === 1 ? "Tens un premi per rebre" : "Tens " + pend.length + " premis per rebre", pend.map(function (c) { return c.marca; }).join(" · ") + ". Quan arribi, marca'l a l'app de col·laboracions."]);
 
   var ol = $("fer"); ol.replaceChildren();
   items.slice(0, 5).forEach(function (it) {
     var li = el("li"); var d = el("div"); d.appendChild(el("b", "", it[0])); d.appendChild(el("span", "", it[1])); li.appendChild(d); ol.appendChild(li);
+  });
+}
+function pintaIdees() {
+  var I = D.raw.idees || {}, ll = I.llista || [];
+  var box = $("idees-box");
+  if (!ll.length) { box.hidden = true; return; }
+  box.hidden = false;
+  $("idees-hint").textContent = "Temes que venen i encaixen amb el que et funciona" + (I.setmana ? ". Setmana del " + fData(I.setmana) : "") + ".";
+  var ol = $("idees"); ol.replaceChildren();
+  ll.slice(0, 5).forEach(function (x) {
+    var li = el("li"), d = el("div");
+    d.appendChild(el("b", "", x.titol || ""));
+    d.appendChild(el("span", "", (x.perque || "") + (x.quan ? " Quan: " + x.quan + "." : "")));
+    li.appendChild(d); ol.appendChild(li);
   });
 }
 function iconaTrofeu() {
@@ -907,11 +931,12 @@ function iconaTrofeu() {
 }
 function pintaConcursos() {
   var box = $("concursos-box");
-  if (!CONC || !CONC.length) { box.hidden = true; return; }
+  var guanyats = (CONC || []).filter(function (c) { return c.estat !== "obert" && c.estat !== "descartada"; });
+  if (!guanyats.length) { box.hidden = true; return; }
   box.hidden = false;
-  var cs = CONC.slice().sort(function (a, b) { return (b.dataAcceptacio || "").localeCompare(a.dataAcceptacio || ""); });
+  var cs = guanyats.slice().sort(function (a, b) { return (b.dataAcceptacio || "").localeCompare(a.dataAcceptacio || ""); });
   var pend = cs.filter(function (c) { return c.estat !== "cobrat"; }).length;
-  $("conc-hint").textContent = cs.length + " concursos i sortejos guanyats" + (pend ? ", " + pend + " amb el premi per rebre" : "") + ". Surten de l'app de col·laboracions.";
+  $("conc-hint").textContent = (cs.length === 1 ? "Un concurs o sorteig guanyat" : cs.length + " concursos i sortejos guanyats") + (pend ? ", " + pend + " amb el premi per rebre" : "") + ". Les dades surten de l'app de col·laboracions.";
   var host = $("concursos"); host.replaceChildren();
   cs.forEach(function (c) {
     var row = el("div", "conc");

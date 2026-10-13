@@ -92,12 +92,15 @@ input[type=search]{flex:1 1 190px;min-width:0}
 
 .badge{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.03em;padding:2px 8px;border-radius:20px;border:1px solid var(--line-strong);color:var(--ink-soft);white-space:nowrap}
 .badge.b-acceptada{color:var(--brand-blue);border-color:var(--brand-blue)}
+.badge.b-obert{color:var(--paper);background:var(--brand-blue);border-color:var(--brand-blue)}
 .badge.b-producte,.badge.b-produccio{color:var(--brand-orange);border-color:var(--brand-orange)}
 .badge.b-revisio{color:var(--brand-orange);border-color:var(--brand-orange)}
 .badge.b-publicat,.badge.b-cobrat{color:var(--good);border-color:var(--good)}
 .badge.b-descartada{text-decoration:line-through;opacity:.6}
 .badge.t-material{color:var(--brand-blue);border-color:var(--brand-blue);background:color-mix(in srgb,var(--brand-blue) 10%,transparent)}
 .badge.t-disseny{color:var(--brand-orange);border-color:var(--brand-orange);background:color-mix(in srgb,var(--brand-orange) 10%,transparent)}
+.badge.t-hardware{color:var(--ink);border-color:var(--ink-soft);background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.badge.t-concurs{color:var(--good);border-color:var(--good);background:color-mix(in srgb,var(--good) 10%,transparent)}
 .tipusline{margin-top:4px}
 .thumbs{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 0}
 .thumb{position:relative;width:74px;height:110px;border:1px solid var(--line-strong);border-radius:var(--r);overflow:hidden;background:var(--paper)}
@@ -108,6 +111,7 @@ input[type=search]{flex:1 1 190px;min-width:0}
 .collab-row:last-child{border-bottom:1px solid var(--line)}
 .collab-row:hover{background:rgba(0,0,0,.015)}
 .collab-row.done{opacity:.55}
+nav .ncount{font-weight:400;color:var(--ink-soft);margin-left:5px;font-variant-numeric:tabular-nums}
 .cmain{flex:1;min-width:0}
 .cmain .name{font-weight:600}
 .cmain .sub{margin-top:2px;color:var(--ink-soft);font-size:12.5px}
@@ -183,7 +187,7 @@ textarea.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:
   .toolbar .spacer{display:none}
   .toolbar>.btn{flex:1 1 100%}
   input[type=search]{flex:1 1 100%}
-  #f-estat,#f-tipus{flex:1 1 calc(50% - 4px);min-width:0}
+  #f-estat,#f-tipus,#f2-estat,#f2-tipus{flex:1 1 calc(50% - 4px);min-width:0}
 
   /* files de la llista: el nom mana, l'estat baixa a sota */
   .collab-row{gap:10px;padding:13px 0;align-items:flex-start}
@@ -337,6 +341,7 @@ nav::-webkit-scrollbar{display:none}
   <button role="tab" data-view="llista" aria-selected="true">Col·laboracions</button>
   <button role="tab" data-view="pendent" aria-selected="false">Pendent</button>
   <button role="tab" data-view="seguiment" aria-selected="false">Seguiment</button>
+  <button role="tab" data-view="tancades" aria-selected="false">Tancades<span class="ncount" id="n-tancades"></span></button>
   <button role="tab" data-view="correu" aria-selected="false">Correu</button>
   <button role="tab" data-view="instagram" aria-selected="false">Instagram</button>
   <button role="tab" data-view="importa" aria-selected="false">Importa</button>
@@ -349,8 +354,10 @@ nav::-webkit-scrollbar{display:none}
     <select id="f-estat"><option value="">Tots els estats</option></select>
     <select id="f-tipus">
       <option value="">Tots els tipus</option>
-      <option value="material">Material</option>
+      <option value="material">Filament</option>
+      <option value="hardware">Hardware</option>
       <option value="disseny">Disseny</option>
+      <option value="concurs">Concurs</option>
       <option value="altre">Altre</option>
     </select>
     <span class="spacer"></span>
@@ -361,6 +368,31 @@ nav::-webkit-scrollbar{display:none}
     <b>Encara no tens cap col·laboració desada</b>
     Quan una marca t'accepti una proposta — per correu, Instagram o TikTok — crea-la aquí i tindràs en un sol lloc què t'han enviat, què els deus i la data de lliurament.
     <div style="margin-top:14px"><button class="btn primary" data-goto-add>Nova col·laboració</button></div>
+  </div>
+</section>
+
+<section id="view-tancades" hidden>
+  <p class="hint">Les cobrades, les descartades i els concursos que ja han tancat, de la més recent a la més antiga. Si n'obres una i li canvies l'estat, torna a Col·laboracions.</p>
+  <div class="toolbar">
+    <input type="search" id="q2" placeholder="Cerca una marca…">
+    <select id="f2-estat">
+      <option value="">Tots els estats</option>
+      <option value="cobrat">Cobrat</option>
+      <option value="descartada">Descartada</option>
+    </select>
+    <select id="f2-tipus">
+      <option value="">Tots els tipus</option>
+      <option value="material">Filament</option>
+      <option value="hardware">Hardware</option>
+      <option value="disseny">Disseny</option>
+      <option value="concurs">Concurs</option>
+      <option value="altre">Altre</option>
+    </select>
+  </div>
+  <div id="tancades"></div>
+  <div class="empty-state" id="tancades-empty" hidden>
+    <b>Encara no n'hi ha cap de tancada</b>
+    Quan marquis una col·laboració com a cobrada o descartada, passarà aquí.
   </div>
 </section>
 
@@ -466,8 +498,10 @@ nav::-webkit-scrollbar{display:none}
   <div class="grid2" style="margin-bottom:12px">
     <label class="f">Tipus
       <select id="ig-tipus">
-        <option value="material">Material — m'envien producte</option>
+        <option value="material">Filament — m\'envien filament o resina</option>
+        <option value="hardware">Hardware — impressora, eines o accessoris</option>
         <option value="disseny">Disseny — imprimeixo un model seu</option>
+        <option value="concurs">Concurs — premi guanyat</option>
         <option value="altre">Altre</option>
       </select>
     </label>
@@ -518,8 +552,10 @@ nav::-webkit-scrollbar{display:none}
       <label class="f full">Marca / empresa <input type="text" id="e-marca" placeholder="p. ex. Sunlu"></label>
       <label class="f full">Tipus de col·laboració
         <select id="e-tipus">
-          <option value="material">Material — m'envien filament, resina o maquinari</option>
-          <option value="disseny">Disseny — imprimeixo el model d'un dissenyador</option>
+          <option value="material">Filament — m\'envien filament o resina</option>
+          <option value="hardware">Hardware — m\'envien impressora, eines o accessoris</option>
+          <option value="disseny">Disseny — imprimeixo el model d\'un dissenyador</option>
+          <option value="concurs">Concurs — premi guanyat en un sorteig</option>
           <option value="altre">Altre</option>
         </select>
       </label>
@@ -530,6 +566,7 @@ nav::-webkit-scrollbar{display:none}
       <label class="f">Canal <select id="e-canal"><option value="email">Correu</option><option value="instagram">Instagram</option><option value="tiktok">TikTok</option><option value="altre">Altre</option></select></label>
       <label class="f">Estat
         <select id="e-estat">
+          <option value="obert">Concurs obert</option>
           <option value="proposta">Proposta rebuda</option>
           <option value="acceptada">Acceptada</option>
           <option value="producte">Esperant el producte</option>
@@ -580,6 +617,7 @@ nav::-webkit-scrollbar{display:none}
 
 /* ---------------- estat ---------------- */
 var collabs = [];
+var deletedUids = {};   /* esborrades en aquesta sessió: no les recupero del Drive en desar */
 var LS_KEY = "collabs-v1";
 var dbDoc=null, remoteSeen=false, writeTimer=null, lastSerialized="";
 var assetsNs=null, sampleFn=null, imgCaps=null, igPend=null;
@@ -587,12 +625,13 @@ var editingId=null;
 var edEntregables=[], edRebuts=[], edFitxers=[];
 
 var ESTATS = {
-  proposta:"Proposta rebuda", acceptada:"Acceptada", producte:"Esperant el producte",
+  obert:"Concurs obert", proposta:"Proposta rebuda", acceptada:"Acceptada", producte:"Esperant el producte",
   produccio:"En producció", revisio:"Enviat a revisió", publicat:"Publicat",
   cobrat:"Cobrat", descartada:"Descartada"
 };
 var ACTIUS = ["acceptada","producte","produccio","revisio","publicat"];
-var TIPUS = { material:"Material", disseny:"Disseny", altre:"Altre" };
+var TANCATS = ["cobrat","descartada"];
+var TIPUS = { material:"Filament", hardware:"Hardware", disseny:"Disseny", concurs:"Concurs", altre:"Altre" };
 
 function $(id){ return document.getElementById(id); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
@@ -721,6 +760,10 @@ function progress(c){
   return {fet:fet, total:list.length};
 }
 function isActiu(c){ return ACTIUS.indexOf(c.estat)>=0; }
+function avuiISO(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+/* un concurs obert amb la data límit passada ja no es pot fer: va a Tancades sense haver de tocar res */
+function caducat(c){ return c.estat==="obert" && !!c.dataLliurament && c.dataLliurament < avuiISO(); }
+function isTancat(c){ return TANCATS.indexOf(c.estat)>=0 || caducat(c); }
 function pendentsCount(c){
   var a=(c.entregables||[]).filter(function(x){return !x.fet;}).length;
   var b=(c.rebuts||[]).filter(function(x){return !x.fet;}).length;
@@ -740,50 +783,79 @@ function renderHeader(){
 }
 
 /* ---------------- render: llista ---------------- */
+function passaFiltre(c, q, f, ft){
+  if(f && c.estat!==f) return false;
+  if(ft && (c.tipus||"material")!==ft) return false;
+  if(!q) return true;
+  return (c.marca+" "+(c.contacte||"")+" "+(c.notes||"")+" "+(c.compensacio||"")).toLowerCase().indexOf(q)>=0;
+}
 function visible(){
   var q=$("q").value.trim().toLowerCase(), f=$("f-estat").value, ft=$("f-tipus").value;
-  var list=collabs.filter(function(c){
-    if(f && c.estat!==f) return false;
-    if(ft && (c.tipus||"material")!==ft) return false;
-    if(!q) return true;
-    return (c.marca+" "+(c.contacte||"")+" "+(c.notes||"")).toLowerCase().indexOf(q)>=0;
-  });
-  var order = ["produccio","revisio","producte","acceptada","proposta","publicat","cobrat","descartada"];
+  var list=collabs.filter(function(c){ return !isTancat(c) && passaFiltre(c, q, f, ft); });
+  var order = ["obert","produccio","revisio","producte","acceptada","proposta","publicat"];
   list.sort(function(a,b){
     var da=order.indexOf(a.estat), db=order.indexOf(b.estat);
     if(da!==db) return da-db;
+    if(a.estat==="obert") return (a.dataLliurament||"9999").localeCompare(b.dataLliurament||"9999");
     return (b.dataLliurament||"").localeCompare(a.dataLliurament||"");
   });
   return list;
 }
-function renderLlista(){
-  var box=$("llista"), list=visible();
-  $("llista-empty").hidden = collabs.length>0;
-  box.innerHTML = list.map(function(c){
-    var p=progress(c);
-    var pct = p.total ? Math.round(p.fet/p.total*100) : 0;
-    var done = c.estat==="cobrat"||c.estat==="descartada";
-    return '<div class="collab-row'+(done?' done':'')+'" data-uid="'+esc(c.uid)+'">'+
-      '<div class="cmain"><div class="name">'+esc(c.marca||"Sense nom")+'</div>'+
-      '<div class="sub">'+(c.contacte?esc(c.contacte)+' · ':'')+esc({email:"Correu",instagram:"Instagram",tiktok:"TikTok",altre:"Altre"}[c.canal]||"")+
-      (c.dataLliurament?' · lliurament '+fmtDate(c.dataLliurament):'')+'</div></div>'+
-      '<div class="cright"><span class="badge b-'+esc(c.estat)+'">'+esc(ESTATS[c.estat]||c.estat)+'</span>'+
-      '<div class="tipusline"><span class="badge t-'+esc(c.tipus||"material")+'">'+esc(TIPUS[c.tipus||"material"]||"Material")+'</span></div>'+
-      (p.total?'<div class="progress" title="'+p.fet+'/'+p.total+' entregables"><span style="width:'+pct+'%"></span></div>':'')+
-      '</div></div>';
-  }).join("");
+function fmtDateAny(iso){
+  if(!iso) return "";
+  try{ var d=new Date(iso+"T00:00:00"); return d.toLocaleDateString("ca-ES",{day:"numeric",month:"short",year:"numeric"}); }catch(e){ return iso; }
+}
+function rowHtml(c, tancada){
+  var p=progress(c);
+  var pct = p.total ? Math.round(p.fet/p.total*100) : 0;
+  var quan = c.dataLliurament ? (c.estat==="obert" ? (caducat(c) ? ' · va tancar el ' : ' · tanca el ') : ' · lliurament ')+(tancada?fmtDateAny(c.dataLliurament):fmtDate(c.dataLliurament))
+           : (tancada && c.dataAcceptacio ? ' · '+fmtDateAny(c.dataAcceptacio) : '');
+  return '<div class="collab-row" data-uid="'+esc(c.uid)+'">'+
+    '<div class="cmain"><div class="name">'+esc(c.marca||"Sense nom")+'</div>'+
+    '<div class="sub">'+(c.contacte?esc(c.contacte)+' · ':'')+esc({email:"Correu",instagram:"Instagram",tiktok:"TikTok",altre:"Altre"}[c.canal]||"")+
+    quan+'</div></div>'+
+    '<div class="cright"><span class="badge b-'+esc(caducat(c)?"descartada":c.estat)+'">'+esc(caducat(c)?"Concurs tancat":(ESTATS[c.estat]||c.estat))+'</span>'+
+    '<div class="tipusline"><span class="badge t-'+esc(c.tipus||"material")+'">'+esc(TIPUS[c.tipus||"material"]||"Material")+'</span></div>'+
+    (p.total?'<div class="progress" title="'+p.fet+'/'+p.total+' entregables"><span style="width:'+pct+'%"></span></div>':'')+
+    '</div></div>';
+}
+function bindRows(box){
   Array.prototype.forEach.call(box.querySelectorAll(".collab-row"),function(row){
     row.onclick=function(){ openEditor(row.dataset.uid); };
   });
+}
+function renderLlista(){
+  var box=$("llista"), list=visible();
+  var oberts=collabs.filter(function(c){ return !isTancat(c); }).length;
+  $("llista-empty").hidden = collabs.length>0;
+  box.innerHTML = list.map(function(c){ return rowHtml(c, false); }).join("") ||
+    (collabs.length && !oberts ? '<p class="hint">Totes les col·laboracions estan tancades. Les tens a la pestanya Tancades.</p>' : '');
+  bindRows(box);
   var sel=$("f-estat"), cur=sel.value;
-  sel.innerHTML='<option value="">Tots els estats</option>'+Object.keys(ESTATS).map(function(k){
+  sel.innerHTML='<option value="">Tots els estats</option>'+Object.keys(ESTATS).filter(function(k){ return TANCATS.indexOf(k)<0; }).map(function(k){
     return '<option value="'+k+'"'+(k===cur?' selected':'')+'>'+esc(ESTATS[k])+'</option>'; }).join("");
+}
+
+/* ---------------- render: tancades ---------------- */
+function renderTancades(){
+  var box=$("tancades");
+  var q=$("q2").value.trim().toLowerCase(), f=$("f2-estat").value, ft=$("f2-tipus").value;
+  var tots=collabs.filter(isTancat);
+  var list=tots.filter(function(c){ return passaFiltre(c, q, f, ft); });
+  list.sort(function(a,b){
+    var da=a.dataLliurament||a.dataAcceptacio||"", db=b.dataLliurament||b.dataAcceptacio||"";
+    return db.localeCompare(da);
+  });
+  box.innerHTML = list.map(function(c){ return rowHtml(c, true); }).join("");
+  bindRows(box);
+  $("tancades-empty").hidden = tots.length>0;
+  $("n-tancades").textContent = tots.length ? String(tots.length) : "";
 }
 
 /* ---------------- render: pendent ---------------- */
 function renderPendent(){
   var box=$("pendent-list");
-  var actius=collabs.filter(isActiu).sort(function(a,b){ return (a.dataLliurament||"9999").localeCompare(b.dataLliurament||"9999"); });
+  var actius=collabs.filter(function(c){ return isActiu(c) || (c.estat==="obert" && !caducat(c)); }).sort(function(a,b){ return (a.dataLliurament||"9999").localeCompare(b.dataLliurament||"9999"); });
   var html="";
   actius.forEach(function(c){
     var items=[];
@@ -791,7 +863,7 @@ function renderPendent(){
     (c.rebuts||[]).forEach(function(it){ if(!it.fet) items.push({kind:"rebut", it:it}); });
     if(!items.length) return;
     html += '<h2 style="margin-top:22px">'+esc(c.marca||"Sense nom")+
-      (c.dataLliurament?' <span class="note" style="font-weight:400">— lliurament '+fmtDate(c.dataLliurament)+'</span>':'')+'</h2>';
+      (c.dataLliurament?' <span class="note" style="font-weight:400">— '+(c.estat==="obert"?'tanca el ':'lliurament ')+fmtDate(c.dataLliurament)+'</span>':'')+'</h2>';
     html += '<div class="checklist" data-cuid="'+esc(c.uid)+'">'+items.map(function(x){
       return '<div class="citem" data-id="'+esc(x.it.id)+'" data-kind="'+x.kind+'">'+
         '<input type="checkbox">'+
@@ -813,7 +885,7 @@ function renderPendent(){
   });
 }
 
-function renderAll(){ renderHeader(); renderLlista(); renderPendent(); }
+function renderAll(){ renderHeader(); renderLlista(); renderTancades(); renderPendent(); }
 
 /* ---------------- editor: checklist genèric ---------------- */
 function renderChecklistEditor(containerId, arr){
@@ -944,6 +1016,8 @@ $("e-save").onclick=function(){
     fitxers:edFitxers,
     notes:$("e-notes").value.trim()||null
   };
+  var abans=editingId ? byUid(editingId) : null;
+  var eraTancada=!!(abans && isTancat(abans)), araTancada=isTancat(data);
   if(editingId){
     collabs=collabs.map(function(c){ return c.uid===editingId ? Object.assign({},c,data) : c; });
   }else{
@@ -952,10 +1026,11 @@ $("e-save").onclick=function(){
     collabs.push(data);
   }
   closeEditor(); persist();
-  toast("Desat");
+  toast(araTancada && !eraTancada ? "Desat · ara és a Tancades" : (!araTancada && eraTancada ? "Desat · torna a Col·laboracions" : "Desat"));
 };
 $("e-del").onclick=function(){
   if(!confirm("Vols eliminar aquesta col·laboració? No es pot desfer.")) return;
+  deletedUids[editingId]=1;
   collabs=collabs.filter(function(c){return c.uid!==editingId;});
   closeEditor(); persist(); toast("Eliminada");
 };
@@ -1363,7 +1438,7 @@ function processImportText(raw,replace){
   }
 
   /* amb "substitueix", l'arxiu mana i s'esborra el que hi havia */
-  if(replace){ collabs.length=0; }
+  if(replace){ collabs.forEach(function(c){ deletedUids[c.uid]=1; }); collabs.length=0; }
 
   /* si ja hi és, actualitzo la fitxa en lloc de duplicar-la.
      Es compara primer per "key" (que no canvia mai) i, si no n'hi ha, pel nom. */
@@ -1439,7 +1514,7 @@ $("import-file-input").onchange=function(e){
 };
 
 function go(v){
-  ["llista","pendent","seguiment","correu","instagram","importa"].forEach(function(k){ $("view-"+k).hidden=(k!==v); });
+  ["llista","pendent","seguiment","tancades","correu","instagram","importa"].forEach(function(k){ $("view-"+k).hidden=(k!==v); });
   if(v==="seguiment") renderSeguiment();
   document.querySelectorAll("nav button").forEach(function(b){ b.setAttribute("aria-selected", String(b.dataset.view===v)); });
 }
@@ -1447,6 +1522,9 @@ document.querySelectorAll("nav button").forEach(function(b){ b.onclick=function(
 $("q").addEventListener("input", renderLlista);
 $("f-estat").addEventListener("change", renderLlista);
 $("f-tipus").addEventListener("change", renderLlista);
+$("q2").addEventListener("input", renderTancades);
+$("f2-estat").addEventListener("change", renderTancades);
+$("f2-tipus").addEventListener("change", renderTancades);
 
 /* ---------------- arrencada ---------------- */
 
@@ -1716,7 +1794,7 @@ var ZCFG = {
    ZCFG.applyPayload(data) -> bool (si venien dades), ZCFG.boot() */
 var CID_KEY="g_client_id", SKIP_KEY="g_skip_login";
 var ALLOWED_EMAIL="zenkai3dstudio@gmail.com";
-var gToken=null, gTokenClient=null, gFileId=null, gCsvId=null, gDriveWriteTimer=null;
+var gToken=null, gTokenClient=null, gFileId=null, gCsvId=null, gDriveWriteTimer=null, gLastLoad=0, gSaveFailed=false;
 
 function $g(id){ return document.getElementById(id); }
 function showSetup(){ $g("gate-setup").hidden=false; $g("gate-login").hidden=true; $g("gate").hidden=false; }
@@ -1806,7 +1884,7 @@ function afterAuthOk(){
     gFileId=id;
     return driveLoad(id);
   }).then(function(data){
-    var had=false;
+    var had=false; gLastLoad=Date.now();
     try{ had=ZCFG.applyPayload(data||{}); }catch(e){}
     hideGate();
     ZCFG.boot();
@@ -1868,13 +1946,24 @@ function scheduleDriveSave(){
   if(!gToken||!gFileId) return;
   clearTimeout(gDriveWriteTimer);
   gDriveWriteTimer=setTimeout(function(){
-    driveFetch("https://www.googleapis.com/upload/drive/v3/files/"+gFileId+"?uploadType=media",{
+    driveLoad(gFileId).then(function(d){
+      var remote = Array.isArray(d && d.collabs) ? d.collabs : [];
+      var tinc = {}; collabs.forEach(function(c){ tinc[c.uid]=1; });
+      var noves = remote.filter(function(r){ return r && r.uid && !tinc[r.uid] && !deletedUids[r.uid]; });
+      if(noves.length){
+        noves.forEach(function(r){ collabs.push(r); });
+        saveLocal(); renderAll();
+        toast(noves.length===1 ? "He afegit 1 col·laboració nova que hi havia al Drive" : "He afegit "+noves.length+" col·laboracions noves que hi havia al Drive");
+      }
+    }).catch(function(){}).then(function(){
+    return driveFetch("https://www.googleapis.com/upload/drive/v3/files/"+gFileId+"?uploadType=media",{
       method:"PATCH",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify(ZCFG.getPayload())
     })
-      .then(function(){ return driveSaveCSV(); })
-      .catch(function(e){
+      .then(function(){ gSaveFailed=false; gLastLoad=Date.now(); return driveSaveCSV(); });
+    }).catch(function(e){
+        gSaveFailed=true;
         if(e&&e.code==="g_401"){
           toast("La sessió de Google ha caducat; torna a entrar-hi.");
           gToken=null; showLogin("Torna a entrar-hi per continuar desant al Drive.");
@@ -1884,6 +1973,19 @@ function scheduleDriveSave(){
       });
   },900);
 }
+/* si tornes a l'app després d'una estona (pestanya que havia quedat oberta), recarrego el Drive */
+document.addEventListener("visibilitychange",function(){
+  if(document.visibilityState!=="visible" || !gToken || !gFileId || gSaveFailed) return;
+  if(Date.now()-gLastLoad < 5*60*1000) return;
+  driveLoad(gFileId).then(function(d){
+    gLastLoad=Date.now();
+    var remote = Array.isArray(d && d.collabs) ? d.collabs : null;
+    if(remote && remote.length && JSON.stringify(remote)!==JSON.stringify(collabs)){
+      collabs=JSON.parse(JSON.stringify(remote)); saveLocal(); renderAll();
+      toast("Actualitzat amb els últims canvis del Drive");
+    }
+  }).catch(function(){});
+});
 
 gateInit();
 
