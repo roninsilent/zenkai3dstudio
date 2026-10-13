@@ -518,6 +518,7 @@ nav::-webkit-scrollbar{display:none}
 
 /* ---------------- estat ---------------- */
 var collabs = [];
+var deletedUids = {};   /* esborrades en aquesta sessió: no les recupero del Drive en desar */
 var LS_KEY = "collabs-v1";
 var dbDoc=null, remoteSeen=false, writeTimer=null, lastSerialized="";
 var assetsNs=null, sampleFn=null, imgCaps=null, igPend=null;
@@ -916,6 +917,7 @@ $("e-save").onclick=function(){
 };
 $("e-del").onclick=function(){
   if(!confirm("Vols eliminar aquesta col·laboració? No es pot desfer.")) return;
+  deletedUids[editingId]=1;
   collabs=collabs.filter(function(c){return c.uid!==editingId;});
   closeEditor(); persist(); toast("Eliminada");
 };
@@ -1323,7 +1325,7 @@ function processImportText(raw,replace){
   }
 
   /* amb "substitueix", l'arxiu mana i s'esborra el que hi havia */
-  if(replace){ collabs.length=0; }
+  if(replace){ collabs.forEach(function(c){ deletedUids[c.uid]=1; }); collabs.length=0; }
 
   /* si ja hi és, actualitzo la fitxa en lloc de duplicar-la.
      Es compara primer per "key" (que no canvia mai) i, si no n'hi ha, pel nom. */
@@ -1453,7 +1455,7 @@ var ZCFG = {
    ZCFG.applyPayload(data) -> bool (si venien dades), ZCFG.boot() */
 var CID_KEY="g_client_id", SKIP_KEY="g_skip_login";
 var ALLOWED_EMAIL="zenkai3dstudio@gmail.com";
-var gToken=null, gTokenClient=null, gFileId=null, gCsvId=null, gDriveWriteTimer=null;
+var gToken=null, gTokenClient=null, gFileId=null, gCsvId=null, gDriveWriteTimer=null, gLastLoad=0, gSaveFailed=false;
 
 function $g(id){ return document.getElementById(id); }
 function showSetup(){ $g("gate-setup").hidden=false; $g("gate-login").hidden=true; $g("gate").hidden=false; }
@@ -1543,7 +1545,7 @@ function afterAuthOk(){
     gFileId=id;
     return driveLoad(id);
   }).then(function(data){
-    var had=false;
+    var had=false; gLastLoad=Date.now();
     try{ had=ZCFG.applyPayload(data||{}); }catch(e){}
     hideGate();
     ZCFG.boot();
@@ -1605,13 +1607,24 @@ function scheduleDriveSave(){
   if(!gToken||!gFileId) return;
   clearTimeout(gDriveWriteTimer);
   gDriveWriteTimer=setTimeout(function(){
-    driveFetch("https://www.googleapis.com/upload/drive/v3/files/"+gFileId+"?uploadType=media",{
+    driveLoad(gFileId).then(function(d){
+      var remote = Array.isArray(d && d.collabs) ? d.collabs : [];
+      var tinc = {}; collabs.forEach(function(c){ tinc[c.uid]=1; });
+      var noves = remote.filter(function(r){ return r && r.uid && !tinc[r.uid] && !deletedUids[r.uid]; });
+      if(noves.length){
+        noves.forEach(function(r){ collabs.push(r); });
+        saveLocal(); renderAll();
+        toast(noves.length===1 ? "He afegit 1 col·laboració nova que hi havia al Drive" : "He afegit "+noves.length+" col·laboracions noves que hi havia al Drive");
+      }
+    }).catch(function(){}).then(function(){
+    return driveFetch("https://www.googleapis.com/upload/drive/v3/files/"+gFileId+"?uploadType=media",{
       method:"PATCH",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify(ZCFG.getPayload())
     })
-      .then(function(){ return driveSaveCSV(); })
-      .catch(function(e){
+      .then(function(){ gSaveFailed=false; gLastLoad=Date.now(); return driveSaveCSV(); });
+    }).catch(function(e){
+        gSaveFailed=true;
         if(e&&e.code==="g_401"){
           toast("La sessió de Google ha caducat; torna a entrar-hi.");
           gToken=null; showLogin("Torna a entrar-hi per continuar desant al Drive.");
@@ -1621,6 +1634,19 @@ function scheduleDriveSave(){
       });
   },900);
 }
+/* si tornes a l'app després d'una estona (pestanya que havia quedat oberta), recarrego el Drive */
+document.addEventListener("visibilitychange",function(){
+  if(document.visibilityState!=="visible" || !gToken || !gFileId || gSaveFailed) return;
+  if(Date.now()-gLastLoad < 5*60*1000) return;
+  driveLoad(gFileId).then(function(d){
+    gLastLoad=Date.now();
+    var remote = Array.isArray(d && d.collabs) ? d.collabs : null;
+    if(remote && remote.length && JSON.stringify(remote)!==JSON.stringify(collabs)){
+      collabs=JSON.parse(JSON.stringify(remote)); saveLocal(); renderAll();
+      toast("Actualitzat amb els últims canvis del Drive");
+    }
+  }).catch(function(){});
+});
 
 gateInit();
 

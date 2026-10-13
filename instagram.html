@@ -105,6 +105,11 @@ input[type=search]{background:var(--surface);border:1px solid var(--line-strong)
 .stat b{display:block;font-size:22px;font-weight:700;letter-spacing:-.02em;margin:3px 0 2px;font-variant-numeric:tabular-nums}
 .stat small{display:block;font-size:11.5px;color:var(--ink-soft);line-height:1.3}
 @media(max-width:560px){.statrow,.statrow.six{grid-template-columns:1fr 1fr}}
+.statrow.three{grid-template-columns:repeat(3,1fr)}
+td.tt-guanya,td.ig-guanya{font-weight:700;color:var(--good)}
+.xa-et{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:10px;margin-left:4px;background:var(--line);color:var(--ink-soft)}
+.xa-et.tt{background:rgba(62,150,194,.16);color:var(--brand-blue)}
+.xa-et.ig{background:rgba(230,115,36,.15);color:var(--brand-orange)}
 
 .up{color:var(--good)} .down{color:var(--alert)} .muted{color:var(--ink-soft)}
 
@@ -264,6 +269,7 @@ ul.mini small{color:var(--ink-soft);font-size:12px}
 <nav role="tablist" id="tabs">
   <button role="tab" data-view="resum" aria-selected="true">Resum</button>
   <button role="tab" data-view="creixer" aria-selected="false">Créixer</button>
+  <button role="tab" data-view="xarxes" aria-selected="false">Xarxes</button>
   <button role="tab" data-view="dies" aria-selected="false">Dia a dia</button>
   <button role="tab" data-view="reels" aria-selected="false">Reels</button>
   <button role="tab" data-view="base" aria-selected="false">La base</button>
@@ -295,6 +301,21 @@ ul.mini small{color:var(--ink-soft);font-size:12px}
   <p class="hint">Recomanacions tretes de les teves dades des d'abril de 2025. Els números es recalculen cada dia.</p>
   <div class="card pla"><h3>El pla</h3><ol id="pla"></ol></div>
   <div id="recs"></div>
+</section>
+
+<section id="view-xarxes" hidden>
+  <p class="hint" id="xa-hint"></p>
+  <div class="statrow three" id="xa-kpis"></div>
+  <h2>El mateix vídeo a cada xarxa</h2>
+  <div class="resum" id="xa-resum"></div>
+  <div class="chips" id="xa-filtre">
+    <button type="button" data-v="tots" aria-pressed="true">Tots</button>
+    <button type="button" data-v="tt" aria-pressed="false">Millor a TikTok</button>
+    <button type="button" data-v="ig" aria-pressed="false">Millor a Instagram</button>
+    <button type="button" data-v="sense" aria-pressed="false">No són a TikTok</button>
+  </div>
+  <div class="tbl-wrap"><table class="bd" id="xa-taula"></table></div>
+  <p class="hint" id="xa-nota" style="margin-top:10px"></p>
 </section>
 
 <section id="view-dies" hidden>
@@ -453,6 +474,9 @@ function normalitza(raw) {
   X.med = meds(X.base);
   X.medRec = meds(X.recents);
   X.an = analisi(X);
+  var tk = raw.tiktok || {}, yt = raw.youtube || {};
+  X.tt = files(tk.videos); X.ttCompte = tk.compte || {}; X.ttHist = tk.seguidors_hist || [];
+  X.yt = files(yt.videos); X.ytCompte = yt.compte || {}; X.ytHist = yt.subs_hist || []; X.ytCua = yt.cua || {};
   return X;
 }
 function meds(rs) {
@@ -471,7 +495,7 @@ document.querySelectorAll("#tabs button").forEach(function (b) {
 function mostra(v) {
   vista = v;
   document.querySelectorAll("#tabs button").forEach(function (b) { b.setAttribute("aria-selected", b.dataset.view === v ? "true" : "false"); });
-  ["resum", "creixer", "dies", "reels", "base"].forEach(function (k) { $("view-" + k).hidden = !D || k !== v; });
+  ["resum", "creixer", "xarxes", "dies", "reels", "base"].forEach(function (k) { $("view-" + k).hidden = !D || k !== v; });
   if (D) pinta();
 }
 function segon(id, cb) {
@@ -487,6 +511,17 @@ var rang = 30, metrica = "abast", ordre = "data", qMet = "visualitzacions", ober
 segon("rang", function (v) { rang = +v; pinta(); });
 segon("ordre", function (v) { ordre = v; pinta(); });
 segon("q-met", function (v) { qMet = v; pinta(); });
+var xaFiltre = "tots";
+(function () {
+  var c = $("xa-filtre");
+  c.querySelectorAll("button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      xaFiltre = b.dataset.v;
+      c.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+      pinta();
+    });
+  });
+})();
 $("cerca").addEventListener("input", function () { pinta(); });
 (function () {
   var c = $("metrica");
@@ -519,6 +554,7 @@ function carrega(raw) {
 function pinta() {
   if (vista === "resum") pintaResum();
   else if (vista === "creixer") pintaCreixer();
+  else if (vista === "xarxes") pintaXarxes();
   else if (vista === "dies") pintaDies();
   else if (vista === "reels") pintaReels();
   else pintaBase();
@@ -721,10 +757,107 @@ function pintaResum() {
     box.appendChild(paragraf(["En les últimes 4 setmanes n'has publicat ", [String(A.reels28)],
       ". Les setmanes amb 3 reels arribes a ", [n0(w3)], " comptes; les d'un, a ", [n0(w1)], "."]));
   }
+  var tc = D.ttCompte || {}, yc = D.ytCompte || {}, cuaYt = D.ytCua || {};
+  if (ok(tc.seguidors) || ok(cuaYt.publicats)) {
+    var px = [];
+    if (ok(tc.seguidors)) {
+      var h7 = histFa(D.ttHist, 7);
+      px.push("A TikTok tens ", [n0(tc.seguidors)], " seguidors" + (ok(h7) ? " (" + (tc.seguidors - h7 >= 0 ? "+" : "−") + n0(Math.abs(tc.seguidors - h7)) + " en 7 dies)" : "") + ". ");
+    }
+    if (ok(cuaYt.publicats)) {
+      if (cuaYt.publicats > 0) px.push("A YouTube " + (ok(yc.subscriptors) ? "tens " : ""), ok(yc.subscriptors) ? [n0(yc.subscriptors)] : "", ok(yc.subscriptors) ? " subscriptors i " : "hi ha ", [String(cuaYt.publicats)], (cuaYt.publicats === 1 ? " Short publicat" : " Shorts publicats") + "; en queden " + cuaYt.pendents + " a la cua.");
+      else px.push("A YouTube encara no hi ha cap Short: en sortirà un cada dia a les 9 del matí, i n'hi ha ", [String(cuaYt.pendents)], " a la cua.");
+    }
+    box.appendChild(paragraf(px.filter(function (x) { return x !== ""; })));
+  }
 
   pintaFer();
   pintaConcursos();
   pintaAvui();
+}
+function histFa(h, dies) {
+  if (!h || !h.length) return null;
+  var lim = addDays(D.avui, -dies), v = null;
+  h.forEach(function (x) { if (x[0] <= lim) v = x[1]; });
+  return v;
+}
+function parelles() {
+  var tt = {}, yt = {};
+  (D.tt || []).forEach(function (v) { if (v.ig && ok(v.vistes) && (!tt[v.ig] || v.vistes > tt[v.ig].vistes)) tt[v.ig] = v; });
+  (D.yt || []).forEach(function (v) { if (v.ig && (!yt[v.ig] || (v.vistes || 0) > (yt[v.ig].vistes || 0))) yt[v.ig] = v; });
+  var madur = addDays(D.avui, -7);
+  var rows = D.reels.map(function (r) { return { r: r, tt: tt[r.codi] || null, yt: yt[r.codi] || null, et: "" }; });
+  var par = rows.filter(function (x) { return x.tt && x.r.data <= madur && ok(x.r.visualitzacions) && x.r.visualitzacions > 0 && x.tt.vistes > 0; });
+  var mI = median(par.map(function (x) { return x.r.visualitzacions; })), mT = median(par.map(function (x) { return x.tt.vistes; }));
+  par.forEach(function (x) {
+    x.ri = x.r.visualitzacions / mI; x.rt = x.tt.vistes / mT;
+    if (x.rt >= 1.5 * x.ri && x.rt >= 1.2) x.et = "tt";
+    else if (x.ri >= 1.5 * x.rt && x.ri >= 1.2) x.et = "ig";
+  });
+  return { rows: rows, par: par, mI: mI, mT: mT };
+}
+function pintaXarxes() {
+  var tc = D.ttCompte || {}, yc = D.ytCompte || {}, cua = D.ytCua || {};
+  $("xa-hint").textContent = "Instagram, TikTok i YouTube junts. TikTok: les dades públiques de @" + (tc.usuari || "zenkai3d_studio") + ". YouTube: el canal @zenkai3dstudio. S'actualitza cada matí.";
+  var P = parelles();
+  var k = $("xa-kpis"); k.replaceChildren();
+  stat(k, "Instagram", n0(D.compte.followers_count), "seguidors", "muted");
+  var h7 = histFa(D.ttHist, 7);
+  stat(k, "TikTok", n0(tc.seguidors), ok(h7) && ok(tc.seguidors) ? "seguidors · " + (tc.seguidors - h7 >= 0 ? "+" : "−") + n0(Math.abs(tc.seguidors - h7)) + " en 7 dies" : "seguidors", "muted");
+  stat(k, "YouTube", n0(yc.subscriptors), ok(cua.publicats) ? "subscriptors · " + cua.publicats + " Shorts" : "subscriptors", "muted");
+
+  var box = $("xa-resum"); box.replaceChildren();
+  var par = P.par;
+  if (par.length >= 5) {
+    var nT = par.filter(function (x) { return x.et === "tt"; }).length, nI = par.filter(function (x) { return x.et === "ig"; }).length;
+    box.appendChild(paragraf(["Tens ", [String(par.length)], " vídeos a Instagram i a TikTok alhora. A Instagram fan una mediana de ", [n0(P.mI)],
+      " visualitzacions; a TikTok, ", [n0(P.mT)], "."]));
+    box.appendChild(paragraf(["Si compares cada vídeo amb la mediana de la seva xarxa, ", [String(nT)], " funcionen clarament millor a TikTok i ", [String(nI)],
+      " a Instagram. La resta va més o menys igual a les dues."]));
+    var dest = par.filter(function (x) { return x.et === "tt"; }).sort(function (a, b) { return b.rt / b.ri - a.rt / a.ri; })[0];
+    if (dest) box.appendChild(paragraf(["El que més destaca a TikTok és «" + curt(dest.r.titol, 50) + "»: ", [n0(dest.tt.vistes)],
+      " visualitzacions allà, quan a Instagram en va fer ", [n0(dest.r.visualitzacions)], "."]));
+  } else {
+    box.appendChild(paragraf(["Encara no hi ha prou vídeos aparellats entre Instagram i TikTok per comparar-los."]));
+  }
+  var any = addDays(D.avui, -365), madur = addDays(D.avui, -7);
+  var senseTT = P.rows.filter(function (x) { return !x.tt && x.r.data >= any && x.r.data <= madur; });
+  if (senseTT.length) box.appendChild(paragraf(["Hi ha ", [String(senseTT.length)], senseTT.length === 1 ? " reel de l'últim any que no és a TikTok." : " reels de l'últim any que no són a TikTok."]));
+  if ((D.yt || []).length) {
+    var ytTop = (D.yt || []).filter(function (v) { return ok(v.vistes); }).sort(function (a, b) { return b.vistes - a.vistes; })[0];
+    box.appendChild(paragraf(["A YouTube hi ha ", [String(D.yt.length)], D.yt.length === 1 ? " Short" : " Shorts", ytTop ? ". El que més: «" + curt(ytTop.titol, 50) + "», amb " + n0(ytTop.vistes) + " visualitzacions." : "."]));
+  } else if (ok(cua.pendents)) {
+    box.appendChild(paragraf(["A YouTube encara no n'hi ha cap de publicat. La tasca en penja un cada dia a les 9 del matí i n'hi ha ", [String(cua.pendents)], " a la cua."]));
+  }
+
+  var rows;
+  if (xaFiltre === "tt") rows = par.filter(function (x) { return x.et === "tt"; });
+  else if (xaFiltre === "ig") rows = par.filter(function (x) { return x.et === "ig"; });
+  else if (xaFiltre === "sense") rows = senseTT;
+  else rows = P.rows.filter(function (x) { return x.r.data >= any; });
+  rows = rows.slice().sort(function (a, b) { return (b.r.data + b.r.hora).localeCompare(a.r.data + a.r.hora); });
+  var tb = $("xa-taula"); tb.replaceChildren();
+  var th = el("tr"); ["Vídeo", "Insta", "TikTok", "YouTube"].forEach(function (h) { th.appendChild(el("th", "", h)); });
+  var thead = el("thead"); thead.appendChild(th); tb.appendChild(thead);
+  var tbody = el("tbody");
+  var MAX = 80;
+  rows.slice(0, MAX).forEach(function (x) {
+    var tr = el("tr");
+    var td = el("td", "t");
+    var a = el("a", "", curt(titolNet(x.r.titol), 46)); a.href = igUrl(x.r.codi); a.target = "_blank"; a.rel = "noopener";
+    td.appendChild(a);
+    var sm = el("small", "", fCurta(x.r.data));
+    if (x.et) sm.appendChild(el("span", "xa-et " + x.et, x.et === "tt" ? "millor a TikTok" : "millor a Instagram"));
+    td.appendChild(sm);
+    tr.appendChild(td);
+    tr.appendChild(el("td", x.et === "ig" ? "ig-guanya" : "", nk(x.r.visualitzacions)));
+    tr.appendChild(el("td", x.et === "tt" ? "tt-guanya" : "", x.tt ? nk(x.tt.vistes) : "—"));
+    tr.appendChild(el("td", "", x.yt ? nk(x.yt.vistes) : "—"));
+    tbody.appendChild(tr);
+  });
+  tb.appendChild(tbody);
+  $("xa-nota").textContent = (rows.length > MAX ? "Es mostren els " + MAX + " més recents de " + rows.length + ". " : "") +
+    "Visualitzacions de cada vídeo des que es va publicar. «Millor a» compara cada vídeo amb la mediana de la seva xarxa, perquè TikTok i Instagram no tenen la mateixa mida. TikTok i Instagram s'aparellen pel text del vídeo; si l'has canviat molt d'una xarxa a l'altra, surt com a «no és a TikTok».";
 }
 function pintaFer() {
   var A = D.an, items = [];
