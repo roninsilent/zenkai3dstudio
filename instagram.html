@@ -128,6 +128,8 @@ td.tt-guanya,td.ig-guanya{font-weight:700;color:var(--good)}
 .mets div{font-size:11px;color:var(--ink-soft);line-height:1.25}
 .mets b{display:block;font-size:14px;color:var(--ink);font-weight:600;margin-top:1px}
 @media(max-width:520px){.mets{grid-template-columns:repeat(3,1fr)}}
+.mets.quatre{grid-template-columns:repeat(4,1fr)}
+@media(max-width:520px){.mets.quatre{grid-template-columns:repeat(2,1fr)}}
 .reel .rep-note{font-size:12px;color:var(--alert);margin-top:8px}
 .spark{margin-top:10px;display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--ink-soft)}
 .spark svg{flex:none}
@@ -166,7 +168,7 @@ table.bd td b{font-weight:600}
 .rdot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--brand-blue)}
 .rdot.rep{background:var(--alert)}
 .rmain{flex:1;min-width:0}
-.rmain .n{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rmain .n{display:block;font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rmain small{display:block;font-size:12px;color:var(--ink-soft)}
 .rval{text-align:right;flex:none}
 .rval b{display:block;font-size:15px;font-weight:700}
@@ -272,6 +274,7 @@ ul.mini small{color:var(--ink-soft);font-size:12px}
   <button role="tab" data-view="xarxes" aria-selected="false">Xarxes</button>
   <button role="tab" data-view="dies" aria-selected="false">Dia a dia</button>
   <button role="tab" data-view="reels" aria-selected="false">Reels</button>
+  <button role="tab" data-view="carrusels" aria-selected="false">Carrusels</button>
   <button role="tab" data-view="base" aria-selected="false">La base</button>
 </nav>
 
@@ -358,6 +361,21 @@ ul.mini small{color:var(--ink-soft);font-size:12px}
   <div id="llista"></div>
 </section>
 
+<section id="view-carrusels" hidden>
+  <div class="statrow" id="car-kpis"></div>
+  <p class="hint" id="car-kpi-note"></p>
+  <div class="toolbar">
+    <div class="seg" id="car-ordre">
+      <button type="button" data-v="data" aria-pressed="true">Recents</button>
+      <button type="button" data-v="abast" aria-pressed="false">Més abast</button>
+      <button type="button" data-v="desats" aria-pressed="false">Desats</button>
+      <button type="button" data-v="compartits" aria-pressed="false">Compartits</button>
+    </div>
+  </div>
+  <p class="hint" id="car-hint"></p>
+  <div id="car-llista"></div>
+</section>
+
 <section id="view-base" hidden>
   <h2>Mediana per reel</h2>
   <p class="hint" id="base-hint"></p>
@@ -437,6 +455,7 @@ function toast(t) { var e = $("toast"); e.textContent = t; e.hidden = false; cle
 function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+function postUrl(codi) { return "https://www.instagram.com/p/" + encodeURIComponent(codi) + "/"; }
 function igUrl(codi) { return "https://www.instagram.com/reel/" + encodeURIComponent(codi) + "/"; }
 
 /* ---------- dades ---------- */
@@ -481,6 +500,8 @@ function normalitza(raw) {
   X.an = analisi(X);
   var tk = raw.tiktok || {}, yt = raw.youtube || {};
   X.tt = files(tk.videos); X.ttCompte = tk.compte || {}; X.ttHist = tk.seguidors_hist || [];
+  X.cars = files(raw.carrusels).sort(function (a, b) { return (b.data + b.hora).localeCompare(a.data + a.hora); });
+  X.cars.forEach(function (c) { if (!c.visualitzacions && c.abast) c.visualitzacions = null; });
   X.yt = files(yt.videos); X.ytCompte = yt.compte || {}; X.ytHist = yt.subs_hist || []; X.ytCua = yt.cua || {};
   return X;
 }
@@ -500,7 +521,7 @@ document.querySelectorAll("#tabs button").forEach(function (b) {
 function mostra(v) {
   vista = v;
   document.querySelectorAll("#tabs button").forEach(function (b) { b.setAttribute("aria-selected", b.dataset.view === v ? "true" : "false"); });
-  ["resum", "creixer", "xarxes", "dies", "reels", "base"].forEach(function (k) { $("view-" + k).hidden = !D || k !== v; });
+  ["resum", "creixer", "xarxes", "dies", "reels", "carrusels", "base"].forEach(function (k) { $("view-" + k).hidden = !D || k !== v; });
   if (D) pinta();
 }
 function segon(id, cb) {
@@ -515,6 +536,8 @@ function segon(id, cb) {
 var rang = 30, metrica = "abast", ordre = "data", qMet = "visualitzacions", obert = null;
 segon("rang", function (v) { rang = +v; pinta(); });
 segon("ordre", function (v) { ordre = v; pinta(); });
+var carOrdre = "data", carObert = null;
+segon("car-ordre", function (v) { carOrdre = v; pinta(); });
 segon("q-met", function (v) { qMet = v; pinta(); });
 var xaFiltre = "tots";
 (function () {
@@ -562,6 +585,7 @@ function pinta() {
   else if (vista === "xarxes") pintaXarxes();
   else if (vista === "dies") pintaDies();
   else if (vista === "reels") pintaReels();
+  else if (vista === "carrusels") pintaCarrusels();
   else pintaBase();
 }
 
@@ -1203,6 +1227,69 @@ function pintaReels() {
       det.appendChild(targetaReel(r));
       row.appendChild(det);
     }
+    frag.appendChild(row);
+  });
+  host.appendChild(frag);
+}
+
+/* ---------- CARRUSELS ---------- */
+function targetaCar(c) {
+  var box = el("div", "reel");
+  var top = el("div", "reel-top");
+  var t = el("div", "t");
+  var a = el("a", "", titolNet(c.titol)); a.href = postUrl(c.codi); a.target = "_blank"; a.rel = "noopener";
+  t.appendChild(a);
+  t.appendChild(el("small", "", fDia(c.data) + " · " + c.hora));
+  top.appendChild(t);
+  var v = el("div", "v");
+  v.appendChild(el("b", "", n0(c.abast)));
+  var p = pctTxt(c.abast, D.med.abast);
+  var jove = diesEntre(c.data, D.avui) < 7;
+  v.appendChild(el("small", jove ? "muted" : p.c, "abast" + (jove ? ", encara creix" : p.t !== "—" && c.data >= BASE_DES_DE ? " · " + p.t + " vs reels" : "")));
+  top.appendChild(v);
+  box.appendChild(top);
+  var m = el("div", "mets quatre");
+  [["Visualitzacions", n0(c.visualitzacions)], ["Interaccions", n0(c.interaccions)], ["Compartits", n0(c.compartits)], ["Desats", n0(c.desats)],
+   ["M'agrada", n0(c.m_agrada)], ["Comentaris", n0(c.comentaris)], ["Visites al perfil", n0(c.visites_perfil)], ["Seguidors nous", n0(c.seguidors)]].forEach(function (x) {
+    var d = el("div", "", x[0]); d.appendChild(el("b", "", x[1])); m.appendChild(d);
+  });
+  box.appendChild(m);
+  return box;
+}
+function pintaCarrusels() {
+  var cs = D.cars;
+  var madur = addDays(D.avui, -7);
+  var base = cs.filter(function (c) { return c.data >= BASE_DES_DE && c.data <= madur; });
+  var k = $("car-kpis"); k.replaceChildren();
+  function cmp(key) {
+    var mc = median(base.map(function (c) { return c[key]; })), p = pctTxt(mc, D.med[key]);
+    return { v: mc, sub: "Reels: " + n0(D.med[key]) + (p.t !== "—" ? " (" + p.t + ")" : ""), c: p.c };
+  }
+  var dAb = cmp("abast"), dDe = cmp("desats"), dCo = cmp("compartits");
+  stat(k, "Carrusels", n0(cs.length), base.length + " des d'abril de 2025", "muted");
+  stat(k, "Abast · mediana", n0(dAb.v), dAb.sub, dAb.c);
+  stat(k, "Desats · mediana", nsm(dDe.v), dDe.sub, dDe.c);
+  stat(k, "Compartits · mediana", nsm(dCo.v), dCo.sub, dCo.c);
+  $("car-kpi-note").textContent = base.length
+    ? "Mediana per carrusel dels " + base.length + " publicats des de l'1 d'abril de 2025 que ja tenen una setmana, al costat de la mediana per reel del mateix període."
+    : "Encara no hi ha carrusels des d'abril de 2025 amb una setmana de vida per comparar-los amb els reels.";
+  var sk = { data: function (c) { return c.data + c.hora; }, abast: function (c) { return c.abast || 0; }, desats: function (c) { return c.desats || 0; }, compartits: function (c) { return c.compartits || 0; } }[carOrdre];
+  var rs = cs.slice().sort(function (a, b) { var x = sk(a), y = sk(b); return x < y ? 1 : x > y ? -1 : 0; });
+  $("car-hint").textContent = n0(rs.length) + " carrusels. Instagram no té les visualitzacions dels carrusels anteriors a l'estiu de 2024: allà surten en blanc. Toca'n un per veure'l sencer.";
+  var host = $("car-llista"); host.replaceChildren();
+  var frag = document.createDocumentFragment();
+  rs.forEach(function (c) {
+    var row = el("div", "rrow");
+    var b = el("button"); b.type = "button"; b.setAttribute("aria-expanded", carObert === c.codi ? "true" : "false");
+    b.appendChild(el("span", "rdot"));
+    var mn = el("span", "rmain"); mn.appendChild(el("span", "n", titolNet(c.titol))); mn.appendChild(el("small", "", fData(c.data) + " · " + c.hora));
+    b.appendChild(mn);
+    var vv = el("span", "rval"); vv.appendChild(el("b", "", n0(c.abast) + " abast"));
+    vv.appendChild(el("small", "", carOrdre === "compartits" ? n0(c.compartits) + (c.compartits === 1 ? " compartit" : " compartits") : n0(c.desats) + (c.desats === 1 ? " desat" : " desats")));
+    b.appendChild(vv);
+    b.addEventListener("click", function () { carObert = carObert === c.codi ? null : c.codi; pintaCarrusels(); });
+    row.appendChild(b);
+    if (carObert === c.codi) { var det = el("div", "rdet"); det.appendChild(targetaCar(c)); row.appendChild(det); }
     frag.appendChild(row);
   });
   host.appendChild(frag);
