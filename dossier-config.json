@@ -9,6 +9,11 @@
  ],
  "afiliats": [
   {
+   "marca": "Anycubic",
+   "url": "https://es.anycubic3d.com/?ref=ZENKAID",
+   "pct": 15
+  },
+  {
    "marca": "Polymaker",
    "url": "https://shop.polymaker.com/ZENKAI3DSTUDIO",
    "codi": "ZENKAI3DSTUDIO",
@@ -18,6 +23,10 @@
   {
    "marca": "BIQU",
    "url": "https://www.awin1.com/cread.php?awinmid=95665&awinaffid=3103438"
+  },
+  {
+   "marca": "Meshy",
+   "url": "https://www.meshy.ai/?via=zenkai3d"
   }
  ]
 }
