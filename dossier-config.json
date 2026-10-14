@@ -21,12 +21,23 @@
    "primera": true
   },
   {
+   "marca": "Uniformation",
+   "url": "https://www.uniformation3d.com?sca_ref=5338299.jCrskdq9GV",
+   "codi": "FRIKZONE"
+  },
+  {
    "marca": "BIQU",
    "url": "https://www.awin1.com/cread.php?awinmid=95665&awinaffid=3103438"
   },
   {
    "marca": "Meshy",
-   "url": "https://www.meshy.ai/?via=zenkai3d"
+   "url": "https://www.meshy.ai/?via=zenkai3d",
+   "nota": {
+    "en": "Turn text or images into 3D models with AI. Every purchase through this link gives the channel a 20% commission for 12 months.",
+    "es": "Convierte texto o imágenes en modelos 3D con IA. Cada compra desde este enlace da al canal un 20 % de comisión durante 12 meses.",
+    "ca": "Converteix text o imatges en models 3D amb IA. Cada compra des d'aquest enllaç dona al canal un 20 % de comissió durant 12 mesos.",
+    "de": "Verwandelt Text oder Bilder per KI in 3D-Modelle. Jeder Kauf über diesen Link bringt dem Kanal 12 Monate lang 20 % Provision."
+   }
   }
  ]
 }
