@@ -7,6 +7,20 @@
   "BIQU",
   "Meshy"
  ],
+ "perfils": [
+  {
+   "nom": "MakerWorld",
+   "url": "https://makerworld.com/en/@zenkai3dstudio",
+   "models": 82,
+   "seguidors": 4600
+  },
+  {
+   "nom": "Creality Cloud",
+   "url": "https://www.crealitycloud.com/user/9449546655",
+   "models": 26,
+   "m_agrada": 1391
+  }
+ ],
  "afiliats": [
   {
    "marca": "Anycubic",

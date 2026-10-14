@@ -122,6 +122,14 @@ footer{margin-top:40px;font-size:12px;color:var(--ink-soft)}
 .affc .pct{margin-left:auto;font-weight:800;font-size:20px;letter-spacing:-.02em;color:var(--brand-orange);white-space:nowrap}
 .affc p{margin:0;color:var(--ink-soft);font-size:14px}
 .affc .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.prof{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.prof a{display:flex;align-items:center;gap:12px;text-decoration:none;border:1px solid var(--line);border-left:3px solid var(--brand-blue);
+  border-radius:var(--r);background:var(--surface);padding:13px 15px}
+.prof a:hover{border-color:var(--ink);border-left-color:var(--brand-blue)}
+.prof .n{flex:1;min-width:0}
+.prof .n b{display:block;font-size:16px;font-weight:700;letter-spacing:-.01em}
+.prof .n small{display:block;color:var(--ink-soft);font-size:13px;margin-top:2px}
+.prof .go{font-size:13px;font-weight:600;white-space:nowrap;color:var(--ink-soft)}
 .code{display:inline-flex;align-items:center;gap:8px;font:inherit;cursor:pointer;border:1px dashed var(--line-strong);
   background:var(--paper);color:var(--ink);border-radius:var(--r);padding:7px 10px;min-width:0}
 .code b{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;letter-spacing:.04em;overflow-wrap:anywhere}
@@ -166,6 +174,12 @@ footer{margin-top:40px;font-size:12px;color:var(--ink-soft)}
 <section id="s-top" hidden>
   <h2 data-t="top"></h2>
   <ol class="reels" id="top"></ol>
+</section>
+
+<section id="s-prof" hidden>
+  <h2 data-t="models"></h2>
+  <p class="foot" style="margin:0 0 12px" data-t="modelsHint"></p>
+  <div class="prof" id="prof"></div>
 </section>
 
 <section id="s-brands" hidden>
@@ -230,6 +244,7 @@ var T = {
     ttF: "TikTok followers", ttMed: "Median {n} views per video",
     ytS: "YouTube subscribers", ytSh: "YouTube Shorts", shortsN: "{n} Shorts",
     statsFoot: "Medians, engagement and shares cover reels posted between one week and three months ago, so a very new or very old post doesn't skew them.",
+    models: "My models", modelsHint: "I also design figures and publish them for others to print.", nModels: "{n} models", nFollowers: "{n} followers", nLikes: "{n} likes", profile: "See profile",
     viewsW: "views"
   },
   es: {
@@ -257,6 +272,7 @@ var T = {
     ttF: "Seguidores en TikTok", ttMed: "Mediana de {n} visualizaciones por vídeo",
     ytS: "Suscriptores en YouTube", ytSh: "Shorts en YouTube", shortsN: "{n} Shorts",
     statsFoot: "Las medianas, la interacción y los compartidos son de los reels publicados hace entre una semana y tres meses, para que uno muy nuevo o muy antiguo no las distorsione.",
+    models: "Mis modelos", modelsHint: "También diseño figuras y las publico para que otros las impriman.", nModels: "{n} modelos", nFollowers: "{n} seguidores", nLikes: "{n} me gusta", profile: "Ver perfil",
     viewsW: "visualizaciones"
   },
   ca: {
@@ -284,6 +300,7 @@ var T = {
     ttF: "Seguidors a TikTok", ttMed: "Mediana de {n} visualitzacions per vídeo",
     ytS: "Subscriptors a YouTube", ytSh: "Shorts a YouTube", shortsN: "{n} Shorts",
     statsFoot: "Les medianes, la interacció i els compartits són dels reels publicats fa entre una setmana i tres mesos, perquè un de molt nou o de molt antic no les distorsioni.",
+    models: "Els meus models", modelsHint: "També dissenyo figures i les publico perquè altres les imprimeixin.", nModels: "{n} models", nFollowers: "{n} seguidors", nLikes: "{n} m'agrada", profile: "Mira el perfil",
     viewsW: "visualitzacions"
   },
   de: {
@@ -311,6 +328,7 @@ var T = {
     ttF: "TikTok-Follower", ttMed: "Median {n} Aufrufe pro Video",
     ytS: "YouTube-Abonnenten", ytSh: "YouTube Shorts", shortsN: "{n} Shorts",
     statsFoot: "Mediane, Interaktionen und Shares beziehen sich auf Reels, die vor einer Woche bis drei Monaten veröffentlicht wurden, damit sehr neue oder sehr alte Beiträge sie nicht verzerren.",
+    models: "Meine Modelle", modelsHint: "Ich entwerfe auch Figuren und veröffentliche sie, damit andere sie drucken können.", nModels: "{n} Modelle", nFollowers: "{n} Follower", nLikes: "{n} Likes", profile: "Profil ansehen",
     viewsW: "Aufrufe"
   }
 };
@@ -403,6 +421,23 @@ function pinta() {
   $("s-brands").hidden = !br.length && !D.premis;
 }
 
+function curt(x) {
+  if (x == null) return null;
+  if (L === "en" && x >= 1000) return (x >= 1e4 ? Math.round(x / 1e3) : Math.round(x / 100) / 10) + "K";
+  return nf().format(x);
+}
+function pintaPerfils() {
+  var pf = ((C && C.perfils) || []).filter(function (p) { return p && p.nom && p.url; });
+  $("s-prof").hidden = !pf.length;
+  $("prof").innerHTML = pf.map(function (p) {
+    var dades = [];
+    if (p.models) dades.push(t("nModels", { n: curt(p.models) }));
+    if (p.seguidors) dades.push(t("nFollowers", { n: curt(p.seguidors) }));
+    if (p.m_agrada) dades.push(t("nLikes", { n: curt(p.m_agrada) }));
+    return '<a href="' + esc(p.url) + '" target="_blank" rel="noopener"><span class="n"><b>' + esc(p.nom) + '</b>' +
+      (dades.length ? '<small>' + esc(dades.join(" · ")) + '</small>' : '') + '</span><span class="go">' + esc(t("profile")) + ' ↗</span></a>';
+  }).join("");
+}
 function pintaAfiliats() {
   var af = ((C && C.afiliats) || []).filter(function (a) { return a && a.marca && a.url; });
   $("s-aff").hidden = !af.length;
@@ -440,7 +475,7 @@ function canvia(l) {
   if (LANGS.indexOf(l) < 0) return;
   L = l; lsSet(KEY, l);
   try { var u = new URL(location.href); u.searchParams.set("lang", l); history.replaceState(null, "", u); } catch (e) {}
-  textos(); pinta(); pintaAfiliats();
+  textos(); pinta(); pintaPerfils(); pintaAfiliats();
 }
 Array.prototype.forEach.call($("lang").querySelectorAll("button"), function (b) {
   b.onclick = function () { canvia(b.dataset.l); };
@@ -452,7 +487,7 @@ function json(u) {
   return fetch(u + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
 }
 json("dossier-config.json").then(function (c) { C = c; }, function () { C = null; }).then(function () {
-  pintaAfiliats();
+  pintaPerfils(); pintaAfiliats();
   return json("dossier.json").then(function (d) {
     D = d;
     pinta();
