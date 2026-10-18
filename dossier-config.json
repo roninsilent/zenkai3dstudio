@@ -7,30 +7,6 @@
   "BIQU",
   "Meshy"
  ],
- "colaboracions": [
-  {
-   "marca": "eSUN",
-   "codi": "DUTTs9GDZja",
-   "titol": "Goku Ultra Instinct",
-   "material": "PLA eSUN"
-  },
-  {
-   "marca": "Polymaker",
-   "codi": "DCMbcIwNHCH",
-   "titol": "Magikarp"
-  },
-  {
-   "marca": "Anycubic",
-   "codi": "DeZj3O0zmvN",
-   "titol": {
-    "en": "Ultra Instinct bust",
-    "es": "Busto Ultra Instinto",
-    "ca": "Bust Ultra Instint",
-    "de": "Ultra-Instinct-Büste"
-   },
-   "material": "PLA Anycubic"
-  }
- ],
  "perfils": [
   {
    "nom": "MakerWorld",
