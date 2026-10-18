@@ -137,6 +137,26 @@ footer{margin-top:40px;font-size:12px;color:var(--ink-soft)}
 .code:hover{border-color:var(--ink)}
 .code:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .affc .btn{padding:7px 12px;font-size:13.5px}
+.pub{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+@media(max-width:620px){.pub{grid-template-columns:1fr}}
+.pub>div{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:13px 14px}
+.pub h3{margin:0 0 9px;font-size:12px;font-weight:600;color:var(--ink-soft)}
+.pub ol{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.pub li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:baseline;font-size:14px}
+.pub li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pub li b{font-weight:700;font-variant-numeric:tabular-nums}
+.pub li i{grid-column:1/-1;display:block;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.pub li i::before{content:"";display:block;height:100%;width:var(--w);background:var(--brand-orange)}
+
+.cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.cases a{display:flex;flex-direction:column;gap:3px;text-decoration:none;border:1px solid var(--line);border-top:3px solid var(--brand-orange);
+  border-radius:var(--r);background:var(--surface);padding:12px 14px 13px}
+.cases a:hover{border-color:var(--ink);border-top-color:var(--brand-orange)}
+.cases .m{font-size:13px;font-weight:700;letter-spacing:.01em;color:var(--brand-orange)}
+.cases .t{font-weight:600;line-height:1.3}
+.cases .s{font-size:12.5px;color:var(--ink-soft)}
+.cases .v{margin-top:8px;font-size:clamp(22px,4vw,28px);font-weight:800;letter-spacing:-.03em;line-height:1}
+.cases .v small{display:block;font-size:12px;font-weight:500;letter-spacing:0;color:var(--ink-soft);margin-top:4px}
 </style>
 </head>
 <body>
@@ -169,6 +189,15 @@ footer{margin-top:40px;font-size:12px;color:var(--ink-soft)}
   <h2 data-t="audience"></h2>
   <div class="big" id="stats"></div>
   <p class="foot" data-t="statsFoot"></p>
+  <div class="pub" id="pub" hidden>
+    <div><h3 data-t="byCountry"></h3><ol id="paisos"></ol></div>
+    <div><h3 data-t="byAge"></h3><ol id="edats"></ol></div>
+  </div>
+</section>
+
+<section id="s-cases" hidden>
+  <h2 data-t="cases"></h2>
+  <div class="cases" id="cases"></div>
 </section>
 
 <section id="s-top" hidden>
@@ -245,6 +274,7 @@ var T = {
     ytS: "YouTube subscribers", ytSh: "YouTube Shorts", shortsN: "{n} Shorts",
     statsFoot: "Medians, engagement and shares cover reels posted between one week and three months ago, so a very new or very old post doesn't skew them.",
     models: "My models", modelsHint: "I also design figures and publish them for others to print.", nModels: "{n} models", nFollowers: "{n} followers", nLikes: "{n} likes", profile: "See profile",
+    byCountry: "Followers by country", byAge: "Followers by age", cases: "Brand collaborations", watch: "views",
     viewsW: "views"
   },
   es: {
@@ -273,6 +303,7 @@ var T = {
     ytS: "Suscriptores en YouTube", ytSh: "Shorts en YouTube", shortsN: "{n} Shorts",
     statsFoot: "Las medianas, la interacción y los compartidos son de los reels publicados hace entre una semana y tres meses, para que uno muy nuevo o muy antiguo no las distorsione.",
     models: "Mis modelos", modelsHint: "También diseño figuras y las publico para que otros las impriman.", nModels: "{n} modelos", nFollowers: "{n} seguidores", nLikes: "{n} me gusta", profile: "Ver perfil",
+    byCountry: "Seguidores por país", byAge: "Seguidores por edad", cases: "Colaboraciones con marcas", watch: "visualizaciones",
     viewsW: "visualizaciones"
   },
   ca: {
@@ -301,6 +332,7 @@ var T = {
     ytS: "Subscriptors a YouTube", ytSh: "Shorts a YouTube", shortsN: "{n} Shorts",
     statsFoot: "Les medianes, la interacció i els compartits són dels reels publicats fa entre una setmana i tres mesos, perquè un de molt nou o de molt antic no les distorsioni.",
     models: "Els meus models", modelsHint: "També dissenyo figures i les publico perquè altres les imprimeixin.", nModels: "{n} models", nFollowers: "{n} seguidors", nLikes: "{n} m'agrada", profile: "Mira el perfil",
+    byCountry: "Seguidors per país", byAge: "Seguidors per edat", cases: "Col·laboracions amb marques", watch: "visualitzacions",
     viewsW: "visualitzacions"
   },
   de: {
@@ -329,6 +361,7 @@ var T = {
     ytS: "YouTube-Abonnenten", ytSh: "YouTube Shorts", shortsN: "{n} Shorts",
     statsFoot: "Mediane, Interaktionen und Shares beziehen sich auf Reels, die vor einer Woche bis drei Monaten veröffentlicht wurden, damit sehr neue oder sehr alte Beiträge sie nicht verzerren.",
     models: "Meine Modelle", modelsHint: "Ich entwerfe auch Figuren und veröffentliche sie, damit andere sie drucken können.", nModels: "{n} Modelle", nFollowers: "{n} Follower", nLikes: "{n} Likes", profile: "Profil ansehen",
+    byCountry: "Follower nach Land", byAge: "Follower nach Alter", cases: "Markenkooperationen", watch: "Aufrufe",
     viewsW: "Aufrufe"
   }
 };
@@ -400,7 +433,7 @@ function pinta() {
   h += stat("ig", t("eng"), ig.interaccio_pct != null ? nf().format(ig.interaccio_pct) + (L === "en" ? "%" : " %") : null, t("engS"));
   h += stat("ig", t("shares"), ig.compartits_mitjana != null ? nf().format(ig.compartits_mitjana) : null, t("avg"));
   h += stat("tt", t("ttF"), num(tk.seguidors), tk.mediana_vistes ? t("ttMed", { n: num(tk.mediana_vistes) }) : "");
-  if (yt.subscriptors || yt.shorts) {
+  if (yt.subscriptors) {
     h += stat("yt", yt.subscriptors ? t("ytS") : t("ytSh"), num(yt.subscriptors || yt.shorts),
       yt.subscriptors && yt.shorts ? t("shortsN", { n: yt.shorts }) : "");
   }
@@ -413,6 +446,32 @@ function pinta() {
       '<span class="v"><b>' + esc(num(r.vistes)) + '</b><small>' + esc(t("viewsW")) + '</small></span></a></li>';
   }).join("");
   $("s-top").hidden = !top.length;
+
+  var P = D.public || {}, pc = (L === "en" ? "%" : " %");
+  var noms = null;
+  try { noms = new Intl.DisplayNames([LOC[L]], { type: "region" }); } catch (e) {}
+  function barres(llista, nom) {
+    var max = llista.length ? llista[0][1] : 1;
+    return llista.map(function (x) {
+      return '<li><span>' + esc(nom(x[0])) + '</span><b>' + esc(x[1] + pc) + '</b><i style="--w:' + Math.round(x[1] * 100 / max) + '%"></i></li>';
+    }).join("");
+  }
+  var ps = (P.paisos || []).slice(0, 5), ed = (P.edats || []).filter(function (x) { return x[1] >= 1; }).slice(0, 4);
+  $("paisos").innerHTML = barres(ps, function (c) { try { return (noms && noms.of(c)) || c; } catch (e) { return c; } });
+  $("edats").innerHTML = barres(ed, function (a) { return String(a).replace("-", "–"); });
+  $("pub").hidden = !ps.length && !ed.length;
+
+  var cs = ((C && C.colaboracions) || []).filter(function (c) { return c && c.codi; });
+  var vs = D.vistes || {};
+  $("cases").innerHTML = cs.map(function (c) {
+    var tit = (c.titol && typeof c.titol === "object") ? (c.titol[L] || c.titol.en) : c.titol;
+    var v = vs[c.codi];
+    return '<a href="https://www.instagram.com/reel/' + encodeURIComponent(c.codi) + '/" target="_blank" rel="noopener">' +
+      '<span class="m">' + esc(c.marca) + '</span><span class="t">' + esc(tit || "") + '</span>' +
+      (c.material ? '<span class="s">' + esc(c.material) + '</span>' : '') +
+      (v ? '<span class="v">' + esc(num(v)) + '<small>' + esc(t("watch")) + '</small></span>' : '') + '</a>';
+  }).join("");
+  $("s-cases").hidden = !cs.length;
 
   var br = (C && C.marques) || [];
   $("brands").innerHTML = br.map(function (m) { return "<li>" + esc(m) + "</li>"; }).join("");
@@ -474,7 +533,6 @@ function copiaVell(s) {
 function canvia(l) {
   if (LANGS.indexOf(l) < 0) return;
   L = l; lsSet(KEY, l);
-  try { var u = new URL(location.href); u.searchParams.set("lang", l); history.replaceState(null, "", u); } catch (e) {}
   textos(); pinta(); pintaPerfils(); pintaAfiliats();
 }
 Array.prototype.forEach.call($("lang").querySelectorAll("button"), function (b) {
