@@ -1808,16 +1808,62 @@ function zdeepMerge(base,extra){
   }
 }
 
+var GSCOPE = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
+
+/* ---------- la sessió de Google, compartida entre les apps ---------- */
+/* El testimoni dura una hora i totes les apps són al mateix domini, així que el
+   guardo i el torno a fer servir: passar d'una app a l'altra no ha de tornar a
+   demanar el compte. Només es reaprofita si és del compte que toca i si porta
+   tots els permisos que demana l'app on s'obre. */
+/* Una clau per compte: hi ha apps que entren amb el compte de l'estudi i
+   altres amb el de casa. Si en compartissin una de sola, cada app rebutjaria
+   el testimoni de l'altra i, pitjor, l'hi esborraria. */
+var TOK_KEY = "g_token_" + ALLOWED_EMAIL;
+function tokDesa(resp, u) {
+  try {
+    localStorage.setItem(TOK_KEY, JSON.stringify({
+      t: resp.access_token,
+      fins: Date.now() + (Math.max(60, (+resp.expires_in || 3600)) - 120) * 1000,
+      scope: resp.scope || GSCOPE,
+      email: (u && u.email) || "",
+      foto: (u && u.picture) || ""
+    }));
+  } catch (e) {}
+}
+function tokDesat(calen) {
+  try {
+    var d = JSON.parse(localStorage.getItem(TOK_KEY) || "null");
+    if (!d || !d.t || !(d.fins > Date.now())) return null;
+    if ((d.email || "").trim().toLowerCase() !== ALLOWED_EMAIL) return null;
+    var te = String(d.scope || "").split(/\s+/);
+    var falta = String(calen || "").split(/\s+/).filter(Boolean).filter(function (s) {
+      return te.indexOf(s) < 0;
+    });
+    if (falta.length) return null;
+    return d;
+  } catch (e) { return null; }
+}
+function tokOblida() { try { localStorage.removeItem(TOK_KEY); } catch (e) {} }
+
+function authOk(email, foto) {
+  $g("acct-pic").src = foto || "";
+  $g("acct-email").textContent = email || "";
+  $g("acctbar").hidden = false;
+  afterAuthOk();
+}
+
 function gateInit(){
   if(localStorage.getItem(SKIP_KEY)==="1"){ hideGate(); ZCFG.boot(); return; }
   var cid=localStorage.getItem(CID_KEY);
   if(!cid){ showSetup(); return; }
-  showLogin("");
+  var desat = tokDesat(GSCOPE);
+  if (desat) { gToken = desat.t; hideGate(); authOk(desat.email, desat.foto); }
+  else showLogin("");
   waitForGis(function(){
     try{
       gTokenClient=google.accounts.oauth2.initTokenClient({
         client_id: cid,
-        scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile",
+        scope: GSCOPE,
         callback: onGToken,
         error_callback: function(){ showLogin("No s'ha pogut iniciar sessió. Torna-ho a provar."); }
       });
@@ -1844,6 +1890,7 @@ $g("gate-signin").onclick=function(){
   gTokenClient.requestAccessToken({prompt:""});
 };
 $g("acct-signout").onclick=function(){
+  tokOblida();
   if(gToken && typeof google!=="undefined" && google.accounts && google.accounts.oauth2.revoke){
     google.accounts.oauth2.revoke(gToken,function(){});
   }
@@ -1870,10 +1917,8 @@ function onGToken(resp){
         showLogin("Aquest compte ("+(u.email||"")+") no hi té accés. Entra-hi amb "+ALLOWED_EMAIL+".");
         return;
       }
-      $g("acct-pic").src=u.picture||"";
-      $g("acct-email").textContent=u.email||"";
-      $g("acctbar").hidden=false;
-      afterAuthOk();
+      tokDesa(resp, u);
+      authOk(u.email, u.picture);
     }).catch(function(){
       gToken=null;
       showLogin("No he pogut confirmar el compte. Torna-ho a provar.");
@@ -1904,6 +1949,7 @@ function driveFetch(url,opts){
       var detail="";
       try{ var j=JSON.parse(t); detail=(j.error&&(j.error.message||j.error.status))||""; }
       catch(e){ detail=(t||"").slice(0,200); }
+      if (r.status === 401) tokOblida();
       throw {code:(r.status===401?"g_401":"g_http_"+r.status), status:r.status, detail:detail};
     });
   });
