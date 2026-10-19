@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Registre d'impressions</title>
-<meta name="description" content="Llegeix el fitxer del slicer i descompta el filament de l'inventari">
+<meta name="description" content="Amb el fitxer del slicer o a mà: descompta el filament de l'inventari">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Impressions">
@@ -251,11 +251,52 @@ nav::-webkit-scrollbar{display:none}
 .filmatch b{font-weight:600}
 .filmatch small{display:block;color:var(--ink-soft);font-size:11px;margin-top:1px}
 .filsel{margin-top:7px}
-.filsel select{font-size:13.5px;padding:6px 8px;max-width:100%}
+
+/* ---- selector de bobina ---- */
+.pick{position:relative}
+.pickbtn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;cursor:pointer;
+  padding:8px 10px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);
+  font:inherit;font-size:13.5px;color:var(--ink)}
+.pickbtn:hover{border-color:var(--brand-orange)}
+.pickbtn[aria-expanded="true"]{border-color:var(--brand-orange);box-shadow:0 0 0 2px rgba(230,115,36,.16)}
+.pickbtn:not(.te) .pickn{color:var(--ink-soft)}
+.pickn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pickc{flex:none;font-size:11.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.pickv{flex:none;font-size:10px;color:var(--ink-soft)}
+.pickpanel{position:absolute;z-index:40;left:0;right:0;top:calc(100% + 5px);
+  border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);
+  box-shadow:0 10px 28px rgba(0,0,0,.16);padding:8px}
+/* la regla base d'input[type=search] val (0,1,1): per guanyar-li calen dues classes */
+.pickpanel input.pickq{width:100%;box-sizing:border-box;font:inherit;font-size:13.5px;padding:7px 9px;
+  border:1px solid var(--line);border-radius:6px;background:var(--hub);color:var(--ink);margin:0}
+.picklist{max-height:252px;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:7px}
+.pickit{display:flex;align-items:center;gap:8px;width:100%;text-align:left;cursor:pointer;
+  padding:8px 7px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:var(--ink)}
+.pickit:hover{background:var(--hub)}
+.pickit.tria{background:rgba(230,115,36,.12);font-weight:600}
+.pickit.buida .pickn,.pickit.buida .pickc{color:var(--ink-soft)}
+.pickbuit{margin:9px 5px;font-size:12.5px}
+.picknone{display:block;width:100%;margin-top:7px;padding:7px;cursor:pointer;font:inherit;font-size:12px;
+  color:var(--ink-soft);background:transparent;border:0;border-top:1px solid var(--line);text-align:left}
+.picknone:hover{color:var(--brand-orange)}
+
+/* ---- files posades a ma ---- */
+.filrow input.magr{width:78px;font:inherit;font-size:14px;font-weight:700;text-align:right;padding:5px 7px;
+  border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);color:var(--ink);
+  font-variant-numeric:tabular-nums;margin:0}
+.filrow input.magr:focus{outline:2px solid var(--brand-orange);outline-offset:1px}
+.matreu{margin-top:7px}
+.lnk{background:0;border:0;padding:0;cursor:pointer;font:inherit;font-size:11.5px;
+  color:var(--ink-soft);text-decoration:underline}
+.lnk:hover{color:var(--brand-orange)}
+.sw.gran{width:20px;height:20px;border-radius:5px}
+
 #fail-mode{max-width:100%}
 @media(max-width:430px){
   #fail-mode button{padding:9px 10px;font-size:13px}
-  .filsel select{font-size:13px}
+  #mode-seg button{padding:9px 12px;font-size:13.5px}
+  .pickbtn,.pickq{font-size:13px}
+  .picklist{max-height:210px}
 }
 .nomatch{color:var(--ink-soft)}
 .muted{color:var(--ink-soft)}
@@ -324,7 +365,7 @@ input[type=range]{width:100%;accent-color:var(--brand-blue)}
     <button class="btn" id="acct-signout">Tanca sessió</button>
   </div>
   <h1>Registre d'impressions</h1>
-  <p class="sub">Deixa-hi el fitxer del slicer: en treu els grams, el temps i els colors, i descompta el filament de l'inventari. <span class="ver">v6 · descompta de l'inventari</span></p>
+  <p class="sub">Amb el fitxer del slicer o posant-ho a mà: els grams de cada filament surten de la bobina que tries de l'inventari. <span class="ver">v7 · amb fitxer o a mà</span></p>
 </header>
 
 <div class="navwrap"><nav role="tablist">
@@ -336,12 +377,33 @@ input[type=range]{width:100%;accent-color:var(--brand-blue)}
 <main>
 <section id="view-read">
 
-  <div class="drop" id="drop" tabindex="0" role="button" aria-label="Tria el fitxer de la impressió">
-    <input type="file" id="file" hidden>
-    <b id="drop-main">Deixa anar aquí el fitxer de la impressió</b>
-    <span id="drop-sub">el que surt del slicer · .gcode.3mf o .gcode</span>
+  <div class="seg" id="mode-seg" style="margin-bottom:16px">
+    <button type="button" data-m="file" aria-pressed="true">Tinc el fitxer</button>
+    <button type="button" data-m="ma" aria-pressed="false">Ho poso a mà</button>
   </div>
-  <p class="note" id="read-status"></p>
+
+  <div id="w-file">
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Tria el fitxer de la impressió">
+      <input type="file" id="file" hidden>
+      <b id="drop-main">Deixa anar aquí el fitxer de la impressió</b>
+      <span id="drop-sub">el que surt del slicer · .gcode.3mf o .gcode</span>
+    </div>
+    <p class="note" id="read-status"></p>
+  </div>
+
+  <div class="card" id="w-ma" hidden>
+    <h3>Dades de la impressió</h3>
+    <p class="hint" style="margin:0 0 14px">Digue'm els grams de cada filament i de quina bobina surten. La resta va igual que amb fitxer: els grams no es mouen de l'inventari fins que em diguis que la impressió ha acabat.</p>
+    <div class="grid2">
+      <label class="f">Hores <input type="number" id="m-h" min="0" step="1" inputmode="numeric" autocomplete="off" placeholder="0"></label>
+      <label class="f">Minuts <input type="number" id="m-min" min="0" max="59" step="1" inputmode="numeric" autocomplete="off" placeholder="0"></label>
+    </div>
+    <div class="grid2" style="margin-top:12px">
+      <label class="f">Impressora <input type="text" id="m-printer" autocomplete="off" placeholder="opcional"></label>
+      <label class="f">Capes en total <input type="number" id="m-capes" min="0" step="1" inputmode="numeric" autocomplete="off" placeholder="opcional"></label>
+    </div>
+    <p class="hint" style="margin:12px 0 0">Les capes són opcionals; només em fan falta si la impressió falla i em vols dir en quina capa s'ha aturat. Si no les saps, m'ho pots dir en tant per cent.</p>
+  </div>
 
   <div id="result" hidden>
 
@@ -366,6 +428,9 @@ input[type=range]{width:100%;accent-color:var(--brand-blue)}
 
     <h2>Filaments</h2>
     <div id="fil-list"></div>
+    <div class="toolbar" id="ma-add-wrap" hidden style="margin:12px 0 0">
+      <button class="btn" id="ma-add">Afegeix un filament</button>
+    </div>
     <p class="hint" id="inv-note"></p>
 
     <div class="card">
@@ -395,8 +460,9 @@ input[type=range]{width:100%;accent-color:var(--brand-blue)}
         </div>
         <div style="margin-top:12px">
           <label class="f" id="w-capa">Capa on s'ha aturat <input type="number" id="f-capa" min="0" step="1" inputmode="numeric" autocomplete="off" placeholder="la que marcava la impressora"></label>
-          <label class="f" id="w-pct" hidden>Tant per cent que portava <input type="number" id="f-pct" min="0" max="100" step="1" inputmode="decimal" autocomplete="off" placeholder="0 a 100"></label>
-          <label class="f" id="w-grams" hidden>Grams que pesa el tros que ha sortit <input type="number" id="f-grams" min="0" step="0.1" inputmode="decimal" autocomplete="off" placeholder="amb una bàscula de cuina"></label>
+          <!-- type=text i no number: un camp number es menja la coma, i el teclat català en dona una -->
+          <label class="f" id="w-pct" hidden>Tant per cent que portava <input type="text" id="f-pct" inputmode="decimal" autocomplete="off" placeholder="0 a 100"></label>
+          <label class="f" id="w-grams" hidden>Grams que pesa el tros que ha sortit <input type="text" id="f-grams" inputmode="decimal" autocomplete="off" placeholder="amb una bàscula de cuina"></label>
         </div>
         <p class="note" id="fail-calc" style="margin-top:8px"></p>
       </div>
@@ -410,7 +476,7 @@ input[type=range]{width:100%;accent-color:var(--brand-blue)}
       <button class="btn" id="clear-read">Descarta</button>
     </div>
 
-    <details class="diag">
+    <details class="diag" id="diag-box">
       <summary>Què he llegit del fitxer</summary>
       <p class="hint" style="margin:10px 0">Si alguna dada no quadra, passa'm aquest text i ho arreglo.</p>
       <pre class="mono" id="diag-body"></pre>
@@ -435,19 +501,11 @@ input[type=range]{width:100%;accent-color:var(--brand-blue)}
   <h2>Inventari</h2>
   <div class="card">
     <label class="f chk" style="margin-bottom:12px"><input type="checkbox" id="s-descompta"> <span>Descompta els grams de l'inventari quan desi una impressió</span></label>
-    <p class="hint" style="margin:0 0 12px">A cada filament del fitxer tries de quina bobina ha sortit, i en desar-la els grams se'n van de l'inventari. Just abans d'escriure-hi torno a llegir el fitxer del Drive, per no trepitjar res que hagis canviat a l'altra app. A la fitxa de cada impressió pots tornar els grams si t'has equivocat.</p>
+    <p class="hint" style="margin:0 0 12px">A cada filament tries de quina bobina ha sortit, tant si el fitxer del slicer el porta com si poses les dades a mà. Els grams no es mouen fins que desis la impressió dient-me com ha anat: si ha fallat, només es descompta el tros que s'ha arribat a imprimir. Just abans d'escriure-hi torno a llegir el fitxer del Drive, per no trepitjar res que hagis canviat a l'altra app. A la fitxa de cada impressió pots tornar els grams si t'has equivocat.</p>
     <p class="note" id="inv-status">—</p>
     <div class="toolbar" style="margin:12px 0 0">
       <button class="btn" id="inv-reload">Torna a llegir l'inventari</button>
     </div>
-  </div>
-
-  <h2>Semblança de color</h2>
-  <div class="card">
-    <label class="f full">Fins a quin punt es pot assemblar un color per donar-lo per bo
-      <input type="range" id="s-tol" min="4" max="30" step="1">
-    </label>
-    <p class="note" id="s-tol-val"></p>
   </div>
 
   <h2>Densitats</h2>
@@ -505,7 +563,6 @@ input[type=range]{width:100%;accent-color:var(--brand-blue)}
 
 /* ---------------- estat ---------------- */
 var settings = {
-  tol: 12,
   diam: 1.75,
   descompta: true,
   dens: { PLA:1.24, PETG:1.27, ABS:1.04, TPU:1.21, PA:1.14 }
@@ -523,6 +580,10 @@ var plateIdx=0;
 var resultOk=true;
 var triaBobina={};           /* slot del filament -> clau de la bobina triada ("" = no descomptar) */
 var failMode="capa";         /* capa | pct | grams */
+var mode="file";             /* file = tinc el fitxer del slicer · ma = ho poso a ma */
+var maSeq=0;                 /* per donar un slot a cada filament posat a ma */
+var picObert=null;           /* slot del selector de bobina que hi ha obert */
+var picFiltre={};            /* slot -> el que hi ha escrit al cercador */
 
 function $(id){ return document.getElementById(id); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
@@ -1023,21 +1084,6 @@ function invPerKey(k){
   for(var i=0;i<inventari.length;i++){ if(invKey(inventari[i])===k) return inventari[i]; }
   return null;
 }
-function matchSpool(hex, material){
-  if(!hex || !inventari.length) return null;
-  var best=null;
-  inventari.forEach(function(it){
-    var hs=invColors(it);
-    if(!hs.length) return;
-    var d=Infinity;
-    hs.forEach(function(h){ var x=deltaE(hex,h); if(x<d) d=x; });
-    var mt=String(material||"").toUpperCase(), im=String(it.material||"").toUpperCase();
-    var matOk = !mt || !im || mt.indexOf(im)>=0 || im.indexOf(mt)>=0;
-    var score = d + (matOk?0:10);
-    if(!best || score<best.score) best={ item:it, dist:d, matOk:matOk, score:score };
-  });
-  return best;
-}
 function loadInventory(){
   if(typeof gToken==="undefined" || !gToken){
     invCarregat=false;
@@ -1075,69 +1121,124 @@ function loadInventory(){
 function renderInvStatus(msg){ var e=$("inv-status"); if(e) e.textContent=msg; }
 
 /* ---------------- triar la bobina ---------------- */
-/* Totes les bobines, les que s'assemblen primer. Les que no tenen estoc van
-   al final perque triar-les gairebé sempre és una errada. */
-function invOpcions(hex, material){
-  var dins=[], fora=[];
+/* No te'n proposo cap ni te les ordeno per semblança de color: et dono
+   l'inventari sencer i el cercador. Les que no tenen estoc van al final,
+   perquè triar-les gairebé sempre és una errada, però s'hi poden triar. */
+function senseAccents(s){
+  s=String(s==null?"":s).toLowerCase();
+  if(s.normalize) s=s.normalize("NFD").replace(/[̀-ͯ]/g,"");
+  return s;
+}
+function invCerca(it){
+  var p=[it.marca,it.material,it.color_nom,it.notes,it.color_hex,it.id];
+  if(Array.isArray(it.colors)) it.colors.forEach(function(c){ if(c){ p.push(c.nom); p.push(c.hex); } });
+  return senseAccents(p.filter(Boolean).join(" "));
+}
+function invLlista(){
+  var l=[];
   inventari.forEach(function(it){
-    var hs=invColors(it), d=Infinity;
-    if(hex) hs.forEach(function(h){ var x=deltaE(hex,h); if(x<d) d=x; });
-    var mt=String(material||"").toUpperCase(), im=String(it.material||"").toUpperCase();
-    var matOk = !mt || !im || mt.indexOf(im)>=0 || im.indexOf(mt)>=0;
-    var o={ it:it, dist:d, matOk:matOk, estoc:invStock(it) };
-    if(hex && isFinite(d) && d<=settings.tol && matOk) dins.push(o); else fora.push(o);
+    if(!invKey(it)) return;
+    l.push({ it:it, estoc:invStock(it), txt:invCerca(it) });
   });
-  function ordena(a,b){
+  l.sort(function(a,b){
     if((a.estoc>0)!==(b.estoc>0)) return a.estoc>0?-1:1;
-    if(a.matOk!==b.matOk) return a.matOk?-1:1;
-    if(isFinite(a.dist)&&isFinite(b.dist)&&a.dist!==b.dist) return a.dist-b.dist;
-    return invNom(a.it).localeCompare(invNom(b.it),"ca");
+    return invNom(a.it).localeCompare(invNom(b.it),"ca",{numeric:true});
+  });
+  return l;
+}
+/* una bobina de dos o tres colors porta una tira de colors, no un quadret pla */
+function swatchDe(it, cls){
+  var hs=invColors(it), c="sw sm"+(cls?" "+cls:"");
+  if(!hs.length) return '<span class="'+c+' sw-none"></span>';
+  if(hs.length===1) return '<span class="'+c+'" style="background:'+esc(hs[0])+'"></span>';
+  var pas=100/hs.length, trossos=[];
+  hs.forEach(function(h,i){
+    trossos.push(esc(h)+" "+(i*pas).toFixed(2)+"% "+((i+1)*pas).toFixed(2)+"%");
+  });
+  return '<span class="'+c+'" style="background:linear-gradient(135deg,'+trossos.join(",")+')"></span>';
+}
+function pickItemsHTML(slot){
+  var q=senseAccents(picFiltre[slot]||""), triada=triaBobina[slot], h="", n=0;
+  invLlista().forEach(function(o){
+    if(q && o.txt.indexOf(q)<0) return;
+    n++;
+    var k=invKey(o.it);
+    h+='<button type="button" class="pickit'+(k===triada?" tria":"")+(o.estoc>0?"":" buida")+'"'+
+       ' data-slot="'+esc(slot)+'" data-k="'+esc(k)+'" role="option" aria-selected="'+(k===triada)+'">'+
+       swatchDe(o.it)+'<span class="pickn">'+esc(invNom(o.it))+'</span>'+
+       '<span class="pickc">'+(o.estoc>0?Math.round(o.estoc)+" g":"sense estoc")+'</span></button>';
+  });
+  if(!n){
+    h='<p class="muted pickbuit">'+(picFiltre[slot]
+      ? 'Cap bobina no et quadra amb «'+esc(picFiltre[slot])+'».'
+      : "L'inventari és buit.")+'</p>';
   }
-  dins.sort(ordena); fora.sort(ordena);
-  return { dins:dins, fora:fora };
+  return h;
 }
-function opcioHTML(o, triada){
-  var k=invKey(o.it);
-  if(!k) return "";
-  var cua = o.estoc>0 ? Math.round(o.estoc)+" g" : "sense estoc";
-  if(!o.matOk && o.it.material) cua += " · "+o.it.material;
-  return '<option value="'+esc(k)+'"'+(triada===k?' selected':'')+'>'+
-    esc(invNom(o.it))+" — "+esc(cua)+'</option>';
-}
-function selectBobina(f){
+function pickerBobina(f){
   if(invCarregat!==true || !inventari.length) return "";
-  var ops=invOpcions(f.color, f.type);
-  var triada=triaBobina[f.slot];
-  var html='<select class="selbob" data-slot="'+esc(f.slot)+'" aria-label="Bobina d\'aquest filament">'+
-    '<option value="">— no descomptis res —</option>';
-  if(ops.dins.length){
-    html+='<optgroup label="'+(ops.dins.length===1?"La que hi encaixa":"Les que hi encaixen")+'">';
-    ops.dins.forEach(function(o){ html+=opcioHTML(o,triada); });
-    html+='</optgroup>';
+  var slot=f.slot, k=triaBobina[slot], it=invPerKey(k), obert=(picObert===slot);
+  var h='<div class="pick" data-slot="'+esc(slot)+'">'+
+    '<button type="button" class="pickbtn'+(it?" te":"")+'" data-slot="'+esc(slot)+'"'+
+    ' aria-expanded="'+obert+'">'+
+    (it?swatchDe(it):'<span class="sw sm sw-none"></span>')+
+    '<span class="pickn">'+esc(it?invNom(it):"Tria la bobina")+'</span>'+
+    '<span class="pickc">'+(it?esc(Math.round(invStock(it))+" g"):"")+'</span>'+
+    '<span class="pickv" aria-hidden="true">▾</span></button>';
+  if(obert){
+    h+='<div class="pickpanel">'+
+      '<input type="search" class="pickq" data-slot="'+esc(slot)+'" value="'+esc(picFiltre[slot]||"")+'"'+
+      ' placeholder="marca, material o color" autocomplete="off" aria-label="Cerca una bobina">'+
+      '<div class="picklist" role="listbox">'+pickItemsHTML(slot)+'</div>'+
+      (k?'<button type="button" class="picknone" data-slot="'+esc(slot)+'">Treu-la — d\'aquest filament no descomptis res</button>':"")+
+    '</div>';
   }
-  if(ops.fora.length){
-    html+='<optgroup label="'+(ops.dins.length?"La resta":"Cap no s\'assembla prou — tria-la tu")+'">';
-    ops.fora.forEach(function(o){ html+=opcioHTML(o,triada); });
-    html+='</optgroup>';
-  }
-  return html+'</select>';
+  return h+'</div>';
 }
-/* La bobina que proposo per a cada filament, nomes el primer cop.
-   Passo per invOpcions i no per matchSpool perque aquella ja posa al davant
-   les que tenen estoc: si el color clavat es una bobina esgotada, val mes
-   proposar la seguent que no pas no proposar res. */
-function proposaBobines(pl){
-  if(invCarregat!==true || !pl) return;
-  pl.filaments.forEach(function(f){
-    if(triaBobina[f.slot]!==undefined) return;
-    var tria="";
-    if(f.color){
-      var ops=invOpcions(f.color,f.type);
-      for(var i=0;i<ops.dins.length;i++){
-        if(ops.dins[i].estoc>0){ tria=invKey(ops.dins[i].it)||""; break; }
+/* El cercador repinta només la llista. Si repintes tota la fila a cada tecla,
+   el camp perd el focus i al mòbil se't tanca el teclat. */
+function lligaPickers(){
+  var zona=$("fil-list");
+  Array.prototype.forEach.call(zona.querySelectorAll(".pickbtn"),function(b){
+    b.onclick=function(){
+      var s=b.dataset.slot;
+      picObert = (picObert===s) ? null : s;
+      showResult();
+      if(picObert===s){
+        var q=$("fil-list").querySelector('.pickq[data-slot="'+s+'"]');
+        /* al mòbil no li poso el focus: el teclat taparia la llista */
+        if(q && !(window.matchMedia && window.matchMedia("(max-width:700px)").matches)) q.focus();
       }
-    }
-    triaBobina[f.slot]=tria;
+    };
+  });
+  Array.prototype.forEach.call(zona.querySelectorAll(".pickq"),function(q){
+    q.oninput=function(){
+      var s=q.dataset.slot;
+      picFiltre[s]=q.value;
+      var l=$("fil-list").querySelector('.pick[data-slot="'+s+'"] .picklist');
+      if(l){ l.innerHTML=pickItemsHTML(s); lligaItems(l); }
+    };
+    q.onkeydown=function(e){
+      if(e.key==="Escape"){ picObert=null; showResult(); }
+      else if(e.key==="Enter"){
+        e.preventDefault();
+        var p=$("fil-list").querySelector('.pick[data-slot="'+q.dataset.slot+'"] .pickit');
+        if(p) p.click();
+      }
+    };
+  });
+  lligaItems(zona);
+  Array.prototype.forEach.call(zona.querySelectorAll(".picknone"),function(b){
+    b.onclick=function(){ triaBobina[b.dataset.slot]=""; picObert=null; showResult(); };
+  });
+}
+function lligaItems(zona){
+  Array.prototype.forEach.call(zona.querySelectorAll(".pickit"),function(b){
+    b.onclick=function(){
+      triaBobina[b.dataset.slot]=b.dataset.k;
+      picObert=null; picFiltre[b.dataset.slot]="";
+      showResult();
+    };
   });
 }
 
@@ -1335,14 +1436,173 @@ function aplicaInventariAra(moviments, signe){
 }
 
 /* ---------------- pintar el resultat ---------------- */
+function esMa(){ return !!(parsed && parsed.source==="ma"); }
+
+/* ---------------- posar-ho a mà ---------------- */
+function filamentNouMa(){
+  maSeq++;
+  return { slot:"m"+maSeq, idx:null, type:null, color:null, nom:null, grams:null, manual:true };
+}
+function creaManual(){
+  maSeq=0; triaBobina={}; picObert=null; picFiltre={};
+  parsed={
+    source:"ma", fileName:null, bytes:null, printer:null, layerHeight:null, nozzle:null,
+    modelNames:[], thumb:null, unsliced:false, diag:{},
+    plates:[{ index:"1", seconds:0, weight:null, filaments:[filamentNouMa()],
+              objects:[], capesPerFil:null, totalCapes:null, meta:{} }]
+  };
+  plateIdx=0;
+}
+/* passo al plat el que hi ha escrit als camps de dalt */
+function sincronitzaMa(){
+  if(!esMa()) return;
+  var pl=currentPlate(); if(!pl) return;
+  var h=num($("m-h").value), m=num($("m-min").value);
+  pl.seconds=Math.max(0, Math.round(h*3600 + m*60));
+  var c=Math.round(num($("m-capes").value));
+  pl.totalCapes = (isFinite(c) && c>0) ? c : null;
+  parsed.printer = $("m-printer").value.trim() || null;
+  var tot=0, cap=true;
+  pl.filaments.forEach(function(f){
+    if(f.grams!=null){ tot+=f.grams; cap=false; }
+    /* el color i el material surten de la bobina: així la fitxa, el CSV i el
+       pressupost no es queden amb un "?" al mig */
+    var it=invPerKey(triaBobina[f.slot]);
+    if(it){
+      var hs=invColors(it);
+      f.color = hs.length ? hs[0] : null;
+      f.type = it.material || null;
+      f.nom = invNom(it);
+    } else { f.color=null; f.type=null; f.nom=null; }
+  });
+  pl.weight = cap ? null : Math.round(tot*100)/100;
+}
+function setMode(m){
+  mode=m;
+  Array.prototype.forEach.call($("mode-seg").querySelectorAll("button"),function(b){
+    b.setAttribute("aria-pressed", String(b.dataset.m===m));
+  });
+  $("w-file").hidden = m!=="file";
+  $("w-ma").hidden   = m!=="ma";
+  clearRead();
+}
+
+/* ---------------- pintar el resultat ---------------- */
 function currentPlate(){
   if(!parsed || !parsed.plates.length) return null;
   return parsed.plates[Math.min(plateIdx, parsed.plates.length-1)];
 }
+/* el "en tens 820 g → 750 g" de cada fila */
+function textQueda(f, usat){
+  var it=invPerKey(triaBobina[f.slot]);
+  if(!it) return "";
+  var st=invStock(it);
+  if(usat==null) return "en tens "+Math.round(st)+" g";
+  var queda=st-usat;
+  return Math.round(st)+" g → "+Math.round(Math.max(0,queda))+" g"+
+         (queda<0 ? " · no n'hi ha prou, en falten "+Math.round(-queda) : "");
+}
+function resumSub(pl, cru){
+  var bits=[];
+  if(cru) bits.push("encara sense calcular — ni temps ni grams");
+  else {
+    /* a mà el temps és opcional: si no l'ha posat, no li ensenyo "0 min" */
+    if(!esMa() || pl.seconds>0) bits.push(fmtHM(pl.seconds));
+    bits.push(pl.weight==null ? "grams per posar" : fmtG(pl.weight));
+  }
+  if(parsed.printer) bits.push(String(parsed.printer));
+  return bits.join(" · ");
+}
+/* l'avis de sota els filaments: quantes bobines falten, quines es queden curtes… */
+function pintaNota(pl, usats, cru){
+  var senseTria=0, senseColor=0, curt=0;
+  pl.filaments.forEach(function(f,i){
+    if(!esMa() && !f.color) senseColor++;
+    if(!triaBobina[f.slot]) senseTria++;
+    else {
+      var it=invPerKey(triaBobina[f.slot]);
+      if(it && usats[i]!=null && invStock(it)-usats[i]<0) curt++;
+    }
+  });
+  var n=[];
+  if(cru){
+    n.push("Aquests són els filaments que tens carregats al projecte. Quan me'l passis amb els números calculats et diré els grams de cadascun.");
+  } else if(invCarregat!==true){
+    n.push("No tinc l'inventari carregat, per això no et puc donar la llista de bobines. Mira-ho als Ajustos.");
+  } else if(!inventari.length){
+    n.push("L'inventari és buit: afegeix-hi bobines a l'app d'inventari i aquí les tindràs a la llista.");
+  } else {
+    if(settings.descompta) n.push("Els grams no surten de les bobines fins que desis la impressió dient-me com ha anat.");
+    else n.push("El descompte automàtic el tens apagat als Ajustos: apunto quina bobina és, però no hi toco els grams.");
+    if(senseTria) n.push(senseTria+" filament"+(senseTria===1?"":"s")+" sense bobina triada — d'aquest"+(senseTria===1?"":"s")+" no descompto res.");
+    /* ha dit que ha fallat però no ha dit fins on: millor avisar-lo que no pas
+       descomptar la peça sencera o no descomptar res sense dir-ho */
+    if(!resultOk && senseTria<pl.filaments.length && sumaGrams(usats)==null){
+      n.push("<b>Digues fins on va arribar</b> aquí sota i descomptaré només el que s'ha gastat. Si ho deixes en blanc, no toco l'inventari.");
+    }
+    if(curt) n.push("<b>Compte:</b> en "+(curt===1?"una bobina":curt+" bobines")+" no hi ha prou grams apuntats; quedarà a zero i passarà a la llista del que s'ha de demanar.");
+  }
+  if(senseColor) n.push(senseColor+" filament"+(senseColor===1?"":"s")+" sense color al fitxer.");
+  $("inv-note").innerHTML = n.join(" ");
+}
+function filaHTML(f, i, usats, cru){
+  var ma=esMa(), it=invPerKey(triaBobina[f.slot]);
+  var sw = ma
+    ? (it ? swatchDe(it,"gran") : '<span class="sw sw-none"></span>')
+    : (f.color ? '<span class="sw" style="background:'+esc(f.color)+'"></span>'
+               : '<span class="sw sw-none" title="el fitxer no en diu el color"></span>');
+
+  var titol, sub;
+  if(ma){
+    titol = it ? invNom(it) : "Filament "+(i+1);
+    sub = it ? [it.material||"", it.color_hex||""].filter(Boolean).join(" · ") : "tria la bobina i posa-hi els grams";
+  } else {
+    titol = f.color || "sense color";
+    var etq=[f.type||"?"];
+    if(f.nom) etq.push(String(f.nom).slice(0,34));
+    sub = etq.join(" · ");
+  }
+
+  var gHTML;
+  if(ma){
+    /* type=text i no number: un camp number es menja la coma del teclat català */
+    gHTML = '<span class="filg"><input type="text" class="magr" data-slot="'+esc(f.slot)+'"'+
+            ' inputmode="decimal" autocomplete="off" placeholder="0" value="'+
+            (f.grams==null?"":esc(String(f.grams).replace(".",",")))+'" aria-label="Grams d\'aquest filament"> g</span>';
+  } else {
+    var gSub="";
+    if(!cru && usats[i]!=null && f.grams!=null && Math.abs(usats[i]-f.grams)>0.05){
+      gSub='<i>se\'n descompten '+fmtG(usats[i])+'</i>';
+    } else if(f.estimat){ gSub='<i>estimat</i>'; }
+    gHTML = '<span class="filg">'+((f.grams==null)?'—':fmtG(f.grams))+gSub+'</span>';
+  }
+
+  var blocs="";
+  if(invCarregat===true && inventari.length){
+    blocs='<div class="filsel">'+pickerBobina(f)+'</div>'+
+          '<div class="filmatch"><small id="q-'+esc(f.slot)+'">'+esc(textQueda(f,usats[i]))+'</small></div>';
+  } else if(!ma){
+    blocs='<div class="filmatch"><span class="muted">'+
+          (invCarregat===true ? "l'inventari és buit" : "inventari no carregat")+'</span></div>';
+  }
+  if(ma && usats[i]!=null && f.grams!=null && Math.abs(usats[i]-f.grams)>0.05){
+    blocs+='<div class="filmatch"><small>se\'n descompten '+fmtG(usats[i])+'</small></div>';
+  }
+  if(ma){
+    blocs+='<div class="matreu"><button type="button" class="lnk" data-treu="'+esc(f.slot)+'">Treu aquest filament</button></div>';
+  }
+
+  return '<div class="filrow">'+sw+'<div class="filmain">'+
+    '<div class="filtop"><b>'+esc(titol)+'</b>'+gHTML+'</div>'+
+    '<div class="filsub">'+esc(sub)+'</div>'+
+    blocs+'</div></div>';
+}
 function showResult(){
   var pl=currentPlate();
-  if(!pl){ $("result").hidden=true; return; }
+  if(!pl){ $("result").hidden=true; $("ma-add-wrap").hidden=true; return; }
   $("result").hidden=false;
+  var ma=esMa();
+  sincronitzaMa();
 
   var cru = !!parsed.unsliced;
   $("unsliced").hidden = !cru;
@@ -1350,35 +1610,42 @@ function showResult(){
   $("fes-press").hidden = cru;
   $("copy-press").hidden = cru;
   $("r-title").closest(".card").hidden = cru;
+  $("ma-add-wrap").hidden = !ma;
+  $("diag-box").hidden = ma;      /* a mà no hi ha cap fitxer per ensenyar */
+  $("r-thumb").hidden = true;
 
-  if(parsed.thumb){ $("r-thumb").src=parsed.thumb; $("r-thumb").hidden=false; }
-  else $("r-thumb").hidden=true;
+  if(!ma && parsed.thumb){ $("r-thumb").src=parsed.thumb; $("r-thumb").hidden=false; }
 
-  var netFitxer = parsed.fileName.replace(/\.(gcode\.3mf|3mf|gcode)$/i,"");
-  /* el Bambu Studio bateja les peces "Object_1": per títol val més el nom del fitxer */
-  var objsBons = (pl.objects||[]).filter(function(x){
-    return x && !/^object_?\d*$/i.test(x) && !/^wipe[_ ]?tower$/i.test(x);
-  });
-  var nom = (!cru && objsBons.length) ? objsBons.slice(0,2).join(", ") : netFitxer;
+  var nom;
+  if(ma){
+    nom = $("r-title").value.trim() || "Impressió a mà";
+  } else {
+    var netFitxer = parsed.fileName.replace(/\.(gcode\.3mf|3mf|gcode)$/i,"");
+    /* el Bambu Studio bateja les peces "Object_1": per títol val més el nom del fitxer */
+    var objsBons = (pl.objects||[]).filter(function(x){
+      return x && !/^object_?\d*$/i.test(x) && !/^wipe[_ ]?tower$/i.test(x);
+    });
+    nom = (!cru && objsBons.length) ? objsBons.slice(0,2).join(", ") : netFitxer;
+    if(!$("r-title").value) $("r-title").value = nom;
+  }
   $("r-name").textContent = nom;
-  if(!$("r-title").value) $("r-title").value = nom;
-
-  var bits=[];
-  if(cru){ bits.push("encara sense calcular — ni temps ni grams"); }
-  else { bits.push(fmtHM(pl.seconds)); bits.push(fmtG(pl.weight||0)); }
-  if(parsed.printer) bits.push(String(parsed.printer));
-  $("r-sub").textContent = bits.join(" · ");
+  $("r-sub").textContent = resumSub(pl, cru);
 
   var bits2=[];
-  if(parsed.modelNames && parsed.modelNames.length && parsed.modelNames.join(", ")!==nom){
-    bits2.push(parsed.modelNames.slice(0,3).join(", "));
+  if(ma){
+    if(pl.totalCapes) bits2.push(pl.totalCapes+" capes");
+    bits2.push("posada a mà, sense fitxer");
+  } else {
+    if(parsed.modelNames && parsed.modelNames.length && parsed.modelNames.join(", ")!==nom){
+      bits2.push(parsed.modelNames.slice(0,3).join(", "));
+    }
+    if(parsed.layerHeight) bits2.push("capa "+parsed.layerHeight+" mm");
+    if(parsed.nozzle) bits2.push("nas "+parsed.nozzle+" mm");
+    bits2.push(parsed.fileName);
   }
-  if(parsed.layerHeight) bits2.push("capa "+parsed.layerHeight+" mm");
-  if(parsed.nozzle) bits2.push("nas "+parsed.nozzle+" mm");
-  bits2.push(parsed.fileName);
   $("r-sub2").textContent = bits2.join(" · ");
 
-  if(parsed.plates.length>1){
+  if(!ma && parsed.plates.length>1){
     $("plates-wrap").hidden=false;
     $("plate-seg").innerHTML = parsed.plates.map(function(p,i){
       return '<button type="button" data-i="'+i+'" aria-pressed="'+(i===plateIdx)+'">Placa '+esc(p.index)+'</button>';
@@ -1388,82 +1655,55 @@ function showResult(){
     });
   } else $("plates-wrap").hidden=true;
 
-  proposaBobines(pl);
   var usats = cru ? pl.filaments.map(function(){ return null; }) : gramsReals(pl);
-  var senseColor=0, senseTria=0, curt=0;
-
   $("fil-list").innerHTML = pl.filaments.map(function(f,i){
-    if(!f.color) senseColor++;
-    var sw = f.color
-      ? '<span class="sw" style="background:'+esc(f.color)+'"></span>'
-      : '<span class="sw sw-none" title="el fitxer no en diu el color"></span>';
-    var etq = [f.type||"?"];
-    if(f.nom) etq.push(String(f.nom).slice(0,34));
-
-    var blocs="";
-    if(invCarregat!==true){
-      blocs='<div class="filmatch"><span class="muted">inventari no carregat</span></div>';
-    } else if(!inventari.length){
-      blocs='<div class="filmatch"><span class="muted">l\'inventari és buit</span></div>';
-    } else {
-      var k=triaBobina[f.slot];
-      if(!k) senseTria++;
-      blocs='<div class="filsel">'+selectBobina(f)+'</div>';
-      var it=invPerKey(k);
-      if(it){
-        var st=invStock(it), g=usats[i], det;
-        if(g==null) det="en tens "+Math.round(st)+" g";
-        else {
-          var queda=st-g;
-          if(queda<0) curt++;
-          det=Math.round(st)+" g → "+Math.round(Math.max(0,queda))+" g"+
-              (queda<0?" · no n'hi ha prou, en falten "+Math.round(-queda):"");
-        }
-        blocs+='<div class="filmatch"><small>'+esc(det)+'</small></div>';
-      }
-    }
-
-    var gTxt = (f.grams==null) ? '—' : fmtG(f.grams);
-    var gSub = "";
-    if(!cru && usats[i]!=null && f.grams!=null && Math.abs(usats[i]-f.grams)>0.05){
-      gSub='<i>se\'n descompten '+fmtG(usats[i])+'</i>';
-    } else if(f.estimat){ gSub='<i>estimat</i>'; }
-
-    return '<div class="filrow">'+sw+'<div class="filmain">'+
-      '<div class="filtop"><b>'+esc(f.color||"sense color")+'</b>'+
-      '<span class="filg">'+gTxt+gSub+'</span></div>'+
-      '<div class="filsub">'+esc(etq.join(" · "))+'</div>'+
-      blocs+'</div></div>';
+    return filaHTML(f,i,usats,cru);
   }).join("");
-
-  Array.prototype.forEach.call($("fil-list").querySelectorAll(".selbob"),function(s){
-    s.onchange=function(){ triaBobina[s.dataset.slot]=s.value; showResult(); };
-  });
-
-  var n=[];
-  if(cru){
-    n.push("Aquests són els filaments que tens carregats al projecte. Quan me'l passis amb els números calculats et diré els grams de cadascun.");
-  } else if(invCarregat===true && inventari.length){
-    if(settings.descompta) n.push("En desar-la, aquests grams surten de les bobines que hi has triat.");
-    else n.push("El descompte automàtic el tens apagat als Ajustos: apunto quina bobina és, però no hi toco els grams.");
-    if(senseTria) n.push(senseTria+" filament"+(senseTria===1?"":"s")+" sense bobina triada — d'aquest"+(senseTria===1?"":"s")+" no descompto res.");
-    /* ha dit que ha fallat pero no ha dit fins on: millor avisar-lo que no pas
-       descomptar la peca sencera o no descomptar res sense dir-ho */
-    if(!resultOk && senseTria<pl.filaments.length && sumaGrams(usats)==null){
-      n.push("<b>Digues fins on va arribar</b> aquí sota i descomptaré només el que s'ha gastat. Si ho deixes en blanc, no toco l'inventari.");
-    }
-    if(curt) n.push("<b>Compte:</b> en "+(curt===1?"una bobina":curt+" bobines")+" no hi ha prou grams apuntats; quedarà a zero i passarà a la llista del que s'ha de demanar.");
-  } else if(invCarregat===false){
-    n.push("No tinc l'inventari carregat, per això no et puc dir quina bobina és. Mira-ho als Ajustos.");
-  }
-  if(senseColor) n.push(senseColor+" filament"+(senseColor===1?"":"s")+" sense color al fitxer.");
-  $("inv-note").innerHTML = n.join(" ");
-
+  lligaPickers();
+  lligaFilesMa(pl);
+  pintaNota(pl, usats, cru);
   renderFallada();
   $("diag-body").textContent = diagText();
 }
+/* els grams i el botó de treure, de les files posades a mà */
+function lligaFilesMa(pl){
+  if(!esMa()) return;
+  Array.prototype.forEach.call($("fil-list").querySelectorAll(".magr"),function(e){
+    e.oninput=function(){
+      var f=null;
+      pl.filaments.forEach(function(x){ if(x.slot===e.dataset.slot) f=x; });
+      if(!f) return;
+      var v=parseFloat(String(e.value).replace(",","."));
+      f.grams = (isFinite(v) && v>=0) ? Math.round(v*100)/100 : null;
+      actualitzaMa(pl);
+    };
+  });
+  Array.prototype.forEach.call($("fil-list").querySelectorAll("[data-treu]"),function(b){
+    b.onclick=function(){
+      if(pl.filaments.length<2){ toast("Almenys n'hi ha d'haver un"); return; }
+      var s=b.dataset.treu;
+      pl.filaments=pl.filaments.filter(function(x){ return x.slot!==s; });
+      delete triaBobina[s]; delete picFiltre[s];
+      if(picObert===s) picObert=null;
+      showResult();
+    };
+  });
+}
+/* Refresco només el que depèn dels grams. Si repintés la llista a cada tecla,
+   el camp perdria el focus. */
+function actualitzaMa(pl){
+  sincronitzaMa();
+  var usats=gramsReals(pl);
+  pl.filaments.forEach(function(f,i){
+    var e=$("q-"+f.slot);
+    if(e) e.textContent=textQueda(f,usats[i]);
+  });
+  $("r-sub").textContent=resumSub(pl,false);
+  pintaNota(pl,usats,false);
+  renderFallada();
+  $("diag-body").textContent=diagText();
+}
 
-/* ---------------- fins on va arribar una impressio fallida ---------------- */
 function renderFallada(){
   var pl=currentPlate();
   $("w-capa").hidden  = failMode!=="capa";
@@ -1475,7 +1715,9 @@ function renderFallada(){
   var e=$("fail-calc");
   if(!e || !pl) return;
   if(failMode==="capa" && !pl.totalCapes){
-    e.innerHTML = "Aquest fitxer no em diu quantes capes té, així que per capa no et puc calcular res. Fes-ho pel tant per cent o pesa el tros.";
+    e.innerHTML = esMa()
+      ? "Per capa em fa falta saber quantes capes tenia en total: posa-ho a dalt, o fes-ho pel tant per cent o pesa el tros."
+      : "Aquest fitxer no em diu quantes capes té, així que per capa no et puc calcular res. Fes-ho pel tant per cent o pesa el tros.";
     return;
   }
   var total=sumaGrams(pl.filaments.map(function(f){ return f.grams==null?null:f.grams; }));
@@ -1495,7 +1737,7 @@ function renderFallada(){
   e.textContent = txt;
 }
 function diagText(){
-  var o={ fitxer:parsed.fileName, bytes:parsed.bytes, origen:parsed.source,
+  var o={ fitxer:parsed.fileName||"(posada a mà)", bytes:parsed.bytes, origen:parsed.source,
           impressora:parsed.printer||null, capa:parsed.layerHeight||null, nas:parsed.nozzle||null,
           plaques:parsed.plates.map(function(p){
             return { index:p.index, segons:p.seconds, pes:p.weight,
@@ -1579,7 +1821,13 @@ Array.prototype.forEach.call($("fail-mode").querySelectorAll("button"),function(
 /* ---------------- desar al registre ---------------- */
 function savePrint(){
   var pl=currentPlate();
-  if(!pl){ toast("Primer llegeix un fitxer"); return; }
+  if(!pl){ toast(mode==="ma"?"Primer posa-hi les dades":"Primer llegeix un fitxer"); return; }
+  sincronitzaMa();
+  if(esMa()){
+    var ambG=pl.filaments.filter(function(f){ return f.grams!=null && f.grams>0; });
+    if(!ambG.length){ toast("Posa-hi els grams d'almenys un filament"); return; }
+    if(!$("r-title").value.trim()){ toast("Posa-li un nom per trobar-la després"); return; }
+  }
   var usats=gramsReals(pl);
   var movs = settings.descompta ? movimentsDe(pl) : [];
   var atur=null;
@@ -1644,15 +1892,37 @@ function savePrint(){
   });
 }
 function clearRead(){
-  parsed=null; plateIdx=0; triaBobina={};
+  parsed=null; plateIdx=0; triaBobina={}; picObert=null; picFiltre={};
   $("result").hidden=true;
+  $("ma-add-wrap").hidden=true;
   $("read-status").textContent="";
   $("r-title").value=""; $("r-notes").value=""; $("r-failwhy").value="";
   $("f-capa").value=""; $("f-pct").value=""; $("f-grams").value="";
+  $("m-h").value=""; $("m-min").value=""; $("m-printer").value=""; $("m-capes").value="";
   failMode="capa";
   setResultOk(true);
-  renderFallada();
+  if(mode==="ma"){ creaManual(); showResult(); }
+  else renderFallada();
 }
+Array.prototype.forEach.call($("mode-seg").querySelectorAll("button"),function(b){
+  b.onclick=function(){ if(mode!==b.dataset.m) setMode(b.dataset.m); };
+});
+$("ma-add").onclick=function(){
+  var pl=currentPlate();
+  if(!pl || !esMa()) return;
+  if(pl.filaments.length>=8){ toast("Vuit filaments ja són molts"); return; }
+  pl.filaments.push(filamentNouMa());
+  showResult();
+};
+["m-h","m-min","m-printer","m-capes"].forEach(function(id){
+  $(id).addEventListener("input",function(){
+    var pl=currentPlate();
+    if(pl && esMa()) actualitzaMa(pl);
+  });
+});
+$("r-title").addEventListener("input",function(){
+  if(esMa()) $("r-name").textContent = $("r-title").value.trim() || "Impressió a mà";
+});
 $("save-print").onclick=savePrint;
 $("clear-read").onclick=clearRead;
 $("copy-press").onclick=function(){
@@ -1678,11 +1948,9 @@ $("fes-press").onclick=function(){
   if(!pl){ toast("Primer llegeix un fitxer"); return; }
   var titol = $("r-title").value.trim() || $("r-name").textContent || "";
   var linies = pl.filaments.filter(function(f){ return (f.grams||0)>0; }).map(function(f){
-    var nom=f.color||"filament";
-    if(invCarregat===true && f.color){
-      var m=matchSpool(f.color, f.type);
-      if(m && m.dist<=settings.tol) nom=invNom(m.item);
-    }
+    /* el nom surt de la bobina que has triat tu; si no n'hi ha cap, del color */
+    var it=invPerKey(triaBobina[f.slot]);
+    var nom = it ? invNom(it) : (f.color || "filament");
     return "· "+nom+" — "+(Math.round((f.grams||0)*10)/10).toFixed(1).replace(".",",")+" g";
   });
   var dades={
@@ -1691,10 +1959,10 @@ $("fes-press").onclick=function(){
     segons: Math.round(pl.seconds||0),
     grams: pl.weight||0,
     peces: 1,
-    notes: "Del registre d'impressions · "+parsed.fileName+
+    notes: "Del registre d'impressions · "+(parsed.fileName||"posada a mà")+
            (parsed.printer?" · "+parsed.printer:"")+
            (linies.length>1 ? "\n"+linies.join("\n") : ""),
-    resum: "Vingut del registre d'impressions: "+(titol||parsed.fileName)+" · "+
+    resum: "Vingut del registre d'impressions: "+(titol||parsed.fileName||"impressió a mà")+" · "+
            fmtHM(pl.seconds)+" · "+fmtG(pl.weight||0)+
            (pl.filaments.length>1?" · "+pl.filaments.length+" colors":"")+
            ". Revisa les peces i el preu del material."
@@ -1865,29 +2133,13 @@ $("d-del").onclick=function(){
 };
 
 /* ---------------- ajustos ---------------- */
-function tolLabel(){
-  var t=settings.tol;
-  return t<=7 ? "molt estricte — només colors gairebé idèntics"
-       : t<=12 ? "normal — tons molt propers"
-       : t<=20 ? "tolerant — accepta variacions de to"
-       : "molt tolerant — pot encertar la bobina equivocada";
-}
 function fillSettings(){
-  $("s-tol").value=settings.tol;
-  $("s-tol-val").textContent=settings.tol+" · "+tolLabel();
   $("d-pla").value=settings.dens.PLA; $("d-petg").value=settings.dens.PETG; $("d-abs").value=settings.dens.ABS;
   $("d-tpu").value=settings.dens.TPU; $("d-pa").value=settings.dens.PA; $("d-diam").value=settings.diam;
   $("s-descompta").checked = settings.descompta!==false;
 }
 $("s-descompta").addEventListener("change",function(){
   settings.descompta=!!this.checked;
-  saveLocal();
-  if(typeof scheduleDriveSave==="function") scheduleDriveSave();
-  if(parsed) showResult();
-});
-$("s-tol").addEventListener("input",function(){
-  settings.tol=Math.round(num(this.value))||12;
-  $("s-tol-val").textContent=settings.tol+" · "+tolLabel();
   saveLocal();
   if(typeof scheduleDriveSave==="function") scheduleDriveSave();
   if(parsed) showResult();
