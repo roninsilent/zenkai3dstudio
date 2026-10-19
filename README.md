@@ -13,7 +13,6 @@ compte amb què inicies sessió.
 | `pressupost.html` | Pressupost d'impressió 3D |
 | `collabs.html` | Col·laboracions amb marques |
 | `instagram.html` | Instagram dia a dia: reels, abast i seguidors (només llegeix) |
-| `factures.html` | Factures de casa: llum, aigua i telèfon (només llegeix) |
 | `.nojekyll` | Perquè GitHub Pages no toqui res |
 
 Pugeu-los tots al mateix repositori, al mateix nivell.
@@ -75,13 +74,6 @@ l'omple.
 
 ## Factures de casa
 
-`factures.html` tampoc no hi escriu res: llegeix `zenkai3d-factures.json` del
-mateix Drive. Les dades no són al repositori (que és públic): l'adreça, els
-imports i els enllaços als PDF només viuen en aquest fitxer.
-
-Com que l'app només té permís `drive.file`, només veu el fitxer si l'ha creat
-ella. El primer cop que l'obres en crea un de buit; qui actualitzi les factures
-ha d'escriure a **totes** les còpies que es diguin `zenkai3d-factures.json`.
-
-Cada dilluns al matí una tasca programada de Claude busca factures noves al
-correu (via Composio), en desa el PDF al Drive i actualitza totes les còpies.
+Han marxat a **[roninsilent/solell](https://github.com/roninsilent/solell)**:
+són de casa i aquí no hi pintaven res. L'app d'allà entra amb
+roninsilent@gmail.com i llegeix `solell-factures.json`.
