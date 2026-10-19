@@ -280,6 +280,26 @@ nav::-webkit-scrollbar{display:none}
   color:var(--ink-soft);background:transparent;border:0;border-top:1px solid var(--line);text-align:left}
 .picknone:hover{color:var(--brand-orange)}
 
+/* ---- hi arribara o no ---- */
+.estoc{border:1px solid var(--line);border-left:3px solid var(--line-strong);border-radius:var(--r);
+  padding:13px 15px;margin:16px 0 0;display:flex;flex-direction:column;gap:7px}
+.estoc.e-be{border-color:var(--good);border-left-color:var(--good);background:rgba(63,125,76,.07)}
+.estoc.e-just,.estoc.e-canvi{border-color:var(--brand-orange);border-left-color:var(--brand-orange);
+  background:rgba(230,115,36,.08)}
+.estoc.e-curt{border-color:var(--alert);border-left-color:var(--alert);background:rgba(196,54,43,.08)}
+.etitol{font-size:14.5px}
+.estoc.e-be .etitol{color:var(--good)}
+.estoc.e-curt .etitol{color:var(--alert)}
+.ecua{font-size:12.5px;line-height:1.5;color:var(--ink-soft)}
+.ellista{list-style:none;margin:2px 0;padding:0;display:flex;flex-direction:column;gap:7px}
+.ebob{display:flex;align-items:flex-start;gap:9px;font-size:13px;line-height:1.35}
+.ebob>span{min-width:0}
+.ebob b{font-weight:600;display:block;overflow-wrap:anywhere}
+.ebob small{display:block;font-size:11.5px;color:var(--ink-soft);margin-top:1px;overflow-wrap:anywhere}
+.ebob small b{display:inline;font-weight:700;color:var(--ink)}
+.ebob .sw{margin-top:3px}
+.e-curt small b,.e-canvi small b{color:var(--alert)}
+
 /* ---- files posades a ma ---- */
 .filrow input.magr{width:78px;font:inherit;font-size:14px;font-weight:700;text-align:right;padding:5px 7px;
   border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);color:var(--ink);
@@ -365,7 +385,7 @@ input[type=range]{width:100%;accent-color:var(--brand-blue)}
     <button class="btn" id="acct-signout">Tanca sessió</button>
   </div>
   <h1>Registre d'impressions</h1>
-  <p class="sub">Amb el fitxer del slicer o posant-ho a mà: els grams de cada filament surten de la bobina que tries de l'inventari. <span class="ver">v7 · amb fitxer o a mà</span></p>
+  <p class="sub">Amb el fitxer del slicer o posant-ho a mà: els grams de cada filament surten de la bobina que tries de l'inventari. <span class="ver">v8 · t'avisa si et falta filament</span></p>
 </header>
 
 <div class="navwrap"><nav role="tablist">
@@ -431,6 +451,7 @@ input[type=range]{width:100%;accent-color:var(--brand-blue)}
     <div class="toolbar" id="ma-add-wrap" hidden style="margin:12px 0 0">
       <button class="btn" id="ma-add">Afegeix un filament</button>
     </div>
+    <div id="estoc-box" hidden></div>
     <p class="hint" id="inv-note"></p>
 
     <div class="card">
@@ -1435,6 +1456,91 @@ function aplicaInventariAra(moviments, signe){
     });
 }
 
+/* ---------------- hi arribarà o es plantarà a mitges? ---------------- */
+/* Miro la bobina OBERTA, no l'estoc total: amb 40 g oberts i tres bobines
+   precintades l'estoc diu 3040 g, però la impressió es plantarà als 40 g si no
+   ets tu qui la canvia a mitja feina. I compto la peça sencera encara que
+   hagis marcat que ha fallat: la pregunta és si hi arribaria. */
+var MARGE_JUST = 25;   /* g de coixí per sota dels quals ho dono per just */
+
+function comprovaEstoc(pl){
+  if(invCarregat!==true || !inventari.length || !pl) return null;
+  var per={}, ordre=[];
+  pl.filaments.forEach(function(f){
+    var k=triaBobina[f.slot];
+    if(!k || f.grams==null || !(f.grams>0)) return;
+    var it=invPerKey(k); if(!it) return;
+    if(!per[k]){
+      var q=invQty(it);
+      per[k]={ it:it, nom:invNom(it), cal:0, nominal:invNominal(it),
+               obert:(q>0 ? (Number(it.pes_restant_g)||0) : 0),
+               precintades:Math.max(0,q-1) };
+      ordre.push(k);
+    }
+    per[k].cal += f.grams;
+  });
+  if(!ordre.length) return null;
+  var ordrePes={ be:0, just:1, canvi:2, curt:3 }, pitjor="be";
+  var files=ordre.map(function(k){
+    var b=per[k];
+    b.cal=Math.round(b.cal*100)/100;
+    b.queda=Math.round((b.obert-b.cal)*100)/100;
+    b.total=b.obert + b.precintades*b.nominal;
+    b.falta=Math.round((b.cal-b.obert)*100)/100;
+    b.faltaTot=Math.round((b.cal-b.total)*100)/100;
+    b.estat = (b.cal<=b.obert) ? (b.queda<MARGE_JUST ? "just" : "be")
+            : (b.cal<=b.total ? "canvi" : "curt");
+    if(ordrePes[b.estat]>ordrePes[pitjor]) pitjor=b.estat;
+    return b;
+  });
+  return { estat:pitjor, files:files };
+}
+function pintaEstoc(pl, cru){
+  var box=$("estoc-box");
+  if(!box) return;
+  var v = cru ? null : comprovaEstoc(pl);
+  if(!v){ box.hidden=true; box.innerHTML=""; return; }
+  box.hidden=false;
+
+  var titol, cua="";
+  if(v.estat==="be"){
+    var menys=null;
+    v.files.forEach(function(b){ if(menys==null || b.queda<menys) menys=b.queda; });
+    titol = v.files.length===1 ? "Sí, hi arribes." : "Sí, hi arribes amb totes.";
+    cua = "Després d'imprimir-la, a la bobina més justa li quedaran "+fmtG(menys)+".";
+  } else if(v.estat==="just"){
+    titol = "Hi arribes, però just.";
+    cua = "El pes que tens apuntat a l'inventari és a ull: si falla una mica, et pots quedar a mitges. Val més pesar la bobina abans de començar.";
+  } else if(v.estat==="canvi"){
+    titol = "A la bobina oberta no li arriba.";
+    cua = "En tens de precintades, però l'hauràs de canviar tu a mitja impressió. Si la impressora no t'avisa que s'ha acabat el filament, la peça es farà malbé.";
+  } else {
+    titol = "No en tens prou.";
+    cua = "Amb el que tens apuntat no s'acabarà. Demana'n o tria una altra bobina.";
+  }
+
+  var files=v.files.map(function(b){
+    var txt;
+    if(b.estat==="curt"){
+      txt = "en calen "+fmtG(b.cal)+" i en tens "+fmtG(b.total)+
+            " · <b>et falten "+fmtG(b.faltaTot)+"</b>";
+    } else if(b.estat==="canvi"){
+      txt = "en calen "+fmtG(b.cal)+" i a l'oberta n'hi ha "+fmtG(b.obert)+
+            " · <b>li falten "+fmtG(b.falta)+"</b>, i en tens "+b.precintades+
+            " de precintad"+(b.precintades===1?"a":"es");
+    } else {
+      txt = "en calen "+fmtG(b.cal)+" de "+fmtG(b.obert)+" · queden "+fmtG(b.queda);
+      if(b.precintades) txt += " (i "+b.precintades+" de precintad"+(b.precintades===1?"a":"es")+")";
+    }
+    return '<li class="ebob e-'+b.estat+'">'+swatchDe(b.it)+
+           '<span><b>'+esc(b.nom)+'</b><small>'+txt+'</small></span></li>';
+  }).join("");
+
+  box.className="estoc e-"+v.estat;
+  box.innerHTML='<b class="etitol">'+esc(titol)+'</b><ul class="ellista">'+files+'</ul>'+
+                '<span class="ecua">'+cua+'</span>';
+}
+
 /* ---------------- pintar el resultat ---------------- */
 function esMa(){ return !!(parsed && parsed.source==="ma"); }
 
@@ -1496,10 +1602,13 @@ function currentPlate(){
 function textQueda(f, usat){
   var it=invPerKey(triaBobina[f.slot]);
   if(!it) return "";
-  var st=invStock(it);
-  if(usat==null) return "en tens "+Math.round(st)+" g";
+  var st=invStock(it), q=invQty(it);
+  /* amb més d'una bobina dic de quantes és el total: si no, 2040 g sembla que
+     estiguin tots a la bobina oberta, i el bloc de sota diu el contrari */
+  var dequantes = q>1 ? " en "+q+" bobines" : "";
+  if(usat==null) return "en tens "+Math.round(st)+" g"+dequantes;
   var queda=st-usat;
-  return Math.round(st)+" g → "+Math.round(Math.max(0,queda))+" g"+
+  return Math.round(st)+" g"+dequantes+" → "+Math.round(Math.max(0,queda))+" g"+
          (queda<0 ? " · no n'hi ha prou, en falten "+Math.round(-queda) : "");
 }
 function resumSub(pl, cru){
@@ -1540,7 +1649,8 @@ function pintaNota(pl, usats, cru){
     if(!resultOk && senseTria<pl.filaments.length && sumaGrams(usats)==null){
       n.push("<b>Digues fins on va arribar</b> aquí sota i descomptaré només el que s'ha gastat. Si ho deixes en blanc, no toco l'inventari.");
     }
-    if(curt) n.push("<b>Compte:</b> en "+(curt===1?"una bobina":curt+" bobines")+" no hi ha prou grams apuntats; quedarà a zero i passarà a la llista del que s'ha de demanar.");
+    /* del que falta ja en parla el bloc de dalt: aquí no ho repeteixo */
+    if(curt) n.push("Les bobines que es quedin a zero passaran a la llista del que s'ha de demanar.");
   }
   if(senseColor) n.push(senseColor+" filament"+(senseColor===1?"":"s")+" sense color al fitxer.");
   $("inv-note").innerHTML = n.join(" ");
@@ -1661,6 +1771,7 @@ function showResult(){
   }).join("");
   lligaPickers();
   lligaFilesMa(pl);
+  pintaEstoc(pl, cru);
   pintaNota(pl, usats, cru);
   renderFallada();
   $("diag-body").textContent = diagText();
@@ -1699,6 +1810,7 @@ function actualitzaMa(pl){
     if(e) e.textContent=textQueda(f,usats[i]);
   });
   $("r-sub").textContent=resumSub(pl,false);
+  pintaEstoc(pl,false);
   pintaNota(pl,usats,false);
   renderFallada();
   $("diag-body").textContent=diagText();
@@ -1895,6 +2007,7 @@ function clearRead(){
   parsed=null; plateIdx=0; triaBobina={}; picObert=null; picFiltre={};
   $("result").hidden=true;
   $("ma-add-wrap").hidden=true;
+  $("estoc-box").hidden=true; $("estoc-box").innerHTML="";
   $("read-status").textContent="";
   $("r-title").value=""; $("r-notes").value=""; $("r-failwhy").value="";
   $("f-capa").value=""; $("f-pct").value=""; $("f-grams").value="";
