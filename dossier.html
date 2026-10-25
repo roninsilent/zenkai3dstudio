@@ -105,6 +105,11 @@ footer{margin-top:40px;font-size:12px;color:var(--ink-soft)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
 .lang{margin-left:auto;display:inline-flex;border:1px solid var(--line-strong);border-radius:20px;overflow:hidden;background:var(--surface);flex:none}
+.lang button[lang="zh-Hans"]{letter-spacing:0;font-size:13px;min-width:42px}
+@media(max-width:560px){
+  .brandbar{flex-wrap:wrap}
+  .lang{margin-left:0;order:3;width:100%;justify-content:space-between;margin-top:10px}
+  .lang button{flex:1;min-width:0;padding:7px 4px}}
 .lang button{font:inherit;font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--ink-soft);background:none;border:0;
   padding:5px 10px;cursor:pointer;min-width:38px}
 .lang button+button{border-left:1px solid var(--line)}
@@ -112,7 +117,7 @@ footer{margin-top:40px;font-size:12px;color:var(--ink-soft)}
 .lang button:hover{color:var(--ink)}
 .lang button[aria-pressed="true"]:hover{color:var(--paper)}
 .lang button:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
-@media(max-width:420px){.brandname{display:none}}
+
 
 .aff{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
 .affc{border:1px solid var(--line);border-left:3px solid var(--brand-orange);border-radius:var(--r);background:var(--surface);
@@ -171,6 +176,8 @@ footer{margin-top:40px;font-size:12px;color:var(--ink-soft)}
       <button type="button" data-l="es" lang="es" title="Español">ES</button>
       <button type="button" data-l="ca" lang="ca" title="Català">CA</button>
       <button type="button" data-l="de" lang="de" title="Deutsch">DE</button>
+      <button type="button" data-l="pt" lang="pt" title="Português">PT</button>
+      <button type="button" data-l="zh" lang="zh-Hans" title="中文">中文</button>
     </div>
   </div>
   <h1 data-h="h1"></h1>
@@ -335,6 +342,64 @@ var T = {
     byCountry: "Seguidors per país", byAge: "Seguidors per edat", cases: "Col·laboracions amb marques", watch: "visualitzacions",
     viewsW: "visualitzacions"
   },
+  pt: {
+    title: "Zenkai3D Studio · Mídia kit",
+    h1: "Figuras de cultura pop, <em>impressas e pintadas</em> em vídeo.",
+    lede: "Vídeos verticais curtos que levam uma impressão 3D da mesa de impressão até a peça pintada e pronta. Sobretudo anime, jogos e cinema.",
+    cta: "Vamos trabalhar juntos", subject: "Colaboração com o Zenkai3D Studio",
+    state: "Os números estão sendo atualizados. Tente daqui a um minuto ou escreva para " + MAIL + " que eu mando na hora.",
+    audience: "Audiência", top: "Reels em destaque, últimos 12 meses", brands: "Marcas com que já trabalhei",
+    prizes: "Premiado em <b>{n}</b> concursos de impressão 3D e de design.",
+    codes: "Códigos de desconto", codesHint: "Lojas onde eu mesmo compro. Comprar por estes links garante o desconto e ajuda o canal.",
+    copy: "Copiar código", copied: "Copiado", shop: "Ir à loja",
+    off: function (p, first) { return p + " % de desconto" + (first ? " no primeiro pedido" : ""); },
+    collab: "Como é uma colaboração",
+    o1t: "Seu material numa peça de verdade", o1: "Filamento ou resina usados numa figura completa, do fatiamento à pintura, com o material citado no vídeo e na legenda.",
+    o2t: "Máquinas novas, colocadas para trabalhar", o2: "Unboxing, montagem e primeiras impressões de uma impressora ou acessório, filmados no estúdio.",
+    o3t: "Um vídeo, três redes", o3: "Os reels saem também no TikTok e como YouTube Shorts.",
+    o4t: "Códigos e links", o4: "Códigos de desconto ou de afiliado na legenda e no link da bio.",
+    contact: "Contato", contactLine: "Tem um material, uma máquina ou um modelo que gostaria de ver impresso? Me escreva.",
+    footer: "Os números são atualizados todas as segundas-feiras com dados do Instagram, do TikTok e do YouTube.", upd: "Última atualização: {d}.",
+    igF: "Seguidores no Instagram", views12: "Visualizações nos últimos 12 meses", reelsN: "{n} reels",
+    medV: "Mediana de visualizações por reel", medR: "Mediana de alcance {n}",
+    eng: "Taxa de interação", engS: "Curtidas, comentários, compartilhamentos e salvamentos sobre o alcance",
+    shares: "Compartilhamentos por reel", avg: "Média",
+    ttF: "Seguidores no TikTok", ttMed: "Mediana de {n} visualizações por vídeo",
+    ytS: "Inscritos no YouTube", ytSh: "YouTube Shorts", shortsN: "{n} Shorts",
+    statsFoot: "As medianas, a interação e os compartilhamentos cobrem reels publicados entre uma semana e três meses atrás, para que uma publicação muito nova ou muito antiga não distorça os números.",
+    models: "Meus modelos", modelsHint: "Também modelo figuras e publico para outras pessoas imprimirem.", nModels: "{n} modelos", nFollowers: "{n} seguidores", nLikes: "{n} curtidas", profile: "Ver perfil",
+    byCountry: "Seguidores por país", byAge: "Seguidores por idade", cases: "Colaborações com marcas", watch: "visualizações",
+    viewsW: "visualizações"
+  },
+  zh: {
+    title: "Zenkai3D Studio · 媒体资料",
+    h1: "流行文化手办，<em>现场打印与上色</em>。",
+    lede: "竖屏短视频，把一件 3D 打印作品从热床一路做到上色完成的成品。题材以动漫、游戏和电影为主。",
+    cta: "合作洽谈", subject: "与 Zenkai3D Studio 合作",
+    state: "数据正在更新。请过一分钟再试，或者写信到 " + MAIL + "，我直接发给你。",
+    audience: "受众", top: "近 12 个月的热门视频", brands: "合作过的品牌",
+    prizes: "在 <b>{n}</b> 项 3D 打印与设计比赛中获奖。",
+    codes: "优惠码", codesHint: "我自己也在这些店买东西。通过这些链接下单，你能拿到折扣，也等于支持这个频道。",
+    copy: "复制优惠码", copied: "已复制", shop: "前往店铺",
+    off: function (p, first) { return (first ? "首单" : "") + "立减 " + p + "%"; },
+    collab: "合作方式",
+    o1t: "你的材料，用在真实作品上", o1: "线材或光敏树脂用在一件完整的手办上，从切片到上色，视频中和文案中都会写明材料名称。",
+    o2t: "新机器，真正上手", o2: "打印机或配件的开箱、组装和首件打印，在工作室实拍。",
+    o3t: "一条视频，三个平台", o3: "Reels 会同步发布到 TikTok 和 YouTube Shorts。",
+    o4t: "优惠码与链接", o4: "优惠码或联盟链接放在文案里和主页链接里。",
+    contact: "联系方式", contactLine: "有材料、机器或模型想看它被打印出来吗？给我留言。",
+    footer: "数据每周一根据 Instagram、TikTok 和 YouTube 的后台更新。", upd: "最近更新：{d}。",
+    igF: "Instagram 粉丝", views12: "近 12 个月播放量", reelsN: "{n} 条视频",
+    medV: "每条视频播放量中位数", medR: "触达中位数 {n}",
+    eng: "互动率", engS: "点赞、评论、分享和收藏除以触达",
+    shares: "每条视频分享数", avg: "平均",
+    ttF: "TikTok 粉丝", ttMed: "每条视频播放量中位数 {n}",
+    ytS: "YouTube 订阅", ytSh: "YouTube Shorts", shortsN: "{n} 条 Shorts",
+    statsFoot: "中位数、互动率和分享数统计的是一周前到三个月前发布的视频，这样太新或太旧的内容不会影响结果。",
+    models: "我的模型", modelsHint: "我也自己设计手办，并发布出来供别人打印。", nModels: "{n} 个模型", nFollowers: "{n} 位关注者", nLikes: "{n} 个赞", profile: "查看主页",
+    byCountry: "粉丝国家分布", byAge: "粉丝年龄分布", cases: "品牌合作", watch: "次播放",
+    viewsW: "次播放"
+  },
   de: {
     title: "Zenkai3D Studio · Mediakit",
     h1: "Popkultur-Figuren, <em>gedruckt und bemalt</em> vor der Kamera.",
@@ -365,8 +430,8 @@ var T = {
     viewsW: "Aufrufe"
   }
 };
-var LOC = { en: "en-GB", es: "es-ES", ca: "ca-ES", de: "de-DE" };
-var LANGS = ["en", "es", "ca", "de"], KEY = "zenkai_dossier_lang";
+var LOC = { en: "en-GB", es: "es-ES", ca: "ca-ES", de: "de-DE", pt: "pt-BR", zh: "zh-CN" };
+var LANGS = ["en", "es", "ca", "de", "pt", "zh"], KEY = "zenkai_dossier_lang";
 var $ = function (id) { return document.getElementById(id); };
 var esc = function (t) { return String(t == null ? "" : t).replace(/[&<>"]/g, function (c) {
   return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
