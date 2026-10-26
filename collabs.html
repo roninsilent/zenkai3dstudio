@@ -530,6 +530,7 @@ nav::-webkit-scrollbar{display:none}
     </label>
     <label class="f">Estat
       <select id="ig-estat">
+        <option value="enviada">Proposta enviada — espero resposta</option>
         <option value="proposta">Proposta rebuda</option>
         <option value="acceptada">Acceptada</option>
         <option value="producte">Esperant el producte</option>
@@ -590,6 +591,7 @@ nav::-webkit-scrollbar{display:none}
       <label class="f">Estat
         <select id="e-estat">
           <option value="obert">Concurs obert</option>
+          <option value="enviada">Proposta enviada — espero resposta</option>
           <option value="proposta">Proposta rebuda</option>
           <option value="acceptada">Acceptada</option>
           <option value="producte">Esperant el producte</option>
@@ -648,7 +650,8 @@ var editingId=null;
 var edEntregables=[], edRebuts=[], edFitxers=[];
 
 var ESTATS = {
-  obert:"Concurs obert", proposta:"Proposta rebuda", acceptada:"Acceptada", producte:"Esperant el producte",
+  obert:"Concurs obert", enviada:"Proposta enviada", proposta:"Proposta rebuda",
+  acceptada:"Acceptada", producte:"Esperant el producte",
   produccio:"En producció", revisio:"Enviat a revisió", publicat:"Publicat",
   cobrat:"Cobrat", descartada:"Descartada"
 };
@@ -816,7 +819,7 @@ function passaFiltre(c, q, f, ft){
 function visible(){
   var q=$("q").value.trim().toLowerCase(), f=$("f-estat").value, ft=$("f-tipus").value;
   var list=collabs.filter(function(c){ return !esConcurs(c) && !isTancat(c) && passaFiltre(c, q, f, ft); });
-  var order = ["obert","produccio","revisio","producte","acceptada","proposta","publicat"];
+  var order = ["obert","produccio","revisio","producte","acceptada","proposta","publicat","enviada"];
   list.sort(function(a,b){
     var da=order.indexOf(a.estat), db=order.indexOf(b.estat);
     if(da!==db) return da-db;
@@ -1725,7 +1728,7 @@ function calculaSeguiment(){
     if((c.estat==="publicat"||c.estat==="cobrat") && totFet && !S.tancatEl){
       r.tancar.push({c:c, tipus:"tancar"});
     }
-    if(c.estat==="proposta"){
+    if(c.estat==="proposta" || c.estat==="enviada"){
       var desde = S.recordatEl || c.creat;
       var d = diesDes(desde);
       if(d!=null && d >= (plantilles.dies||14)) r.recordar.push({c:c, tipus:"recordar", dies:d});
@@ -1757,7 +1760,8 @@ function fitxaSeg(it){
     perque = "Has entregat "+(ne===1?"l'únic compromís":"els "+ne+" compromisos")+" i la col·laboració consta com a "+(ESTATS[c.estat]||c.estat).toLowerCase()+".";
   } else if(t==="recordar"){
     as = omple(plantilles.recordarAs, c, {dies:it.dies}); cos = omple(plantilles.recordarCos, c, {dies:it.dies});
-    perque = "Proposta sense resposta des de fa "+it.dies+(it.dies===1?" dia":" dies")+".";
+    perque = "Proposta "+(c.estat==="enviada"?"enviada":"rebuda")+" i sense resposta des de fa "+
+             it.dies+(it.dies===1?" dia":" dies")+".";
   } else if(t==="revisitar"){
     as = omple(plantilles.revisitarAs, c); cos = omple(plantilles.revisitarCos, c);
     perque = "Vas apuntar de tornar-hi el "+c.tornarEl+(c.tornarMotiu?" — "+c.tornarMotiu:"")+".";
