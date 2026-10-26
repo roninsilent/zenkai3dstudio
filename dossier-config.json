@@ -9,6 +9,18 @@
  ],
  "perfils": [
   {
+   "nom": "Meshy",
+   "url": "https://www.meshy.ai/@zenkai3dstudio",
+   "nota": {
+    "en": "Original 3D prints. Fan art and functional designs, new ones every week.",
+    "es": "Impresiones 3D originales. Fan art y diseños funcionales, cada semana uno nuevo.",
+    "ca": "Impressions 3D originals. Fan art i dissenys funcionals, cada setmana un de nou.",
+    "de": "Originale 3D-Drucke. Fan-Art und funktionale Designs, jede Woche neue.",
+    "pt": "Impressões 3D originais. Fan art e designs funcionais, toda semana um novo.",
+    "zh": "原创 3D 打印作品。同人手办与实用设计，每周更新。"
+   }
+  },
+  {
    "nom": "MakerWorld",
    "url": "https://makerworld.com/en/@zenkai3dstudio",
    "models": 82,
@@ -50,7 +62,9 @@
     "en": "Turn text or images into 3D models with AI. Every purchase through this link gives the channel a 20% commission for 12 months.",
     "es": "Convierte texto o imágenes en modelos 3D con IA. Cada compra desde este enlace da al canal un 20 % de comisión durante 12 meses.",
     "ca": "Converteix text o imatges en models 3D amb IA. Cada compra des d'aquest enllaç dona al canal un 20 % de comissió durant 12 mesos.",
-    "de": "Verwandelt Text oder Bilder per KI in 3D-Modelle. Jeder Kauf über diesen Link bringt dem Kanal 12 Monate lang 20 % Provision."
+    "de": "Verwandelt Text oder Bilder per KI in 3D-Modelle. Jeder Kauf über diesen Link bringt dem Kanal 12 Monate lang 20 % Provision.",
+    "pt": "Transforme texto ou imagens em modelos 3D com IA. Cada compra por este link dá ao canal 20% de comissão durante 12 meses.",
+    "zh": "用 AI 把文字或图片变成 3D 模型。通过此链接的每笔购买，频道可获得 12 个月 20% 的佣金。"
    }
   }
  ]

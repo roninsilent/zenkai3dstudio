@@ -102,6 +102,15 @@ input[type=search]{flex:1 1 190px;min-width:0}
 .badge.t-hardware{color:var(--ink);border-color:var(--ink-soft);background:color-mix(in srgb,var(--ink) 6%,transparent)}
 .badge.t-concurs{color:var(--good);border-color:var(--good);background:color-mix(in srgb,var(--good) 10%,transparent)}
 .tipusline{margin-top:4px}
+/* els concursos: el que compta és quants dies queden, no l'estat */
+.cgrup{margin:28px 0 0}
+.cgrup:first-child{margin-top:4px}
+.cgrup>h3{margin:0 0 3px;font-size:15px}
+.cgrup>h3 .quants{font-weight:400;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.cgrup.apagat .collab-row{opacity:.6}
+.dies{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.03em;padding:2px 8px;border-radius:20px;border:1px solid var(--line-strong);color:var(--ink-soft);white-space:nowrap}
+.dies.aviat{color:var(--paper);background:var(--brand-orange);border-color:var(--brand-orange)}
+.dies.avui{color:var(--paper);background:var(--alert);border-color:var(--alert)}
 .thumbs{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 0}
 .thumb{position:relative;width:74px;height:110px;border:1px solid var(--line-strong);border-radius:var(--r);overflow:hidden;background:var(--paper)}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
@@ -326,11 +335,12 @@ nav::-webkit-scrollbar{display:none}
     <button class="btn" id="acct-signout">Tanca sessió</button>
   </div>
   <h1>Col·laboracions</h1>
-  <p class="sub">Cada marca amb el seu propi projecte: què t'han enviat, què els deus i què falta. <span class="ver">v3 · seguiment de correus</span></p>
+  <p class="sub">Cada marca amb el seu propi projecte: què t'han enviat, què els deus i què falta. <span class="ver">v4 · concursos a part</span></p>
   <div class="stats">
     <span><b id="t-actives">0</b> actives</span>
     <span><b id="t-pendents">0</b> accions pendents</span>
     <span><b id="t-cobrar">0</b> per cobrar</span>
+    <span><b id="t-concursos">0</b> concursos oberts</span>
     <span><b id="t-seguiment">0</b> esperen correu</span>
     <span class="spacer"></span>
     <button class="btn small" id="sync-btn" title="Torna a sincronitzar amb el que hi hagi desat">⟳ Actualitza</button>
@@ -339,6 +349,7 @@ nav::-webkit-scrollbar{display:none}
 
 <div class="navwrap"><nav role="tablist">
   <button role="tab" data-view="llista" aria-selected="true">Col·laboracions</button>
+  <button role="tab" data-view="concursos" aria-selected="false">Concursos<span class="ncount" id="n-concursos"></span></button>
   <button role="tab" data-view="pendent" aria-selected="false">Pendent</button>
   <button role="tab" data-view="seguiment" aria-selected="false">Seguiment</button>
   <button role="tab" data-view="tancades" aria-selected="false">Tancades<span class="ncount" id="n-tancades"></span></button>
@@ -357,7 +368,6 @@ nav::-webkit-scrollbar{display:none}
       <option value="material">Filament</option>
       <option value="hardware">Hardware</option>
       <option value="disseny">Disseny</option>
-      <option value="concurs">Concurs</option>
       <option value="altre">Altre</option>
     </select>
     <span class="spacer"></span>
@@ -372,7 +382,7 @@ nav::-webkit-scrollbar{display:none}
 </section>
 
 <section id="view-tancades" hidden>
-  <p class="hint">Les cobrades, les descartades i els concursos que ja han tancat, de la més recent a la més antiga. Si n'obres una i li canvies l'estat, torna a Col·laboracions.</p>
+  <p class="hint">Les cobrades i les descartades, de la més recent a la més antiga. Si n'obres una i li canvies l'estat, torna a Col·laboracions.</p>
   <div class="toolbar">
     <input type="search" id="q2" placeholder="Cerca una marca…">
     <select id="f2-estat">
@@ -385,7 +395,6 @@ nav::-webkit-scrollbar{display:none}
       <option value="material">Filament</option>
       <option value="hardware">Hardware</option>
       <option value="disseny">Disseny</option>
-      <option value="concurs">Concurs</option>
       <option value="altre">Altre</option>
     </select>
   </div>
@@ -393,6 +402,20 @@ nav::-webkit-scrollbar{display:none}
   <div class="empty-state" id="tancades-empty" hidden>
     <b>Encara no n'hi ha cap de tancada</b>
     Quan marquis una col·laboració com a cobrada o descartada, passarà aquí.
+  </div>
+</section>
+
+<section id="view-concursos" hidden>
+  <p class="hint">Els concursos i els sortejos van a part de les col·laboracions amb marques: aquí el que compta és la data límit. Cada dilluns te'n busco de nous.</p>
+  <div class="toolbar">
+    <input type="search" id="q3" placeholder="Cerca un concurs…">
+    <span class="spacer"></span>
+    <button class="btn primary" id="add-concurs">Nou concurs</button>
+  </div>
+  <div id="concursos"></div>
+  <div class="empty-state" id="concursos-empty" hidden>
+    <b>Encara no tens cap concurs</b>
+    Cada dilluns miro quins concursos i sortejos d'impressió 3D hi ha oberts i te'ls deixo aquí amb la data límit. També hi entren els premis que guanyes.
   </div>
 </section>
 
@@ -760,6 +783,7 @@ function progress(c){
   return {fet:fet, total:list.length};
 }
 function isActiu(c){ return ACTIUS.indexOf(c.estat)>=0; }
+function esConcurs(c){ return (c.tipus||"material")==="concurs"; }
 function avuiISO(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 /* un concurs obert amb la data límit passada ja no es pot fer: va a Tancades sense haver de tocar res */
 function caducat(c){ return c.estat==="obert" && !!c.dataLliurament && c.dataLliurament < avuiISO(); }
@@ -791,7 +815,7 @@ function passaFiltre(c, q, f, ft){
 }
 function visible(){
   var q=$("q").value.trim().toLowerCase(), f=$("f-estat").value, ft=$("f-tipus").value;
-  var list=collabs.filter(function(c){ return !isTancat(c) && passaFiltre(c, q, f, ft); });
+  var list=collabs.filter(function(c){ return !esConcurs(c) && !isTancat(c) && passaFiltre(c, q, f, ft); });
   var order = ["obert","produccio","revisio","producte","acceptada","proposta","publicat"];
   list.sort(function(a,b){
     var da=order.indexOf(a.estat), db=order.indexOf(b.estat);
@@ -826,8 +850,8 @@ function bindRows(box){
 }
 function renderLlista(){
   var box=$("llista"), list=visible();
-  var oberts=collabs.filter(function(c){ return !isTancat(c); }).length;
-  $("llista-empty").hidden = collabs.length>0;
+  var oberts=collabs.filter(function(c){ return !esConcurs(c) && !isTancat(c); }).length;
+  $("llista-empty").hidden = collabs.filter(function(c){ return !esConcurs(c); }).length>0;
   box.innerHTML = list.map(function(c){ return rowHtml(c, false); }).join("") ||
     (collabs.length && !oberts ? '<p class="hint">Totes les col·laboracions estan tancades. Les tens a la pestanya Tancades.</p>' : '');
   bindRows(box);
@@ -840,7 +864,7 @@ function renderLlista(){
 function renderTancades(){
   var box=$("tancades");
   var q=$("q2").value.trim().toLowerCase(), f=$("f2-estat").value, ft=$("f2-tipus").value;
-  var tots=collabs.filter(isTancat);
+  var tots=collabs.filter(function(c){ return !esConcurs(c) && isTancat(c); });
   var list=tots.filter(function(c){ return passaFiltre(c, q, f, ft); });
   list.sort(function(a,b){
     var da=a.dataLliurament||a.dataAcceptacio||"", db=b.dataLliurament||b.dataAcceptacio||"";
@@ -852,10 +876,96 @@ function renderTancades(){
   $("n-tancades").textContent = tots.length ? String(tots.length) : "";
 }
 
+/* ---------------- render: concursos ---------------- */
+function diesFins(iso){
+  if(!iso) return null;
+  var d=new Date(iso+"T00:00:00");
+  if(isNaN(d)) return null;
+  var a=new Date(); a.setHours(0,0,0,0);
+  return Math.round((d-a)/86400000);
+}
+function quanTanca(c){
+  var n=diesFins(c.dataLliurament);
+  if(n==null) return {txt:"sense data límit", cls:""};
+  if(n<0) return {txt:"va tancar el "+fmtDateAny(c.dataLliurament), cls:""};
+  if(n===0) return {txt:"tanca avui", cls:"avui"};
+  if(n===1) return {txt:"tanca demà", cls:"avui"};
+  return {txt:"queden "+n+" dies", cls:(n<=3?"aviat":"")};
+}
+/* El vocabulari de les col·laboracions no li va bé a un concurs: "Esperant el
+   producte" és el premi que t'han de fer arribar, i "Cobrat" és que ja el tens. */
+var ESTATS_CONCURS = { obert:"Concurs obert", producte:"Esperant el premi", cobrat:"Premi rebut",
+                       descartada:"Descartat" };
+function estatConcurs(c){
+  if(caducat(c)) return "No t'hi has presentat";
+  return ESTATS_CONCURS[c.estat] || ESTATS[c.estat] || c.estat;
+}
+/* L'any només si no és el d'enguany: un concurs que tanca aquesta setmana no
+   necessita que li diguin "del 2026". */
+function fmtDataCurta(iso){
+  if(!iso) return "";
+  return iso.slice(0,4)===String(new Date().getFullYear()) ? fmtDate(iso) : fmtDateAny(iso);
+}
+function rowConcurs(c){
+  var obert = c.estat==="obert" && !caducat(c);
+  var q = quanTanca(c);
+  var p = progress(c);
+  var sub=[];
+  if(c.contacte) sub.push(esc(c.contacte));
+  if(c.compensacio) sub.push(esc(c.compensacio));
+  if(c.dataLliurament) sub.push(esc((obert?"fins al ":"tancava el ")+fmtDataCurta(c.dataLliurament)));
+  /* Res de barra de progrés: en un concurs o t'hi has presentat o no. */
+  if(p.total && p.fet===p.total) sub.push("ja t'hi has presentat");
+  return '<div class="collab-row" data-uid="'+esc(c.uid)+'">'+
+    '<div class="cmain"><div class="name">'+esc(c.marca||"Sense nom")+'</div>'+
+    '<div class="sub">'+sub.join(" · ")+'</div></div>'+
+    '<div class="cright">'+
+    (obert ? '<span class="dies '+q.cls+'">'+esc(q.txt)+'</span>'
+           : '<span class="badge b-'+esc(caducat(c)?"descartada":c.estat)+'">'+esc(estatConcurs(c))+'</span>')+
+    '</div></div>';
+}
+function renderConcursos(){
+  var box=$("concursos");
+  var q=$("q3").value.trim().toLowerCase();
+  var tots=collabs.filter(esConcurs);
+  var mira=tots.filter(function(c){
+    if(!q) return true;
+    return ((c.marca||"")+" "+(c.contacte||"")+" "+(c.notes||"")+" "+(c.compensacio||"")).toLowerCase().indexOf(q)>=0;
+  });
+  /* La línia que compta no és oberta/tancada, sinó si l'has guanyat: un premi
+     rebut no té res a veure amb un concurs que has deixat passar. */
+  var oberts=[], premis=[], tancats=[];
+  mira.forEach(function(c){
+    if(c.estat==="obert") (caducat(c)?tancats:oberts).push(c);
+    else if(c.estat==="descartada") tancats.push(c);
+    else premis.push(c);
+  });
+  oberts.sort(function(a,b){ return (a.dataLliurament||"9999").localeCompare(b.dataLliurament||"9999"); });
+  function recent(c){ return c.dataLliurament || c.dataAcceptacio || (c.creat||"").slice(0,10); }
+  premis.sort(function(a,b){ return recent(b).localeCompare(recent(a)); });
+  tancats.sort(function(a,b){ return recent(b).localeCompare(recent(a)); });
+  var h="";
+  function grup(titol, hint, llista, apagat){
+    if(!llista.length) return;
+    h += '<div class="cgrup'+(apagat?" apagat":"")+'"><h3>'+titol+' <span class="quants">'+llista.length+'</span></h3>'+
+         (hint?'<p class="hint">'+hint+'</p>':'')+
+         llista.map(rowConcurs).join("")+'</div>';
+  }
+  grup("Oberts", "El que tanca abans, a dalt. Obre'n un i hi trobaràs l'enllaç i com s'hi participa.", oberts, false);
+  grup("Premis guanyats", "", premis, false);
+  grup("Ja han tancat", "Els que van passar sense que t'hi presentessis, i els que vas descartar.", tancats, true);
+  box.innerHTML = h || (tots.length?'<p class="hint">Cap concurs amb aquesta cerca.</p>':'');
+  bindRows(box);
+  $("concursos-empty").hidden = tots.length>0;
+  var n = tots.filter(function(c){ return c.estat==="obert" && !caducat(c); }).length;
+  $("n-concursos").textContent = n ? String(n) : "";
+  $("t-concursos").textContent = n;
+}
+
 /* ---------------- render: pendent ---------------- */
 function renderPendent(){
   var box=$("pendent-list");
-  var actius=collabs.filter(function(c){ return isActiu(c) || (c.estat==="obert" && !caducat(c)); }).sort(function(a,b){ return (a.dataLliurament||"9999").localeCompare(b.dataLliurament||"9999"); });
+  var actius=collabs.filter(function(c){ return !esConcurs(c) && isActiu(c); }).sort(function(a,b){ return (a.dataLliurament||"9999").localeCompare(b.dataLliurament||"9999"); });
   var html="";
   actius.forEach(function(c){
     var items=[];
@@ -885,7 +995,7 @@ function renderPendent(){
   });
 }
 
-function renderAll(){ renderHeader(); renderLlista(); renderTancades(); renderPendent(); }
+function renderAll(){ renderHeader(); renderLlista(); renderConcursos(); renderTancades(); renderPendent(); }
 
 /* ---------------- editor: checklist genèric ---------------- */
 function renderChecklistEditor(containerId, arr){
@@ -966,18 +1076,20 @@ $("e-file-input").onchange=function(e){
 };
 
 /* ---------------- editor: obrir / desar ---------------- */
-function openEditor(u){
+function openEditor(u, pre){
+  pre = pre || {};
   editingId=u;
   var c = u ? byUid(u) : null;
-  $("sheet-title").textContent = c ? "Edita la col·laboració" : "Nova col·laboració";
+  $("sheet-title").textContent = c ? (esConcurs(c)?"Edita el concurs":"Edita la col·laboració")
+                                 : (pre.tipus==="concurs"?"Nou concurs":"Nova col·laboració");
   $("e-marca").value = c?c.marca||"":"";
   $("e-contacte").value = c?c.contacte||"":"";
   $("e-email").value = c?c.email||emailDe(c)||"":"";
   $("e-tornar-el").value = c?c.tornarEl||"":"";
   $("e-tornar-motiu").value = c?c.tornarMotiu||"":"";
   $("e-canal").value = c?c.canal||"email":"email";
-  $("e-tipus").value = c?c.tipus||"material":"material";
-  $("e-estat").value = c?c.estat||"acceptada":"acceptada";
+  $("e-tipus").value = c?c.tipus||"material":(pre.tipus||"material");
+  $("e-estat").value = c?c.estat||"acceptada":(pre.estat||"acceptada");
   $("e-compensacio").value = c?c.compensacio||"":"";
   $("e-data-acc").value = c?c.dataAcceptacio||"":"";
   $("e-data-lliurament").value = c?c.dataLliurament||"":"";
@@ -1035,6 +1147,7 @@ $("e-del").onclick=function(){
   closeEditor(); persist(); toast("Eliminada");
 };
 $("add").onclick=function(){ openEditor(null); };
+$("add-concurs").onclick=function(){ openEditor(null, {tipus:"concurs", estat:"obert"}); };
 document.addEventListener("click",function(e){
   if(e.target.closest("[data-goto-add]")) openEditor(null);
 });
@@ -1514,7 +1627,7 @@ $("import-file-input").onchange=function(e){
 };
 
 function go(v){
-  ["llista","pendent","seguiment","tancades","correu","instagram","importa"].forEach(function(k){ $("view-"+k).hidden=(k!==v); });
+  ["llista","concursos","pendent","seguiment","tancades","correu","instagram","importa"].forEach(function(k){ $("view-"+k).hidden=(k!==v); });
   if(v==="seguiment") renderSeguiment();
   document.querySelectorAll("nav button").forEach(function(b){ b.setAttribute("aria-selected", String(b.dataset.view===v)); });
 }
@@ -1522,6 +1635,7 @@ document.querySelectorAll("nav button").forEach(function(b){ b.onclick=function(
 $("q").addEventListener("input", renderLlista);
 $("f-estat").addEventListener("change", renderLlista);
 $("f-tipus").addEventListener("change", renderLlista);
+$("q3").addEventListener("input", renderConcursos);
 $("q2").addEventListener("input", renderTancades);
 $("f2-estat").addEventListener("change", renderTancades);
 $("f2-tipus").addEventListener("change", renderTancades);
@@ -1603,6 +1717,7 @@ function calculaSeguiment(){
   var r = { tancar:[], recordar:[], revisitar:[], tard:[] };
   var avui = new Date(); avui.setHours(0,0,0,0);
   collabs.forEach(function(c){
+    if(esConcurs(c)) return;
     var S = seg(c);
     var ents = c.entregables || [];
     var totFet = ents.length>0 && ents.every(function(x){ return x.fet; });

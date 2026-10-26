@@ -135,6 +135,14 @@ footer{margin-top:40px;font-size:12px;color:var(--ink-soft)}
 .prof .n b{display:block;font-size:16px;font-weight:700;letter-spacing:-.01em}
 .prof .n small{display:block;color:var(--ink-soft);font-size:13px;margin-top:2px}
 .prof .go{font-size:13px;font-weight:600;white-space:nowrap;color:var(--ink-soft)}
+/* el primer perfil és el que ha de llegir primer una marca; els altres, a sota i més petits */
+.prof a.destacat{grid-column:1/-1;padding:16px 18px;border-left-width:4px;align-items:flex-start}
+.prof a.destacat .n b{font-size:19px}
+.prof a.destacat .n small{font-size:14px;margin-top:4px;color:var(--ink);max-width:62ch}
+.prof a.menor{border-left-color:var(--line-strong);padding:10px 13px}
+.prof a.menor .n b{font-size:14.5px;font-weight:600}
+.prof a.menor .n small{font-size:12.5px}
+.prof a.menor .go{font-size:12px}
 .code{display:inline-flex;align-items:center;gap:8px;font:inherit;cursor:pointer;border:1px dashed var(--line-strong);
   background:var(--paper);color:var(--ink);border-radius:var(--r);padding:7px 10px;min-width:0}
 .code b{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;letter-spacing:.04em;overflow-wrap:anywhere}
@@ -553,13 +561,18 @@ function curt(x) {
 function pintaPerfils() {
   var pf = ((C && C.perfils) || []).filter(function (p) { return p && p.nom && p.url; });
   $("s-prof").hidden = !pf.length;
-  $("prof").innerHTML = pf.map(function (p) {
+  $("prof").innerHTML = pf.map(function (p, i) {
     var dades = [];
     if (p.models) dades.push(t("nModels", { n: curt(p.models) }));
     if (p.seguidors) dades.push(t("nFollowers", { n: curt(p.seguidors) }));
     if (p.m_agrada) dades.push(t("nLikes", { n: curt(p.m_agrada) }));
-    return '<a href="' + esc(p.url) + '" target="_blank" rel="noopener"><span class="n"><b>' + esc(p.nom) + '</b>' +
-      (dades.length ? '<small>' + esc(dades.join(" · ")) + '</small>' : '') + '</span><span class="go">' + esc(t("profile")) + ' ↗</span></a>';
+    var nota = p.nota ? (p.nota[L] || p.nota.en || "") : "";
+    var sota = dades.join(" · ");
+    if (nota) sota = sota ? nota + " · " + sota : nota;
+    return '<a class="' + (i ? "menor" : "destacat") + '" href="' + esc(p.url) + '" target="_blank" rel="noopener">' +
+      '<span class="n"><b>' + esc(p.nom) + '</b>' +
+      (sota ? '<small>' + esc(sota) + '</small>' : '') + '</span>' +
+      '<span class="go">' + esc(t("profile")) + ' ↗</span></a>';
   }).join("");
 }
 function pintaAfiliats() {
