@@ -143,6 +143,17 @@ footer{margin-top:40px;font-size:12px;color:var(--ink-soft)}
 .prof a.menor .n b{font-size:14.5px;font-weight:600}
 .prof a.menor .n small{font-size:12.5px}
 .prof a.menor .go{font-size:12px}
+/* les peces: la foto mana, i a sota on te la pots baixar */
+.peces{display:grid;gap:10px;margin:0 0 16px}
+.peca{display:flex;gap:16px;align-items:flex-start;border:1px solid var(--line);border-left:3px solid var(--brand-orange);background:var(--surface);padding:14px 16px}
+.peca img{width:132px;height:auto;flex:none;background:var(--paper);display:block}
+.peca .d{flex:1;min-width:0}
+.peca .d b{display:block;font-size:19px;letter-spacing:-.01em}
+.peca .d p{margin:5px 0 0;color:var(--ink-soft);font-size:13.5px;max-width:58ch}
+.peca .on{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.peca .on a{font-size:12.5px;font-weight:600;text-decoration:none;color:var(--ink);border:1px solid var(--line-strong);border-radius:20px;padding:4px 11px}
+.peca .on a:hover{border-color:var(--ink);background:var(--paper)}
+@media(max-width:560px){.peca{flex-direction:column}.peca img{width:100%;max-width:230px}}
 .code{display:inline-flex;align-items:center;gap:8px;font:inherit;cursor:pointer;border:1px dashed var(--line-strong);
   background:var(--paper);color:var(--ink);border-radius:var(--r);padding:7px 10px;min-width:0}
 .code b{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;letter-spacing:.04em;overflow-wrap:anywhere}
@@ -223,6 +234,7 @@ footer{margin-top:40px;font-size:12px;color:var(--ink-soft)}
 <section id="s-prof" hidden>
   <h2 data-t="models"></h2>
   <p class="foot" style="margin:0 0 12px" data-t="modelsHint"></p>
+  <div class="peces" id="peces"></div>
   <div class="prof" id="prof"></div>
 </section>
 
@@ -558,9 +570,27 @@ function curt(x) {
   if (L === "en" && x >= 1000) return (x >= 1e4 ? Math.round(x / 1e3) : Math.round(x / 100) / 10) + "K";
   return nf().format(x);
 }
+function pintaPeces() {
+  var pc = ((C && C.peces) || []).filter(function (p) { return p && p.nom; });
+  $("peces").innerHTML = pc.map(function (p) {
+    var nota = p.nota ? (p.nota[L] || p.nota.en || "") : "";
+    var on = (p.enllacos || []).filter(function (e) { return e && e.on && e.url; });
+    return '<div class="peca">' +
+      (p.foto ? '<img src="' + esc(p.foto) + '" alt="' + esc(p.nom) + '" loading="lazy">' : "") +
+      '<div class="d"><b>' + esc(p.nom) + '</b>' +
+      (nota ? '<p>' + esc(nota) + '</p>' : "") +
+      (on.length ? '<div class="on">' + on.map(function (e) {
+        return '<a href="' + esc(e.url) + '" target="_blank" rel="noopener">' + esc(e.on) + ' ↗</a>';
+      }).join("") + '</div>' : "") +
+      "</div></div>";
+  }).join("");
+  return pc.length;
+}
 function pintaPerfils() {
   var pf = ((C && C.perfils) || []).filter(function (p) { return p && p.nom && p.url; });
-  $("s-prof").hidden = !pf.length;
+  // fora del && : amb perfils a la llista, el curtcircuit no arribaria mai a pintar les peces
+  var np = pintaPeces();
+  $("s-prof").hidden = !pf.length && !np;
   $("prof").innerHTML = pf.map(function (p, i) {
     var dades = [];
     if (p.models) dades.push(t("nModels", { n: curt(p.models) }));

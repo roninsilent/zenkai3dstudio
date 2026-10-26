@@ -67,5 +67,33 @@
     "zh": "用 AI 把文字或图片变成 3D 模型。通过此链接的每笔购买，频道可获得 12 个月 20% 的佣金。"
    }
   }
+ ],
+ "peces": [
+  {
+   "nom": "Fangy McHowl",
+   "foto": "peces/fangy-mchowl.jpg",
+   "nota": {
+    "en": "First figure of the Creepy Monsters: Halloween Toys collection. Printed with no AMS: the colours come from clean multi-part separation.",
+    "es": "Primera figura de la colección Creepy Monsters: Halloween Toys. Impresa sin AMS: los colores salen de separar la pieza en partes.",
+    "ca": "Primera figura de la col·lecció Creepy Monsters: Halloween Toys. Impresa sense AMS: els colors surten de separar la peça en parts.",
+    "de": "Erste Figur der Kollektion Creepy Monsters: Halloween Toys. Ohne AMS gedruckt: die Farben entstehen durch sauber getrennte Einzelteile.",
+    "pt": "Primeira figura da coleção Creepy Monsters: Halloween Toys. Impressa sem AMS: as cores vêm da separação da peça em partes.",
+    "zh": "Creepy Monsters: Halloween Toys 系列的第一款手办。无需 AMS 打印：颜色靠干净的分件实现。"
+   },
+   "enllacos": [
+    {
+     "on": "MakerWorld",
+     "url": "https://makerworld.com/models/3497271?appSharePlatform=copy"
+    },
+    {
+     "on": "Creality Cloud",
+     "url": "https://www.crealitycloud.com/en/model-detail/6acfcbaecc5a1c53dff254c9?cloudPlatform=18"
+    },
+    {
+     "on": "Meshy",
+     "url": "https://www.meshy.ai/collections/Creepy-Monsters-Halloween-Toys-01a0e516-2894-745a-806a-9a2995b9a2c4"
+    }
+   ]
+  }
  ]
 }
