@@ -144,16 +144,21 @@ footer{margin-top:40px;font-size:12px;color:var(--ink-soft)}
 .prof a.menor .n small{font-size:12.5px}
 .prof a.menor .go{font-size:12px}
 /* les peces: la foto mana, i a sota on te la pots baixar */
-.peces{display:grid;gap:10px;margin:0 0 16px}
-.peca{display:flex;gap:16px;align-items:flex-start;border:1px solid var(--line);border-left:3px solid var(--brand-orange);background:var(--surface);padding:14px 16px}
-.peca img{width:132px;height:auto;flex:none;background:var(--paper);display:block}
-.peca .d{flex:1;min-width:0}
-.peca .d b{display:block;font-size:19px;letter-spacing:-.01em}
-.peca .d p{margin:5px 0 0;color:var(--ink-soft);font-size:13.5px;max-width:58ch}
-.peca .on{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
-.peca .on a{font-size:12.5px;font-weight:600;text-decoration:none;color:var(--ink);border:1px solid var(--line-strong);border-radius:20px;padding:4px 11px}
-.peca .on a:hover{border-color:var(--ink);background:var(--paper)}
-@media(max-width:560px){.peca{flex-direction:column}.peca img{width:100%;max-width:230px}}
+.peces{margin:0 0 18px}
+.colgrup+.colgrup{margin-top:22px}
+.colgrup>h3{margin:0 0 3px;font-size:14px;letter-spacing:.01em}
+.colgrup>.nota{margin:0 0 11px;color:var(--ink-soft);font-size:13px;max-width:62ch}
+.graella{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px}
+.peca{border:1px solid var(--line);border-top:3px solid var(--brand-orange);background:var(--surface);padding:0 0 10px}
+.peca img{width:100%;height:auto;display:block;background:var(--paper)}
+.peca>b{display:block;margin:9px 11px 0;font-size:14.5px;line-height:1.25;letter-spacing:-.01em}
+.peca .on{display:flex;flex-wrap:wrap;gap:4px;margin:8px 11px 0}
+.peca .on a{font-size:11px;font-weight:600;text-decoration:none;color:var(--ink-soft);border:1px solid var(--line-strong);border-radius:20px;padding:3px 7px}
+.peca .on a:hover{color:var(--ink);border-color:var(--ink);background:var(--paper)}
+/* al mòbil la targeta és massa estreta per a tres píndoles: hi van com a enllaços i prou */
+@media(max-width:560px){
+  .peca .on{gap:0 9px;margin-top:6px}
+  .peca .on a{border:0;border-radius:0;padding:0;font-size:11.5px;text-decoration:underline;text-underline-offset:2px}}
 .code{display:inline-flex;align-items:center;gap:8px;font:inherit;cursor:pointer;border:1px dashed var(--line-strong);
   background:var(--paper);color:var(--ink);border-radius:var(--r);padding:7px 10px;min-width:0}
 .code b{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;letter-spacing:.04em;overflow-wrap:anywhere}
@@ -570,19 +575,38 @@ function curt(x) {
   if (L === "en" && x >= 1000) return (x >= 1e4 ? Math.round(x / 1e3) : Math.round(x / 100) / 10) + "K";
   return nf().format(x);
 }
+function notaColleccio(nom) {
+  var cols = (C && C.colleccions) || [];
+  for (var i = 0; i < cols.length; i++) {
+    if (cols[i] && cols[i].nom === nom) return cols[i].nota ? (cols[i].nota[L] || cols[i].nota.en || "") : "";
+  }
+  return "";
+}
 function pintaPeces() {
   var pc = ((C && C.peces) || []).filter(function (p) { return p && p.nom; });
-  $("peces").innerHTML = pc.map(function (p) {
-    var nota = p.nota ? (p.nota[L] || p.nota.en || "") : "";
-    var on = (p.enllacos || []).filter(function (e) { return e && e.on && e.url; });
-    return '<div class="peca">' +
-      (p.foto ? '<img src="' + esc(p.foto) + '" alt="' + esc(p.nom) + '" loading="lazy">' : "") +
-      '<div class="d"><b>' + esc(p.nom) + '</b>' +
-      (nota ? '<p>' + esc(nota) + '</p>' : "") +
-      (on.length ? '<div class="on">' + on.map(function (e) {
-        return '<a href="' + esc(e.url) + '" target="_blank" rel="noopener">' + esc(e.on) + ' ↗</a>';
-      }).join("") + '</div>' : "") +
-      "</div></div>";
+  // agrupades per col·lecció, en l'ordre en què hi surt la primera figura de cada una.
+  // Les que no en porten cap van juntes en un grup sense títol.
+  var ordre = [], grups = {};
+  pc.forEach(function (p) {
+    var k = p.colleccio || "";
+    if (!grups[k]) { grups[k] = []; ordre.push(k); }
+    grups[k].push(p);
+  });
+  $("peces").innerHTML = ordre.map(function (k) {
+    var nota = k ? notaColleccio(k) : "";
+    return '<div class="colgrup">' +
+      (k ? '<h3>' + esc(k) + '</h3>' : "") +
+      (nota ? '<p class="nota">' + esc(nota) + '</p>' : "") +
+      '<div class="graella">' + grups[k].map(function (p) {
+        var on = (p.enllacos || []).filter(function (e) { return e && e.on && e.url; });
+        return '<div class="peca">' +
+          (p.foto ? '<img src="' + esc(p.foto) + '" alt="' + esc(p.nom) + '" loading="lazy">' : "") +
+          '<b>' + esc(p.nom) + '</b>' +
+          (on.length ? '<div class="on">' + on.map(function (e) {
+            return '<a href="' + esc(e.url) + '" target="_blank" rel="noopener">' + esc(e.on) + '</a>';
+          }).join("") + '</div>' : "") +
+          "</div>";
+      }).join("") + '</div></div>';
   }).join("");
   return pc.length;
 }
