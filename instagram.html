@@ -60,8 +60,11 @@ h1{font-size:clamp(26px,5.5vw,38px);font-weight:700;letter-spacing:-.026em;line-
   border-radius:20px;padding:4px 12px;font-size:12px;font-weight:500;white-space:nowrap}
 .backlink:hover{color:var(--ink);border-color:var(--ink)}
 .acctbar{display:flex;align-items:center;gap:8px;margin-top:12px}
-.acctbar img{width:22px;height:22px;border-radius:50%}
-.acctbar .btn{padding:4px 10px;font-size:12px}
+/* el correu empenyia el botó de tancar sessió fora de la pantalla al mòbil. Que
+   s'escurci ell, que és el prescindible: els botons es queden on són. */
+.acctbar .note{min-width:0;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acctbar img{width:22px;height:22px;border-radius:50%;flex:none}
+.acctbar .btn{padding:4px 10px;font-size:12px;flex:none;white-space:nowrap}
 .spacer{flex:1}
 
 nav{display:flex;gap:0;border-bottom:1px solid var(--line-strong);margin:26px 0 0;overflow-x:auto;
@@ -70,6 +73,15 @@ nav::-webkit-scrollbar{display:none}
 nav button{background:none;border:0;border-bottom:2px solid transparent;padding:9px 14px 8px;margin-bottom:-1px;cursor:pointer;white-space:nowrap;color:var(--ink-soft);font-weight:500}
 nav button:hover{color:var(--ink)}
 nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink);font-weight:600}
+/* ---- les pestanyes al mòbil: totes a la vista, en files ---- */
+@media(max-width:560px){
+  nav{flex-wrap:wrap;overflow-x:visible;border-bottom:0;gap:6px;margin:20px 0 0;padding:0 0 2px}
+  nav button{border:1px solid var(--line-strong);border-radius:20px;border-bottom-width:1px;
+    margin-bottom:0;padding:6px 11px;font-size:12.5px;line-height:1.15}
+  nav button[aria-selected="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  nav button[aria-selected="true"] .ncount{color:var(--paper);opacity:.8}
+  .navwrap::after{display:none}
+}
 nav button:focus-visible,.btn:focus-visible,input:focus-visible,.seg button:focus-visible,.chips button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 
 section{padding-top:24px}
@@ -1387,8 +1399,32 @@ var CID_KEY = "g_client_id";
 var ALLOWED_EMAIL = "zenkai3dstudio@gmail.com";
 var gToken = null, gTokenClient = null;
 function showSetup() { $("gate-setup").hidden = false; $("gate-login").hidden = true; $("gate").hidden = false; }
-function showLogin(msg) { $("gate-setup").hidden = true; $("gate-login").hidden = false; $("gate").hidden = false; $("gate-status").textContent = msg || ""; }
-function hideGate() { $("gate").hidden = true; }
+
+/* El botó d'entrar, bloquejat mentre s'hi entra: un segon toc no ha de tornar a
+   demanar el compte. Es deixa anar quan la porta es tanca o quan torna un error,
+   i al cap d'un minut i mig per si la finestra de Google s'ha tancat sense dir res. */
+var gEntrant = false, gEntrantT = null;
+function entraBloqueja() {
+  var b = $("gate-signin");
+  if (!b) return;
+  gEntrant = true;
+  b.dataset.txt = b.dataset.txt || b.textContent;
+  b.disabled = true;
+  b.textContent = "Entrant\u2026";
+  clearTimeout(gEntrantT);
+  gEntrantT = setTimeout(entraDeixa, 90000);
+}
+function entraDeixa() {
+  var b = $("gate-signin");
+  gEntrant = false;
+  clearTimeout(gEntrantT);
+  if (!b) return;
+  b.disabled = false;
+  if (b.dataset.txt) b.textContent = b.dataset.txt;
+}
+
+function showLogin(msg){ entraDeixa(); $("gate-setup").hidden = true; $("gate-login").hidden = false; $("gate").hidden = false; $("gate-status").textContent = msg || ""; }
+function hideGate(){ entraDeixa(); $("gate").hidden = true; }
 var GSCOPE = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
 
 /* ---------- la sessió de Google, compartida entre les apps ---------- */
@@ -1465,7 +1501,9 @@ $("gate-cid-save").onclick = function () {
 };
 $("gate-reconfig").onclick = function () { lsDel(CID_KEY); showSetup(); };
 $("gate-signin").onclick = function () {
+  if (gEntrant) return;
   if (!gTokenClient) { showLogin("Encara carregant… torna a tocar en un moment."); return; }
+  entraBloqueja();
   gTokenClient.requestAccessToken({ prompt: "" });
 };
 $("acct-signout").onclick = function () {
