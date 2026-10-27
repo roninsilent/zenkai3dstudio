@@ -87,6 +87,21 @@
     }
    ],
    "colleccio": "Creepy Monsters: Halloween Toys"
+  },
+  {
+   "nom": "Creepy Franky",
+   "colleccio": "Creepy Monsters: Halloween Toys",
+   "foto": "peces/creepy-franky.jpg",
+   "enllacos": [
+    {
+     "on": "Creality",
+     "url": "https://www.crealitycloud.com/en/model-detail/6acfce660b8afb334448cc3d?cloudPlatform=18"
+    },
+    {
+     "on": "Meshy",
+     "url": "https://www.meshy.ai/collections/Creepy-Monsters-Halloween-Toys-01a0e516-2894-745a-806a-9a2995b9a2c4"
+    }
+   ]
   }
  ],
  "colleccions": [
