@@ -1136,6 +1136,15 @@ function pintaPortfolio() {
     return;
   }
 
+  if (!(p.dies || []).length && !p.visites) {
+    h.textContent = "";
+    k.hidden = true;
+    pfBuit(c, "El comptador ja funciona",
+      "Compta des del " + fCurta(p.desde) + ", i encara no hi ha cap visita. Les xifres sortiran aquí "
+      + "l'endemà de la primera: les recull cada matí la tasca de dades.");
+    return;
+  }
+
   k.hidden = false;
   h.textContent = "Visites a " + PF_URL.replace("https://", "") + ", des del " + fCurta(p.desde)
     + ". Les recull la tasca diària de dades; l'última vegada, el " + (p.actualitzat || "").slice(0, 10) + ".";
