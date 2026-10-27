@@ -1113,6 +1113,27 @@ function niceStep(raw) {
 }
 /* ---------- PORTFOLIO: les visites al dossier ---------- */
 var PF_URL = "https://roninsilent.github.io/zenkai3dstudio/dossier.html";
+/* Les llistes de visites vénen com a [identificador, nom, compte]. El nom el dona
+   GoatCounter en anglès, i a les mides de pantalla el dona buit, així que l'etiqueta
+   la posem aquí. Els països i els idiomes els tradueix el mateix navegador. */
+var PF_MIDES = { phone: "Mòbil", largephone: "Mòbil gran", tablet: "Tauleta",
+                 desktop: "Ordinador", desktophd: "Pantalla gran", unknown: "No se sap" };
+function pfNom(llista, f) {
+  var id = f[0] || "", nom = f[1] || "";
+  /* el referent buit primer: una visita sense enllaç no és un referent desconegut,
+     és algú que ha escrit l'adreça o l'ha obert des d'un missatge */
+  if (llista === "referents") return (!id && !nom) ? "Directe, sense enllaç" : (nom || id);
+  if (id === "(unknown)" || nom === "(unknown)" || (!id && !nom)) return "No se sap";
+  if (llista === "mides") return PF_MIDES[id] || nom || id;
+  try {
+    if (llista === "paisos" && /^[A-Z]{2}$/.test(id))
+      return new Intl.DisplayNames(["ca"], { type: "region" }).of(id) || nom || id;
+    if (llista === "idiomes" && /^[a-z]{2,3}(-[A-Za-z0-9]+)?$/.test(id))
+      return new Intl.DisplayNames(["ca"], { type: "language" }).of(id) || nom || id;
+  } catch (e) {}
+  return nom || id;
+}
+
 function pfBuit(host, titol, text) {
   host.replaceChildren();
   var d = el("div", "buit");
@@ -1147,7 +1168,9 @@ function pintaPortfolio() {
 
   k.hidden = false;
   h.textContent = "Visites a " + PF_URL.replace("https://", "") + ", des del " + fCurta(p.desde)
-    + ". Les recull la tasca diària de dades; l'última vegada, el " + (p.actualitzat || "").slice(0, 10) + ".";
+    + ". D'on venen, de quin país i amb què ho miren; qui són, no: el comptador no desa res "
+    + "de cada persona. Les recull la tasca diària de dades, l'última vegada el "
+    + (p.actualitzat || "").slice(0, 10) + ".";
   stat(k, "Visites", ok(p.visites) ? nk(p.visites) : "—", "des del " + fCurta(p.desde));
   var dies = p.dies || [];
   var ultims = dies.slice(-7).reduce(function (a, d) { return a + (d[1] || 0); }, 0);
@@ -1161,12 +1184,20 @@ function pintaPortfolio() {
       return { l: fCurta(d[0]), v: d[1] || 0 };
     }), nk));
   }
-  [["referents", "D'on venen"], ["paisos", "De quin país"], ["pagines", "Quines pàgines"]].forEach(function (par) {
+  [["referents", "D'on venen"],
+   ["paisos", "De quin país"],
+   ["idiomes", "En quin idioma tenen el navegador"],
+   ["mides", "Amb quin aparell"],
+   ["sistemes", "Amb quin sistema"],
+   ["navegadors", "Amb quin navegador"],
+   ["pagines", "Quines pàgines"]].forEach(function (par) {
     var arr = p[par[0]] || [];
     if (!arr.length) return;
     if (par[0] === "pagines" && arr.length < 2) return;   /* amb una sola pàgina no diu res */
     c.appendChild(el("h2", "", par[1]));
-    c.appendChild(barres(arr.map(function (x) { return { l: curt(x[0], 26), v: x[1] || 0 }; }), nk));
+    c.appendChild(barres(arr.map(function (x) {
+      return { l: curt(pfNom(par[0], x), 26), v: (x.length > 2 ? x[2] : x[1]) || 0 };
+    }), nk));
   });
   if (p.avisos && p.avisos.length) {
     c.appendChild(el("p", "hint", "No s'ha pogut llegir: " + p.avisos.join(" · ")));
