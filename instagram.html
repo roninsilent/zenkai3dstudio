@@ -87,7 +87,7 @@ nav button:focus-visible,.btn:focus-visible,input:focus-visible,.seg button:focu
 section{padding-top:24px}
 h2{font-size:18px;font-weight:600;letter-spacing:-.02em;margin:30px 0 4px}
 section > h2:first-child{margin-top:0}
-.hint{color:var(--ink-soft);font-size:13px;margin:0 0 14px;max-width:64ch}
+.hint{color:var(--ink-soft);font-size:13px;margin:0 0 14px;max-width:64ch;overflow-wrap:anywhere}
 .note{font-size:13px;color:var(--ink-soft)}
 
 input[type=search]{background:var(--surface);border:1px solid var(--line-strong);color:var(--ink);
@@ -110,6 +110,9 @@ input[type=search]{background:var(--surface);border:1px solid var(--line-strong)
 .card{border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:16px;background:var(--surface)}
 .card h3{margin:0 0 2px;font-size:14px;font-weight:600;letter-spacing:-.01em}
 
+.buit{border:1px dashed var(--line-strong);border-radius:var(--r);padding:22px 18px;color:var(--ink-soft);max-width:60ch}
+.buit b{display:block;color:var(--ink);font-size:15px;margin-bottom:6px}
+.buit p{margin:0}
 .statrow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 8px}
 .statrow.six{grid-template-columns:repeat(3,1fr)}
 .stat{border:1px solid var(--line);border-radius:var(--r);padding:11px 10px;background:var(--surface)}
@@ -215,8 +218,11 @@ table.bd td b{font-weight:600}
 .rec .per{font-size:13.5px;color:var(--ink-soft);margin:0 0 8px;line-height:1.5}
 .rec .fes{font-size:14px;margin:10px 0 0;padding:9px 11px;border-left:3px solid var(--brand-blue);background:rgba(62,150,194,.08);line-height:1.45}
 .barres{margin:6px 0 4px}
-.bar-row{display:grid;grid-template-columns:78px 1fr 64px;gap:8px;align-items:center;font-size:12.5px;margin:6px 0}
-.bar-row .l{color:var(--ink-soft)}
+.bar-row{display:grid;grid-template-columns:78px minmax(0,1fr) 64px;gap:8px;align-items:center;font-size:12.5px;margin:6px 0}
+/* una etiqueta llarga i sense espais —un camí de pàgina— no pot partir-se i sortia
+   de la seva columna; que s'escurci amb punts suspensius */
+.bar-row .l{color:var(--ink-soft);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:380px){.bar-row{grid-template-columns:62px minmax(0,1fr) 50px;gap:6px}}
 .bar-row .tr{height:12px;background:var(--hub);border-radius:3px;overflow:hidden;border:1px solid var(--line)}
 .bar-row .tr i{display:block;height:100%;background:var(--brand-blue)}
 .bar-row .v{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
@@ -284,6 +290,7 @@ ul.mini small{color:var(--ink-soft);font-size:12px}
   <button role="tab" data-view="resum" aria-selected="true">Resum</button>
   <button role="tab" data-view="creixer" aria-selected="false">Créixer</button>
   <button role="tab" data-view="xarxes" aria-selected="false">Xarxes</button>
+  <button role="tab" data-view="portfolio" aria-selected="false">Portfolio</button>
   <button role="tab" data-view="dies" aria-selected="false">Dia a dia</button>
   <button role="tab" data-view="reels" aria-selected="false">Reels</button>
   <button role="tab" data-view="carrusels" aria-selected="false">Carrusels</button>
@@ -336,6 +343,12 @@ ul.mini small{color:var(--ink-soft);font-size:12px}
   </div>
   <div class="tbl-wrap"><table class="bd" id="xa-taula"></table></div>
   <p class="hint" id="xa-nota" style="margin-top:10px"></p>
+</section>
+
+<section id="view-portfolio" hidden>
+  <p class="hint" id="pf-hint"></p>
+  <div class="statrow three" id="pf-kpis"></div>
+  <div id="pf-cos"></div>
 </section>
 
 <section id="view-dies" hidden>
@@ -489,7 +502,8 @@ function files(obj) {
   return obj.files.map(function (r) { var o = {}; obj.camps.forEach(function (c, i) { o[c] = r[i]; }); return o; });
 }
 function normalitza(raw) {
-  var X = { raw: raw, compte: raw.compte || {}, act: raw.actualitzat, seg: raw.seguidors_hist || [] };
+  var X = { raw: raw, compte: raw.compte || {}, act: raw.actualitzat, seg: raw.seguidors_hist || [],
+            portfolio: raw.portfolio || {} };
   X.dies = files(raw.dies).sort(function (a, b) { return a.data < b.data ? -1 : 1; });
   X.reels = files(raw.reels).sort(function (a, b) { return (b.data + b.hora).localeCompare(a.data + a.hora); });
   var vist = {};
@@ -533,7 +547,7 @@ document.querySelectorAll("#tabs button").forEach(function (b) {
 function mostra(v) {
   vista = v;
   document.querySelectorAll("#tabs button").forEach(function (b) { b.setAttribute("aria-selected", b.dataset.view === v ? "true" : "false"); });
-  ["resum", "creixer", "xarxes", "dies", "reels", "carrusels", "base"].forEach(function (k) { $("view-" + k).hidden = !D || k !== v; });
+  ["resum", "creixer", "xarxes", "portfolio", "dies", "reels", "carrusels", "base"].forEach(function (k) { $("view-" + k).hidden = !D || k !== v; });
   if (D) pinta();
 }
 function segon(id, cb) {
@@ -595,6 +609,7 @@ function pinta() {
   if (vista === "resum") pintaResum();
   else if (vista === "creixer") pintaCreixer();
   else if (vista === "xarxes") pintaXarxes();
+  else if (vista === "portfolio") pintaPortfolio();
   else if (vista === "dies") pintaDies();
   else if (vista === "reels") pintaReels();
   else if (vista === "carrusels") pintaCarrusels();
@@ -1096,6 +1111,59 @@ function niceStep(raw) {
   var p = Math.pow(10, Math.floor(Math.log10(raw || 1))), f = raw / p;
   return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
 }
+/* ---------- PORTFOLIO: les visites al dossier ---------- */
+var PF_URL = "https://roninsilent.github.io/zenkai3dstudio/dossier.html";
+function pfBuit(host, titol, text) {
+  host.replaceChildren();
+  var d = el("div", "buit");
+  d.appendChild(el("b", "", titol));
+  d.appendChild(el("p", "", text));
+  host.appendChild(d);
+}
+function pintaPortfolio() {
+  var k = $("pf-kpis"), c = $("pf-cos"), h = $("pf-hint");
+  k.replaceChildren(); c.replaceChildren();
+  var p = D.portfolio || {};
+
+  if (p.estat !== "ok") {
+    h.textContent = "";
+    k.hidden = true;
+    pfBuit(c, "Encara no es compten les visites",
+      "El dossier és una pàgina estàtica i GitHub no en dona cap estadística. Amb un compte de "
+      + "GoatCounter i una línia a la pàgina, aquí hi sortiran les visites, d'on venen i de quin país. "
+      + "Mentre no hi sigui, aquesta pestanya es queda així.");
+    if (p.error) c.appendChild(el("p", "hint", "Últim error: " + p.error));
+    return;
+  }
+
+  k.hidden = false;
+  h.textContent = "Visites a " + PF_URL.replace("https://", "") + ", des del " + fCurta(p.desde)
+    + ". Les recull la tasca diària de dades; l'última vegada, el " + (p.actualitzat || "").slice(0, 10) + ".";
+  stat(k, "Visites", ok(p.visites) ? nk(p.visites) : "—", "des del " + fCurta(p.desde));
+  var dies = p.dies || [];
+  var ultims = dies.slice(-7).reduce(function (a, d) { return a + (d[1] || 0); }, 0);
+  stat(k, "Última setmana", nk(ultims), dies.length ? "dels " + dies.length + " dies comptats" : "");
+  var millor = dies.reduce(function (a, d) { return (!a || (d[1] || 0) > (a[1] || 0)) ? d : a; }, null);
+  stat(k, "El millor dia", millor ? nk(millor[1]) : "—", millor ? fCurta(millor[0]) : "");
+
+  if (dies.length) {
+    c.appendChild(el("h2", "", "Els últims 14 dies"));
+    c.appendChild(barres(dies.slice(-14).map(function (d) {
+      return { l: fCurta(d[0]), v: d[1] || 0 };
+    }), nk));
+  }
+  [["referents", "D'on venen"], ["paisos", "De quin país"], ["pagines", "Quines pàgines"]].forEach(function (par) {
+    var arr = p[par[0]] || [];
+    if (!arr.length) return;
+    if (par[0] === "pagines" && arr.length < 2) return;   /* amb una sola pàgina no diu res */
+    c.appendChild(el("h2", "", par[1]));
+    c.appendChild(barres(arr.map(function (x) { return { l: curt(x[0], 26), v: x[1] || 0 }; }), nk));
+  });
+  if (p.avisos && p.avisos.length) {
+    c.appendChild(el("p", "hint", "No s'ha pogut llegir: " + p.avisos.join(" · ")));
+  }
+}
+
 function pintaDies() {
   var m = METRIQUES.filter(function (x) { return x.k === metrica; })[0];
   var fins = D.dies.length ? D.dies[D.dies.length - 1].data : D.avui;

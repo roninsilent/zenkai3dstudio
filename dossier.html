@@ -676,7 +676,21 @@ textos();
 function json(u) {
   return fetch(u + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
 }
+/* El comptador de visites. El codi del compte surt de dossier-config.json: mentre
+   no n'hi hagi, no es carrega res. GoatCounter no posa galetes ni recull dades
+   personals, així que la pàgina no necessita cap avís de cookies. */
+function comptador() {
+  var c = (C && C.analitica && C.analitica.goatcounter) || "";
+  if (!c || !/^[a-z0-9-]{1,40}$/.test(c)) return;
+  var s = document.createElement("script");
+  s.async = true;
+  s.src = "https://gc.zgo.at/count.js";
+  s.setAttribute("data-goatcounter", "https://" + c + ".goatcounter.com/count");
+  document.head.appendChild(s);
+}
+
 json("dossier-config.json").then(function (c) { C = c; }, function () { C = null; }).then(function () {
+  comptador();
   pintaPerfils(); pintaAfiliats();
   return json("dossier.json").then(function (d) {
     D = d;
