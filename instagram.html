@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Instagram</title>
-<meta name="description" content="Els reels i el compte, dia a dia. S'actualitza cada matí">
+<title>Estadístiques</title>
+<meta name="description" content="Instagram, TikTok, YouTube i les visites al portfolio, dia a dia. S'actualitza cada matí">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Instagram">
+<meta name="apple-mobile-web-app-title" content="Estadístiques">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#F2F2F0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -282,8 +282,8 @@ ul.mini small{color:var(--ink-soft);font-size:12px}
     <button class="btn" id="acct-reload">Torna a carregar</button>
     <button class="btn" id="acct-signout">Tanca sessió</button>
   </div>
-  <h1>Instagram</h1>
-  <p class="sub" id="sub">Els reels i el compte, dia a dia.</p>
+  <h1>Estadístiques</h1>
+  <p class="sub" id="sub">Instagram, TikTok, YouTube i les visites al portfolio, dia a dia.</p>
 </header>
 
 <nav role="tablist" id="tabs">
@@ -1113,6 +1113,7 @@ function niceStep(raw) {
 }
 /* ---------- PORTFOLIO: les visites al dossier ---------- */
 var PF_URL = "https://roninsilent.github.io/zenkai3dstudio/dossier.html";
+var PF_GC = "zenkai3d";   /* per si encara no han arribat les dades amb el codi del compte */
 /* Les llistes de visites vénen com a [identificador, nom, compte]. El nom el dona
    GoatCounter en anglès, i a les mides de pantalla el dona buit, així que l'etiqueta
    la posem aquí. Els països i els idiomes els tradueix el mateix navegador. */
@@ -1136,10 +1137,9 @@ function pfNom(llista, f) {
 
 /* El tauler de GoatCounter, per si el vol mirar allà: el subdomini és fàcil d'oblidar. */
 function pfTauler(host, compte, abans) {
-  if (!compte) return;
   if (abans) host.appendChild(document.createTextNode(abans));
-  var a = el("a", "", "Tauler de GoatCounter ↗");
-  a.href = "https://" + compte + ".goatcounter.com";
+  var a = el("a", "", "El compte de GoatCounter ↗");
+  a.href = "https://" + (compte || PF_GC) + ".goatcounter.com/user/api";
   a.target = "_blank"; a.rel = "noopener";
   host.appendChild(a);
 }
@@ -1163,6 +1163,7 @@ function pintaPortfolio() {
       + "GoatCounter i una línia a la pàgina, aquí hi sortiran les visites, d'on venen i de quin país. "
       + "Mentre no hi sigui, aquesta pestanya es queda així.");
     if (p.error) c.appendChild(el("p", "hint", "Últim error: " + p.error));
+    pfTauler(c.querySelector(".buit p"), p.compte, " ");
     return;
   }
 
