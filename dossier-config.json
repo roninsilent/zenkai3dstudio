@@ -37,19 +37,43 @@
   {
    "marca": "Anycubic",
    "url": "https://es.anycubic3d.com/?ref=ZENKAID",
-   "pct": 15
+   "pct": 15,
+   "nota": {
+    "en": "3D printers plus their own filament and resin: PLA, ABS, PETG.",
+    "es": "Impresoras 3D y su propio filamento y resina: PLA, ABS, PETG.",
+    "ca": "Impressores 3D i el seu propi filament i resina: PLA, ABS, PETG.",
+    "de": "3D-Drucker sowie eigenes Filament und Harz: PLA, ABS, PETG.",
+    "pt": "Impressoras 3D e o próprio filamento e resina: PLA, ABS, PETG.",
+    "zh": "3D 打印机，以及自家的线材与光敏树脂：PLA、ABS、PETG。"
+   }
   },
   {
    "marca": "Polymaker",
    "url": "https://shop.polymaker.com/ZENKAI3DSTUDIO",
    "codi": "ZENKAI3DSTUDIO",
    "pct": 15,
-   "primera": true
+   "primera": true,
+   "nota": {
+    "en": "Filament only: PLA, PETG, ABS, ASA, TPU and carbon fibre, in over 400 colours.",
+    "es": "Solo filamento: PLA, PETG, ABS, ASA, TPU y fibra de carbono, en más de 400 colores.",
+    "ca": "Només filament: PLA, PETG, ABS, ASA, TPU i fibra de carboni, en més de 400 colors.",
+    "de": "Nur Filament: PLA, PETG, ABS, ASA, TPU und Carbon, in über 400 Farben.",
+    "pt": "Só filamento: PLA, PETG, ABS, ASA, TPU e fibra de carbono, em mais de 400 cores.",
+    "zh": "只做线材：PLA、PETG、ABS、ASA、TPU 和碳纤维，400 多种颜色。"
+   }
   },
   {
    "marca": "Uniformation",
    "url": "https://www.uniformation3d.com?sca_ref=5338299.jCrskdq9GV",
-   "codi": "FRIKZONE"
+   "codi": "FRIKZONE",
+   "nota": {
+    "en": "Resin printers, resins, ultrasonic cleaners and UV curing stations.",
+    "es": "Impresoras de resina, resinas, limpiadores de ultrasonidos y cabinas de curado UV.",
+    "ca": "Impressores de resina, resines, netejadors d'ultrasons i cabines de curat UV.",
+    "de": "Harzdrucker, Harze, Ultraschallreiniger und UV-Härtestationen.",
+    "pt": "Impressoras de resina, resinas, limpadores ultrassônicos e estações de cura UV.",
+    "zh": "光固化打印机、树脂、超声波清洗机和 UV 固化箱。"
+   }
   },
   {
    "marca": "BIQU · BigTreeTech",
