@@ -1134,6 +1134,15 @@ function pfNom(llista, f) {
   return nom || id;
 }
 
+/* El tauler de GoatCounter, per si el vol mirar allà: el subdomini és fàcil d'oblidar. */
+function pfTauler(host, compte, abans) {
+  if (!compte) return;
+  if (abans) host.appendChild(document.createTextNode(abans));
+  var a = el("a", "", "Tauler de GoatCounter ↗");
+  a.href = "https://" + compte + ".goatcounter.com";
+  a.target = "_blank"; a.rel = "noopener";
+  host.appendChild(a);
+}
 function pfBuit(host, titol, text) {
   host.replaceChildren();
   var d = el("div", "buit");
@@ -1163,6 +1172,7 @@ function pintaPortfolio() {
     pfBuit(c, "El comptador ja funciona",
       "Compta des del " + fCurta(p.desde) + ", i encara no hi ha cap visita. Les xifres sortiran aquí "
       + "l'endemà de la primera: les recull cada matí la tasca de dades.");
+    pfTauler(c.querySelector(".buit p"), p.compte, " ");
     return;
   }
 
@@ -1170,7 +1180,8 @@ function pintaPortfolio() {
   h.textContent = "Visites a " + PF_URL.replace("https://", "") + ", des del " + fCurta(p.desde)
     + ". D'on venen, de quin país i amb què ho miren; qui són, no: el comptador no desa res "
     + "de cada persona. Les recull la tasca diària de dades, l'última vegada el "
-    + (p.actualitzat || "").slice(0, 10) + ".";
+    + (p.actualitzat || "").slice(0, 10) + ". ";
+  pfTauler(h, p.compte);
   stat(k, "Visites", ok(p.visites) ? nk(p.visites) : "—", "des del " + fCurta(p.desde));
   var dies = p.dies || [];
   var ultims = dies.slice(-7).reduce(function (a, d) { return a + (d[1] || 0); }, 0);
