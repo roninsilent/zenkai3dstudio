@@ -52,8 +52,16 @@
    "codi": "FRIKZONE"
   },
   {
-   "marca": "BIQU",
-   "url": "https://www.awin1.com/cread.php?awinmid=95665&awinaffid=3103438"
+   "marca": "BIQU · BigTreeTech",
+   "url": "https://www.awin1.com/cread.php?awinmid=95665&awinaffid=3103438",
+   "nota": {
+    "en": "BigTreeTech's own store: control boards, hotends, build plates and printer upgrades.",
+    "es": "La tienda de BigTreeTech: placas, hotends, bases y piezas de mejora para impresoras.",
+    "ca": "La botiga de BigTreeTech: plaques, hotends, bases i peces de millora per a impressores.",
+    "de": "Der Shop von BigTreeTech: Mainboards, Hotends, Druckbetten und Upgrade-Teile.",
+    "pt": "A loja da BigTreeTech: placas, hotends, mesas e peças de upgrade para impressoras.",
+    "zh": "BigTreeTech 的官方商店：主板、热端、打印平台和升级配件。"
+   }
   },
   {
    "marca": "Meshy",
