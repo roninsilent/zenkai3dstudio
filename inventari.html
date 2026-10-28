@@ -26,6 +26,7 @@
   --line:#D9D9D5;
   --line-strong:#B6B6B1;
   --alert:#C4362B;
+  --ok:#3E8E5A;
   --hub:#F2F2F0;
   --shadow:0 1px 0 rgba(0,0,0,.04);
   --r:3px;
@@ -41,6 +42,7 @@
     --line:#2E3033;
     --line-strong:#45484C;
     --alert:#F0796B;
+    --ok:#55B57C;
     --hub:#131416;
     --shadow:none;
   }
@@ -53,6 +55,7 @@
   --line:#2E3033;
   --line-strong:#45484C;
   --alert:#F0796B;
+  --ok:#55B57C;
   --hub:#131416;
   --shadow:none;
 }
@@ -157,6 +160,21 @@ input[type=search]{flex:1 1 190px;min-width:0}
 .q.done{margin-left:auto;font-size:12px}
 .card.out{opacity:.55}
 .card.out .grams{color:var(--ink-soft)}
+/* quant en queda: el número gros, la barra i on la tens */
+.lvl{display:flex;align-items:baseline;gap:5px;margin-top:3px}
+.lvl .grams{font-size:20px;letter-spacing:-.035em;line-height:1.05}
+.lvl .of{font-size:11px;color:var(--ink-soft);letter-spacing:-.01em;white-space:nowrap}
+.lvl .pc{margin-left:auto;font-size:12px;font-weight:700;color:var(--ink-soft)}
+.bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--ok);border-radius:3px}
+.low .lvl .pc{color:var(--alert)}
+.low .bar i{background:var(--alert)}
+.card.out .lvl .grams{font-size:14px;font-weight:600}
+.card.out .bar i{background:transparent}
+.shelf{font-size:11.5px;font-style:italic;color:var(--ink-soft);line-height:1.3;margin-top:5px}
+/* al mòbil estret hi caben dues targetes per fila i el pes nominal ja no hi cap:
+   la barra diu la proporció igualment */
+@media(max-width:380px){.lvl .of{display:none}.lvl .grams{font-size:18px}}
 .name{font-weight:600;letter-spacing:-.012em;line-height:1.2}
 .sub{color:var(--ink-soft);font-size:12.5px;line-height:1.35}
 .grams{font-weight:600}
@@ -515,6 +533,7 @@ nav::-webkit-scrollbar{display:none}
       <div class="full" style="margin-top:-6px"><button type="button" class="btn" id="e-mesura-btn">📐 Mesura el % amb una foto</button></div>
       <label>Avisa'm per sota de <input type="number" id="e-min" min="0" step="25" placeholder="200"></label>
       <label class="chk"><input type="checkbox" id="e-comprar"> Marca-la per demanar</label>
+      <label class="full">On la tens <input type="text" id="e-pos" placeholder="Prestatge C · calaix 1"></label>
       <label class="full">Notes <input type="text" id="e-notes" placeholder="Assecada el març; nucli de cartró"></label>
     </div>
     <div class="actions">
@@ -1138,16 +1157,22 @@ function renderGrid(){
     var q=qtyOf(it), out=(q===0);
     var card=document.createElement("div");
     card.className="card"+(out?" out":(needsBuy(it)?" buy low":""));
+    var pc=Math.max(0,Math.min(100,Math.round(out?0:(it.percent_restant!=null
+      ? it.percent_restant : stockOf(it)/nominalOf(it)*100))));
     card.innerHTML='<button class="cardmain">'+spoolSVG(it)+
       '<div><div class="name">'+esc(nomColor(it))+'</div>'+
-      '<div class="sub">'+(out
-        ? '<span class="grams">esgotada</span>'
-        : '<span class="grams">'+fmtG(it.pes_restant_g)+'</span> · '+
-          (it.percent_restant==null?"—":Math.round(it.percent_restant)+"%")+
-          (q>1?'<br>'+q+' bobines · '+fmtG(stockOf(it))+' en total':''))+'</div>'+
       '<div class="sub"><span class="tag">'+esc(it.material)+'</span> '+esc(it.marca||"")+
       (isMulti(it)?' <span class="tag">'+esc(it.patro||"multicolor")+'</span>':'')+
-      ((it.foto_id||it.foto_data)?' <span class="tag">foto</span>':'')+'</div></div></button>'+
+      ((it.foto_id||it.foto_data)?' <span class="tag">foto</span>':'')+'</div>'+
+      '<div class="lvl">'+(out
+        ? '<span class="grams">esgotada</span>'
+        : '<span class="grams">'+fmtG(it.pes_restant_g)+'</span>'+
+          '<span class="of">/ '+fmtG(nominalOf(it))+'</span>'+
+          '<span class="pc">'+pc+'%</span>')+'</div>'+
+      '<div class="bar"><i style="width:'+pc+'%"></i></div>'+
+      (!out&&q>1?'<div class="sub">'+q+' bobines · '+fmtG(stockOf(it))+' en total</div>':'')+
+      (it.posicio?'<div class="shelf">'+esc(it.posicio)+'</div>':'')+
+      '</div></button>'+
       '<div class="qty">'+
         '<button class="q" data-act="dec" title="En tinc una menys" aria-label="En tinc una menys">&minus;</button>'+
         '<span class="qn">'+q+'</span>'+
@@ -1396,6 +1421,7 @@ function openEditor(uid){
   $("e-min").value=it&&it.min_g!=null?it.min_g:"";
   $("e-min").placeholder=String(settings.min);
   $("e-comprar").checked=!!(it&&it.comprar);
+  $("e-pos").value=it&&it.posicio?it.posicio:"";
   $("e-notes").value=it&&it.notes?it.notes:"";
   var ph=$("e-photo");
   if(it&&it.foto_id){ ph.onerror=function(){ ph.hidden=true; }; ph.src="/_blob/"+it.foto_id; ph.hidden=false; }
@@ -1442,6 +1468,7 @@ $("e-save").onclick=function(){
     percent_restant: rest==null?null:Math.round(rest/nominal*100),
     min_g:num($("e-min").value),
     comprar:$("e-comprar").checked,
+    posicio:$("e-pos").value.trim()||null,
     notes:$("e-notes").value.trim()||null
   };
   if(editingId){
