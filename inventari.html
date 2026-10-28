@@ -379,6 +379,7 @@ nav::-webkit-scrollbar{display:none}
     <span><b id="t-kg">0</b> kg restants</span>
     <span><b id="t-colors">0</b> colors diferents</span>
     <span><b id="t-buy">0</b> per demanar</span>
+    <span><b id="t-valor">0 €</b> en estoc <small class="note" id="t-valor-nota"></small></span>
   </div>
   <div class="stockbar empty" id="stockbar" aria-hidden="true"></div>
   <div class="stockbar-cap">Cada franja és una bobina, d'amplada proporcional als grams que li queden.</div>
@@ -510,6 +511,7 @@ nav::-webkit-scrollbar{display:none}
       <label>Quantes en tinc <input type="number" id="e-qty" min="0" max="99" step="1"></label>
       <label>Grams de la que fas servir <input type="number" id="e-rest" min="0" step="5"></label>
       <label>Pes nominal <input type="number" id="e-nom-g" min="0" step="50" placeholder="1000"></label>
+      <label>Preu de la bobina (€) <input type="number" id="e-preu" min="0" step="0.5" placeholder="20"></label>
       <div class="full" style="margin-top:-6px"><button type="button" class="btn" id="e-mesura-btn">📐 Mesura el % amb una foto</button></div>
       <label>Avisa'm per sota de <input type="number" id="e-min" min="0" step="25" placeholder="200"></label>
       <label class="chk"><input type="checkbox" id="e-comprar"> Marca-la per demanar</label>
@@ -820,6 +822,7 @@ var ALIAS = {
   pes_net_nominal_g:["pes_net_nominal_g","pes_nominal_g","peso_nominal_g","nominal_weight_g","pes_net_g","net_weight_g"],
   pes_restant_g:["pes_restant_g","grams_restants","peso_restante_g","remaining_g","pes_g","grams"],
   pes_marge_g:["pes_marge_g","marge_g","margin_g","error_g"],
+  preu_bobina_eur:["preu_bobina_eur","preu","preu_eur","precio","precio_eur","price","price_eur","cost","coste"],
   percent_restant:["percent_restant","percentatge","percent","porcentaje","remaining_pct"],
   metode:["metode","method","metodo"],
   confianca:["confianca","confianza","confidence","confiança"],
@@ -850,6 +853,7 @@ function normalize(raw, i){
   o.pes_restant_g = num(o.pes_restant_g);
   o.percent_restant = num(o.percent_restant);
   o.pes_marge_g = num(o.pes_marge_g);
+  o.preu_bobina_eur = num(o.preu_bobina_eur);
   o.diametre_mm = num(o.diametre_mm) || 1.75;
   if(o.pes_restant_g==null && o.percent_restant!=null)
     o.pes_restant_g = Math.round((o.pes_net_nominal_g||1000)*o.percent_restant/100);
@@ -956,6 +960,29 @@ function qtyOf(it){
   var q=(it.quantitat==null?1:Number(it.quantitat));
   return isFinite(q)?Math.max(0,Math.round(q)):1;
 }
+/* ---------- diners ---------- */
+function fmtEur(n){
+  if(n==null || !isFinite(n)) return "—";
+  return (Math.round(n*100)/100).toFixed(2).replace(".",",")+" €";
+}
+function preuOf(it){
+  var p = it && it.preu_bobina_eur;
+  return (p!=null && isFinite(p) && p>0) ? p : null;
+}
+/* El preu és d'una bobina sencera; el valor del que queda es prorrateja pels grams. */
+function valorOf(it){
+  var p = preuOf(it);
+  if(p==null) return null;
+  var nom = nominalOf(it);
+  if(!nom) return null;
+  return stockOf(it)/nom * p;
+}
+function valorTotal(){
+  return items.reduce(function(s,i){ return s + (valorOf(i)||0); }, 0);
+}
+function sensePreu(){
+  return items.filter(function(i){ return qtyOf(i)>0 && preuOf(i)==null; }).length;
+}
 function nominalOf(it){ return it.pes_net_nominal_g||1000; }
 /* estoc total: la bobina oberta més les que encara són precintades */
 function stockOf(it){
@@ -1033,6 +1060,10 @@ function renderHeader(){
   $("t-kg").textContent=(totalG()/1000).toFixed(1).replace(".",",");
   $("t-colors").textContent=clusters(5,settings.bymat).length;
   $("t-buy").textContent=items.filter(needsBuy).length;
+  $("t-valor").textContent=fmtEur(valorTotal());
+  /* si hi ha bobines sense preu, el total es queda curt: val més dir-ho que amagar-ho */
+  var sp=sensePreu();
+  $("t-valor-nota").textContent = sp ? "("+sp+" sense preu)" : "";
   var bar=$("stockbar"), total=totalG();
   bar.innerHTML="";
   if(!items.length||!total){ bar.classList.add("empty"); return; }
@@ -1254,6 +1285,15 @@ function renderBuy(){
   $("buylist").innerHTML = order.length ? order.map(function(k){
     return '<h3 class="buygroup">'+esc(k)+'</h3>'+groups[k].map(buyRow).join("");
   }).join("") : '<p class="note">Res pendent. Tot el que tens està per sobre del seu llindar.</p>';
+  /* què costaria reposar-ho: una bobina nova de cada una de les que falten */
+  var pend=items.filter(needsBuy), ambPreu=pend.filter(function(i){ return preuOf(i)!=null; });
+  var cost=ambPreu.reduce(function(s,i){ return s+preuOf(i); },0);
+  if(pend.length && ambPreu.length){
+    var falten=pend.length-ambPreu.length;
+    $("buylist").insertAdjacentHTML("beforeend",
+      '<p class="note" style="margin-top:14px">Reposar-ho tot, una bobina de cada una: <b>'+esc(fmtEur(cost))+'</b>'+
+      (falten? ' — i '+falten+(falten===1?' que no té preu posat':' que no tenen preu posat') : '')+'.</p>');
+  }
   Array.prototype.forEach.call($("buylist").querySelectorAll(".buyrow"),function(row){
     row.onclick=function(){ openEditor(row.dataset.uid); };
     var plus=row.querySelector(".q");
@@ -1351,6 +1391,7 @@ function openEditor(uid){
   $("e-dia").value=it?String(it.diametre_mm):"1.75";
   $("e-qty").value=it?qtyOf(it):1;
   $("e-rest").value=it&&it.pes_restant_g!=null?it.pes_restant_g:"";
+  $("e-preu").value=it&&preuOf(it)!=null?it.preu_bobina_eur:"";
   $("e-nom-g").value=it?it.pes_net_nominal_g:1000;
   $("e-min").value=it&&it.min_g!=null?it.min_g:"";
   $("e-min").placeholder=String(settings.min);
@@ -1397,6 +1438,7 @@ $("e-save").onclick=function(){
     diametre_mm:parseFloat($("e-dia").value),
     pes_net_nominal_g:nominal,
     pes_restant_g:rest,
+    preu_bobina_eur:num($("e-preu").value),
     percent_restant: rest==null?null:Math.round(rest/nominal*100),
     min_g:num($("e-min").value),
     comprar:$("e-comprar").checked,
@@ -1486,7 +1528,7 @@ function copyFallback(text){
 }
 $("exp-json").onclick=function(){ offer("inventari-filament.json", JSON.stringify({inventari:items},null,2), "application/json"); };
 function buildCSV(){
-  var cols=["id","color_nom","colors_hex","patro","familia_color","material","marca","acabat","diametre_mm","quantitat","pes_net_nominal_g","pes_restant_g","percent_restant","estoc_total_g","min_g","comprar","notes"];
+  var cols=["id","color_nom","colors_hex","patro","familia_color","material","marca","acabat","diametre_mm","quantitat","pes_net_nominal_g","pes_restant_g","percent_restant","estoc_total_g","preu_bobina_eur","valor_estoc_eur","min_g","comprar","notes"];
   return cols.join(",")+"\n"+items.map(function(it){
     return cols.map(function(c){
       var v;
@@ -1494,6 +1536,7 @@ function buildCSV(){
       else if(c==="estoc_total_g") v=stockOf(it);
       else if(c==="quantitat") v=qtyOf(it);
       else if(c==="min_g") v=minOf(it);
+      else if(c==="valor_estoc_eur"){ var vv=valorOf(it); v = vv==null?null:Math.round(vv*100)/100; }
       else v=it[c];
       v=(v==null?"":String(v));
       return '"'+v.replace(/"/g,'""')+'"';
