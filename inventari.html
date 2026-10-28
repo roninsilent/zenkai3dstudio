@@ -172,6 +172,9 @@ input[type=search]{flex:1 1 190px;min-width:0}
 .card.out .lvl .grams{font-size:14px;font-weight:600}
 .card.out .bar i{background:transparent}
 .shelf{font-size:11.5px;font-style:italic;color:var(--ink-soft);line-height:1.3;margin-top:5px}
+.tag.dte{border-color:var(--ok);color:var(--ok);text-decoration:none;font-weight:600}
+.tag.dte:hover{background:var(--ok);color:var(--surface)}
+table.tbl td.de{white-space:nowrap;vertical-align:top;padding-top:9px}
 /* al mòbil estret hi caben dues targetes per fila i el pes nominal ja no hi cap:
    la barra diu la proporció igualment */
 @media(max-width:380px){.lvl .of{display:none}.lvl .grams{font-size:18px}}
@@ -406,6 +409,7 @@ nav::-webkit-scrollbar{display:none}
 <div class="navwrap"><nav role="tablist">
   <button role="tab" data-view="inventari" aria-selected="true">Inventari</button>
   <button role="tab" data-view="colors" aria-selected="false">Colors</button>
+  <button role="tab" data-view="marques" aria-selected="false">Marques</button>
   <button role="tab" data-view="comprar" aria-selected="false">Per comprar</button>
   <button role="tab" data-view="importa" aria-selected="false">Importa</button>
   <button role="tab" data-view="prompt" aria-selected="false">El prompt</button>
@@ -454,6 +458,16 @@ nav::-webkit-scrollbar{display:none}
 
   <h2>Per material</h2>
   <table class="tbl" id="materials"><tbody></tbody></table>
+</section>
+
+<section id="view-marques" hidden>
+  <h2>De qui és el que tens</h2>
+  <p class="hint">Cada marca amb el que en queda i el que val. Si és una marca de la qual tens codi de descompte, hi surt al costat: el llegeix del dossier, així no hi ha dues llistes que es puguin contradir.</p>
+  <table class="tbl" id="marques"><tbody></tbody></table>
+
+  <h2>A quina botiga has d'anar</h2>
+  <p class="hint">El mateix que hi ha a «Per comprar», però repartit per marca i amb el que costaria. Una comanda per botiga surt més barata de ports que sis comandes soltes.</p>
+  <div id="marques-buy"></div>
 </section>
 
 <section id="view-comprar" hidden>
@@ -1224,6 +1238,97 @@ function clusters(th,byMat){
   return gs;
 }
 
+/* ---------- marques ---------- */
+/* Els codis de descompte viuen al dossier; si no es poden llegir, la pestanya
+   funciona igual i prou. */
+var DTES = null;
+var MARCA_DTE = { polyterra:"polymaker", panchroma:"polymaker", polylite:"polymaker" };
+function normMarca(x){
+  return String(x==null?"":x).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+}
+function carregaDtes(){
+  fetch("dossier-config.json",{cache:"no-cache"}).then(function(r){ return r.ok?r.json():null; })
+    .then(function(c){
+      if(!c || !Array.isArray(c.afiliats)) return;
+      var d={};
+      c.afiliats.forEach(function(a){
+        if(!a || !a.marca) return;
+        /* "BIQU · BigTreeTech" és una botiga amb dos noms */
+        String(a.marca).split("\u00b7").forEach(function(n){
+          n=normMarca(n);
+          if(n) d[n]={codi:a.codi||null, pct:a.pct||null, url:a.url||null};
+        });
+      });
+      DTES=d;
+      if(view==="marques") renderMarques();
+    }).catch(function(){});
+}
+function dteDe(nom){
+  if(!DTES) return null;
+  var k=normMarca(nom);
+  return DTES[k] || DTES[MARCA_DTE[k]] || null;
+}
+function perMarca(llista){
+  var per={}, ordre=[];
+  llista.forEach(function(it){
+    var nom=String(it.marca==null?"":it.marca).trim();
+    var k=normMarca(nom);
+    if(!per[k]){ per[k]={nom:nom||"Sense marca", sense:!nom, items:[]}; ordre.push(k); }
+    per[k].items.push(it);
+  });
+  return ordre.map(function(k){
+    var g=per[k];
+    g.g=g.items.reduce(function(s,i){ return s+stockOf(i); },0);
+    g.n=g.items.reduce(function(s,i){ return s+qtyOf(i); },0);
+    g.eur=g.items.reduce(function(s,i){ return s+(valorOf(i)||0); },0);
+    g.baixes=g.items.filter(needsBuy).length;
+    g.mats=g.items.map(function(i){ return i.material; })
+                  .filter(function(v,j,a){ return v && a.indexOf(v)===j; });
+    g.dte=g.sense?null:dteDe(g.nom);
+    return g;
+  }).sort(function(a,b){ return b.g-a.g || b.items.length-a.items.length; });
+}
+function stripMarca(g){
+  var vist={}, hx=[];
+  g.items.forEach(function(i){ colorsOf(i).forEach(function(c){
+    if(c.hex && !vist[c.hex]){ vist[c.hex]=1; hx.push(c.hex); } }); });
+  return '<span class="swatchstrip">'+hx.slice(0,7).map(function(x){
+    return '<span style="background:'+esc(x)+'" title="'+esc(x)+'"></span>'; }).join("")+'</span>';
+}
+function etiquetaDte(d){
+  if(!d) return "";
+  var t=d.pct ? "-"+d.pct+" %" : (d.codi ? "codi" : "enllaç");
+  return ' <a class="tag dte" href="'+esc(d.url||"#")+'" target="_blank" rel="noopener">'+esc(t)+'</a>';
+}
+function notaDte(d){
+  if(!d) return "";
+  return '<div class="sub">'+(d.codi ? 'codi <b>'+esc(d.codi)+'</b>' : "enllaç teu d'afiliat")+'</div>';
+}
+function renderMarques(){
+  var gs=perMarca(items);
+  $("marques").querySelector("tbody").innerHTML = gs.length ? gs.map(function(g){
+    return '<tr><td style="width:1%">'+stripMarca(g)+'</td>'+
+      '<td><b'+(g.sense?' class="note"':'')+'>'+esc(g.nom)+'</b>'+etiquetaDte(g.dte)+
+      '<div class="sub">'+g.items.length+(g.items.length===1?" referència":" referències")+
+      ' · '+g.n+' bobin'+(g.n===1?"a":"es")+
+      (g.baixes?' · <span class="err">'+g.baixes+' per demanar</span>':'')+'</div>'+
+      '<div class="sub">'+esc(g.mats.join(", "))+'</div>'+notaDte(g.dte)+'</td>'+
+      '<td class="de"><b>'+fmtG(g.g)+'</b><small>'+(g.eur?esc(fmtEur(g.eur)):"&mdash;")+'</small></td></tr>';
+  }).join("") : '<tr><td class="note">Encara no hi ha res a repartir per marques.</td></tr>';
+
+  var pend=perMarca(items.filter(needsBuy));
+  $("marques-buy").innerHTML = pend.length ? pend.map(function(g){
+    var ambPreu=g.items.filter(function(i){ return preuOf(i)!=null; });
+    var cost=ambPreu.reduce(function(s,i){ return s+preuOf(i); },0);
+    var falten=g.items.length-ambPreu.length;
+    return '<div class="row"><div class="chips">'+stripMarca(g)+'</div>'+
+      '<div class="rowmain"><b'+(g.sense?' class="note"':'')+'>'+esc(g.nom)+'</b>'+etiquetaDte(g.dte)+
+      '<div class="sub">'+g.items.map(function(i){ return esc(nomColor(i)+" ("+i.material+")"); }).join(" · ")+'</div>'+
+      notaDte(g.dte)+'</div>'+
+      '<div class="de"><b>'+(cost?esc(fmtEur(cost)):"&mdash;")+'</b>'+
+      (falten?'<small>'+falten+' sense preu</small>':'')+'</div></div>';
+  }).join("") : '<p class="note">Res pendent. No has d\'anar enlloc.</p>';
+}
 function renderColors(){
   var byMat=settings.bymat;
   var gs=clusters(settings.tol,byMat).map(function(g){
@@ -1347,7 +1452,7 @@ function buyText(){
   }).join("\n");
 }
 
-function renderAll(){ renderHeader(); renderGrid(); renderColors(); renderBuy(); }
+function renderAll(){ renderHeader(); renderGrid(); renderColors(); renderMarques(); renderBuy(); }
 
 /* ---------------- editor ---------------- */
 var edColors=[];
@@ -1584,7 +1689,7 @@ $("copy-prompt").onclick=function(){
 };
 
 /* ---------------- navegació ---------------- */
-var VIEWS=["inventari","colors","comprar","importa","prompt"];
+var VIEWS=["inventari","colors","marques","comprar","importa","prompt"];
 function go(v){
   view=v;
   VIEWS.forEach(function(k){ $("view-"+k).hidden = (k!==v); });
@@ -2199,6 +2304,7 @@ function bootApp(){
   $("bymat").checked=settings.bymat;
   $("minall").value=settings.min;
   renderAll();
+  carregaDtes();
   connectDb();
   connectCaps();
 }
@@ -2223,6 +2329,7 @@ var ZCFG = {
     $("bymat").checked=settings.bymat;
     $("minall").value=settings.min;
     renderAll();
+    carregaDtes();
     connectDb();
     connectCaps();
   }
