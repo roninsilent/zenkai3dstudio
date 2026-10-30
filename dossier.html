@@ -151,6 +151,8 @@ footer{margin-top:40px;font-size:12px;color:var(--ink-soft)}
 .graella{display:grid;grid-template-columns:1fr;gap:7px}
 .peca{display:flex;align-items:center;gap:13px;border:1px solid var(--line);border-left:3px solid var(--brand-orange);background:var(--surface);padding:9px 14px 9px 11px}
 .peca img{width:56px;height:auto;flex:none;display:block;background:var(--paper)}
+/* mentre no hi hagi foto, un marc de la mateixa mida: la fila no es desquadra */
+.peca .capfoto{width:56px;height:84px;flex:none;border:1px dashed var(--line-strong);background:var(--paper)}
 .peca .d{flex:1;min-width:0}
 .peca .d b{display:block;font-size:15px;line-height:1.2;letter-spacing:-.015em}
 .peca .on{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
@@ -159,7 +161,8 @@ footer{margin-top:40px;font-size:12px;color:var(--ink-soft)}
 /* al mòbil estret, la miniatura cedeix l'espai perquè els enllaços no es parteixin */
 @media(max-width:380px){
   .peca{gap:10px;padding:8px 10px 8px 9px}
-  .peca img{width:44px}
+  .peca img,.peca .capfoto{width:44px}
+  .peca .capfoto{height:66px}
   .peca .on{gap:4px}
   .peca .on a{padding:3px 6px}}
 .code{display:inline-flex;align-items:center;gap:8px;font:inherit;cursor:pointer;border:1px dashed var(--line-strong);
@@ -603,7 +606,8 @@ function pintaPeces() {
       '<div class="graella">' + grups[k].map(function (p) {
         var on = (p.enllacos || []).filter(function (e) { return e && e.on && e.url; });
         return '<div class="peca">' +
-          (p.foto ? '<img src="' + esc(p.foto) + '" alt="' + esc(p.nom) + '" loading="lazy">' : "") +
+          (p.foto ? '<img src="' + esc(p.foto) + '" alt="' + esc(p.nom) + '" loading="lazy">'
+                  : '<div class="capfoto" aria-hidden="true"></div>') +
           '<div class="d"><b>' + esc(p.nom) + '</b>' +
           (on.length ? '<div class="on">' + on.map(function (e) {
             return '<a href="' + esc(e.url) + '" target="_blank" rel="noopener">' + esc(e.on) + '</a>';
