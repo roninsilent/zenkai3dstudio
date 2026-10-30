@@ -102,7 +102,7 @@ input[type=search]{flex:1 1 190px;min-width:0}
 .badge{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.03em;padding:2px 8px;border-radius:20px;border:1px solid var(--line-strong);color:var(--ink-soft);white-space:nowrap}
 .badge.b-acceptada{color:var(--brand-blue);border-color:var(--brand-blue)}
 .badge.b-obert{color:var(--paper);background:var(--brand-blue);border-color:var(--brand-blue)}
-.badge.b-producte,.badge.b-produccio{color:var(--brand-orange);border-color:var(--brand-orange)}
+.badge.b-producte,.badge.b-rebut,.badge.b-produccio{color:var(--brand-orange);border-color:var(--brand-orange)}
 .badge.b-revisio{color:var(--brand-orange);border-color:var(--brand-orange)}
 .badge.b-publicat,.badge.b-cobrat{color:var(--good);border-color:var(--good)}
 .badge.b-descartada{text-decoration:line-through;opacity:.6}
@@ -546,6 +546,7 @@ nav::-webkit-scrollbar{display:none}
         <option value="proposta">Proposta rebuda</option>
         <option value="acceptada">Acceptada</option>
         <option value="producte">Esperant el producte</option>
+        <option value="rebut">Material rebut</option>
       </select>
     </label>
   </div>
@@ -607,6 +608,7 @@ nav::-webkit-scrollbar{display:none}
           <option value="proposta">Proposta rebuda</option>
           <option value="acceptada">Acceptada</option>
           <option value="producte">Esperant el producte</option>
+          <option value="rebut">Material rebut</option>
           <option value="produccio">En producció</option>
           <option value="revisio">Enviat a revisió</option>
           <option value="publicat">Publicat</option>
@@ -663,11 +665,11 @@ var edEntregables=[], edRebuts=[], edFitxers=[];
 
 var ESTATS = {
   obert:"Concurs obert", enviada:"Proposta enviada", proposta:"Proposta rebuda",
-  acceptada:"Acceptada", producte:"Esperant el producte",
+  acceptada:"Acceptada", producte:"Esperant el producte", rebut:"Material rebut",
   produccio:"En producció", revisio:"Enviat a revisió", publicat:"Publicat",
   cobrat:"Cobrat", descartada:"Descartada"
 };
-var ACTIUS = ["acceptada","producte","produccio","revisio","publicat"];
+var ACTIUS = ["acceptada","producte","rebut","produccio","revisio","publicat"];
 var TANCATS = ["cobrat","descartada"];
 var TIPUS = { material:"Filament", hardware:"Hardware", disseny:"Disseny", concurs:"Concurs", altre:"Altre" };
 
@@ -831,7 +833,7 @@ function passaFiltre(c, q, f, ft){
 function visible(){
   var q=$("q").value.trim().toLowerCase(), f=$("f-estat").value, ft=$("f-tipus").value;
   var list=collabs.filter(function(c){ return !esConcurs(c) && !isTancat(c) && passaFiltre(c, q, f, ft); });
-  var order = ["obert","produccio","revisio","producte","acceptada","proposta","publicat","enviada"];
+  var order = ["obert","produccio","rebut","revisio","producte","acceptada","proposta","publicat","enviada"];
   list.sort(function(a,b){
     var da=order.indexOf(a.estat), db=order.indexOf(b.estat);
     if(da!==db) return da-db;
