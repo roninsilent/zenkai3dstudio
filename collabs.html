@@ -141,17 +141,20 @@ nav .ncount{font-weight:400;color:var(--ink-soft);margin-left:5px;font-variant-n
 .citem{display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px solid var(--line)}
 .citem:last-child{border-bottom:1px solid var(--line)}
 .citem input[type=checkbox]{width:17px;height:17px;flex:none}
-.citem span{flex:1;font-size:14px}
+.citem span{flex:1;min-width:0;overflow-wrap:anywhere;font-size:14px}
 .citem.fet span{color:var(--ink-soft);text-decoration:line-through}
 .citem .x{border:0;background:none;cursor:pointer;color:var(--ink-soft);font-size:18px;line-height:1;padding:2px 4px}
 .citem .x:hover{color:var(--alert)}
 .addrow{display:flex;gap:6px;margin-top:8px}
 .addrow input{flex:1}
 
-.frow{display:flex;align-items:center;gap:9px;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px}
+.frow{display:flex;align-items:center;gap:9px;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px;flex-wrap:wrap}
 .frow:last-child{border-bottom:1px solid var(--line)}
-.frow a{font-weight:500;text-decoration:none;border-bottom:1px solid var(--line-strong)}
+/* un enllaç enganxat sencer no té on partir-se: que s'encongeixi i parteixi
+   on calgui, si no estira la fila i el full se'n va de la pantalla */
+.frow a{font-weight:500;text-decoration:none;border-bottom:1px solid var(--line-strong);flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
 .frow a:hover{border-color:var(--ink)}
+.frow .badge,.frow .x{flex:none}
 .frow .note{margin-left:auto;flex:none}
 
 .empty-state{border:1px dashed var(--line-strong);padding:26px;text-align:center;color:var(--ink-soft);max-width:520px}
@@ -161,7 +164,7 @@ nav .ncount{font-weight:400;color:var(--ink-soft);margin-left:5px;font-variant-n
 .overlay[hidden]{display:none}
 .sheet{background:var(--surface);border:1px solid var(--line-strong);width:min(600px,100%);max-height:92vh;overflow:auto;padding:22px;border-radius:var(--r) var(--r) 0 0}
 @media(min-width:700px){.overlay{align-items:center}.sheet{border-radius:var(--r)}}
-.sheet h3{margin:0;font-size:19px;font-weight:600;letter-spacing:-.02em}
+.sheet h3{margin:0;font-size:19px;font-weight:600;letter-spacing:-.02em;overflow-wrap:break-word}
 .actions{display:flex;gap:8px;align-items:center;margin-top:16px}
 
 .gate{position:fixed;inset:0;background:var(--paper);z-index:60;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -533,7 +536,7 @@ nav::-webkit-scrollbar{display:none}
   <div class="grid2" style="margin-bottom:12px">
     <label class="f">Tipus
       <select id="ig-tipus">
-        <option value="material">Filament — m\'envien filament o resina</option>
+        <option value="material">Filament — m'envien filament o resina</option>
         <option value="hardware">Hardware — impressora, eines o accessoris</option>
         <option value="disseny">Disseny — imprimeixo un model seu</option>
         <option value="concurs">Concurs — premi guanyat</option>
@@ -589,9 +592,9 @@ nav::-webkit-scrollbar{display:none}
       <label class="f full">Marca / empresa <input type="text" id="e-marca" placeholder="p. ex. Sunlu"></label>
       <label class="f full">Tipus de col·laboració
         <select id="e-tipus">
-          <option value="material">Filament — m\'envien filament o resina</option>
-          <option value="hardware">Hardware — m\'envien impressora, eines o accessoris</option>
-          <option value="disseny">Disseny — imprimeixo el model d\'un dissenyador</option>
+          <option value="material">Filament — m'envien filament o resina</option>
+          <option value="hardware">Hardware — m'envien impressora, eines o accessoris</option>
+          <option value="disseny">Disseny — imprimeixo el model d'un dissenyador</option>
           <option value="concurs">Concurs — premi guanyat en un sorteig</option>
           <option value="altre">Altre</option>
         </select>

@@ -245,8 +245,15 @@ table.tbl td:last-child,table.tbl th:last-child{text-align:right;padding-right:0
 .fields input,.fields select{width:100%}
 .colorrow{display:flex;gap:8px}
 .colorrow input[type=color]{width:42px;height:36px;padding:2px;border:1px solid var(--line-strong);background:var(--surface);border-radius:var(--r)}
-.sheet h3{margin:0;font-size:19px;font-weight:600;letter-spacing:-.02em}
-.actions{display:flex;gap:8px;align-items:center}
+.sheet h3{margin:0;font-size:19px;font-weight:600;letter-spacing:-.02em;overflow-wrap:break-word}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+/* quatre botons no caben en una línia en un mòbil estret. L'Elimina se'n va a
+   la seva pròpia fila: al costat del Cancel·la és massa fàcil equivocar-se. */
+@media(max-width:560px){
+  .actions .spacer{display:none}
+  .actions .btn{flex:1 1 auto}
+  #e-del{flex:1 1 100%;margin-top:2px}
+}
 .gate{position:fixed;inset:0;background:var(--paper);z-index:60;display:flex;align-items:center;justify-content:center;padding:24px}
 .gate[hidden]{display:none}
 .gate-card{max-width:360px;width:100%;text-align:center}
