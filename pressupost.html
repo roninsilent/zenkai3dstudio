@@ -228,6 +228,15 @@ nav::-webkit-scrollbar{display:none}
   .grid2 > label.f:has(#q-marge){grid-column:1/-1}
   .lbl-row{justify-content:space-between}
 }
+
+/* ---------- ios-zoom: que l'iPhone no ampliï la pàgina ----------
+   Safari a l'iOS amplia la pàgina quan poses el cursor en un camp de menys de
+   16 px i, en sortir-ne, no la torna a reduir: es queda gran. Amb 16 px no ho
+   fa. L'!important hi és perquè regles com .toolbar select tenen més
+   especificitat que select i guanyarien igualment. */
+@media(max-width:900px){
+  input,select,textarea{font-size:16px!important}
+}
 </style>
 </head>
 <body>

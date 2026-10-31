@@ -310,6 +310,15 @@ nav::-webkit-scrollbar{display:none}
 .plantilles textarea{min-height:140px;resize:vertical;line-height:1.5}
 .claus{font-size:11.5px;color:var(--ink-soft);line-height:1.6;margin:10px 0 0}
 .claus code{background:var(--hub);border:1px solid var(--line);border-radius:3px;padding:1px 5px;font-size:11px}
+
+/* ---------- ios-zoom: que l'iPhone no ampliï la pàgina ----------
+   Safari a l'iOS amplia la pàgina quan poses el cursor en un camp de menys de
+   16 px i, en sortir-ne, no la torna a reduir: es queda gran. Amb 16 px no ho
+   fa. L'!important hi és perquè regles com .toolbar select tenen més
+   especificitat que select i guanyarien igualment. */
+@media(max-width:900px){
+  input,select,textarea{font-size:16px!important}
+}
 </style>
 </head>
 <body>

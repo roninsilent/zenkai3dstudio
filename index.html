@@ -90,6 +90,15 @@ footer button:hover{color:var(--ink)}
   a.app{padding:15px 14px;gap:12px}
   a.app .app-ico{width:40px;height:40px}
 }
+
+/* ---------- ios-zoom: que l'iPhone no ampliï la pàgina ----------
+   Safari a l'iOS amplia la pàgina quan poses el cursor en un camp de menys de
+   16 px i, en sortir-ne, no la torna a reduir: es queda gran. Amb 16 px no ho
+   fa. L'!important hi és perquè regles com .toolbar select tenen més
+   especificitat que select i guanyarien igualment. */
+@media(max-width:900px){
+  input,select,textarea{font-size:16px!important}
+}
 </style>
 </head>
 <body>
