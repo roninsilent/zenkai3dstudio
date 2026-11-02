@@ -619,6 +619,7 @@ var INV_JSON="zenkai3d-inventari.json", INV_CSV="zenkai3d-inventari.csv";
 var view="read";
 var parsed=null;             /* resultat del fitxer llegit */
 var plateIdx=0;
+var obertes={};              /* clau de grup de color -> partit per plaques */
 var resultOk=true;
 var triaBobina={};           /* slot del filament -> clau de la bobina triada ("" = no descomptar) */
 var failMode="capa";         /* capa | pct | grams */
@@ -1291,7 +1292,8 @@ function lligaItems(zona){
    diu el gcode capa per capa (un repartiment pla falla el triple). */
 function fraccioCapa(pl,f,L){
   var tc=pl.totalCapes||0;
-  var rangs = (pl.capesPerFil && f.idx!=null) ? pl.capesPerFil[f.idx] : null;
+  /* els grups de color porten els rangs a sobre; les files fetes a mà, no */
+  var rangs = f.capes || ((pl.capesPerFil && f.idx!=null) ? pl.capesPerFil[f.idx] : null);
   if(!rangs || !rangs.length) return tc?Math.min(1,L/tc):0;
   var total=0, fins=0;
   rangs.forEach(function(r){
@@ -1571,7 +1573,7 @@ function filamentNouMa(){
   return { slot:"m"+maSeq, idx:null, type:null, color:null, nom:null, grams:null, manual:true };
 }
 function creaManual(){
-  maSeq=0; triaBobina={}; picObert=null; picFiltre={};
+  maSeq=0; triaBobina={}; picObert=null; picFiltre={}; obertes={};
   parsed={
     source:"ma", fileName:null, bytes:null, printer:null, layerHeight:null, nozzle:null,
     modelNames:[], thumb:null, unsliced:false, diag:{},
@@ -1615,9 +1617,105 @@ function setMode(m){
 }
 
 /* ---------------- pintar el resultat ---------------- */
+/* ---------------- les plaques, sumades per color ---------------- */
+/* Mateix color i mateix material és la mateixa bobina, vingui de la placa que
+   vingui. Un filament sense color al fitxer va a part: no sé si és el mateix
+   que cap altre, i ajuntar-los seria endevinar. */
+function clauColor(f){
+  if(!f.color) return "s:"+f.slot;
+  return "c:"+String(f.color).toLowerCase()+"|"+String(f.type||"").toLowerCase();
+}
+/* els rangs de capes dels membres, ajuntats: dos slots del mateix color poden
+   entrar en capes diferents i les dues franges compten */
+function rangsUnits(membres, pl){
+  if(!pl || !pl.capesPerFil) return null;
+  var tots=[];
+  membres.forEach(function(m){
+    var r = (m.f.idx!=null) ? pl.capesPerFil[m.f.idx] : null;
+    if(r) r.forEach(function(x){ tots.push([x[0],x[1]]); });
+  });
+  if(!tots.length) return null;
+  tots.sort(function(a,b){ return a[0]-b[0] || a[1]-b[1]; });
+  var net=[];
+  tots.forEach(function(r){
+    var u=net[net.length-1];
+    if(u && r[0]<=u[1]+1){ if(r[1]>u[1]) u[1]=r[1]; }
+    else net.push([r[0],r[1]]);
+  });
+  return net;
+}
+function filDeGrup(g, membres, plaques, slot, partit, pl1, ultim){
+  var grams=null, est=false, nom=null;
+  membres.forEach(function(m){
+    if(m.f.grams!=null) grams=(grams||0)+m.f.grams;
+    if(m.f.estimat) est=true;
+    if(!nom && m.f.nom) nom=m.f.nom;
+  });
+  return { slot:slot, grup:g.clau, color:g.color, type:g.type, nom:nom,
+           grams:(grams==null?null:Math.round(grams*100)/100), estimat:est,
+           plaques:plaques.slice(), totesPlaques:g.plaques.slice(),
+           partit:partit, ultimTros:!!ultim, potPartir:(g.plaques.length>1),
+           capes: rangsUnits(membres, pl1), idx:null };
+}
+function fusiona(){
+  var ps=parsed.plates, pl1=(ps.length===1?ps[0]:null);
+  var grups={}, ordre=[];
+  ps.forEach(function(p){
+    (p.filaments||[]).forEach(function(f){
+      var ck=clauColor(f);
+      if(!grups[ck]){ grups[ck]={ clau:ck, color:f.color||null, type:f.type||null,
+                                  membres:[], plaques:[] }; ordre.push(ck); }
+      var g=grups[ck];
+      g.membres.push({ placa:p.index, f:f });
+      if(g.plaques.indexOf(p.index)<0) g.plaques.push(p.index);
+      if(!g.color && f.color) g.color=f.color;
+      if(!g.type && f.type) g.type=f.type;
+    });
+  });
+  var fils=[];
+  ordre.forEach(function(ck){
+    var g=grups[ck];
+    if(!(obertes[ck] && g.plaques.length>1)){
+      fils.push(filDeGrup(g, g.membres, g.plaques, ck, false, pl1, false));
+      return;
+    }
+    g.plaques.forEach(function(px,pi){
+      var mm=g.membres.filter(function(m){ return m.placa===px; });
+      fils.push(filDeGrup(g, mm, [px], ck+"#"+px, true, pl1, pi===g.plaques.length-1));
+    });
+  });
+  return fils;
+}
+/* Una sola "placa" amb tot el fitxer dins: el temps i els grams sumats i els
+   filaments agrupats per color. Per capa només hi ha dades si el fitxer en té
+   una de sola: la capa 400 de tres plaques diferents no vol dir res. */
+function plataFusionada(){
+  var ps=parsed.plates;
+  if(!ps.length) return null;
+  var seconds=0, weight=null, objs=[];
+  ps.forEach(function(p){
+    seconds += p.seconds||0;
+    if(p.weight!=null) weight=(weight||0)+p.weight;
+    (p.objects||[]).forEach(function(o){ if(objs.indexOf(o)<0) objs.push(o); });
+  });
+  return { index: ps.map(function(p){ return p.index; }).join(", "),
+           seconds: seconds, weight:(weight==null?null:Math.round(weight*100)/100),
+           filaments: fusiona(), objects: objs, capesPerFil:null,
+           totalCapes:(ps.length===1 ? ps[0].totalCapes : null),
+           nPlaques: ps.length, meta: ps[0].meta||{} };
+}
 function currentPlate(){
   if(!parsed || !parsed.plates.length) return null;
-  return parsed.plates[Math.min(plateIdx, parsed.plates.length-1)];
+  /* a mà no hi ha ni plaques ni fitxer: la fila és la que ell escriu */
+  if(esMa()) return parsed.plates[0];
+  return plataFusionada();
+}
+function textPlaques(f){
+  if(!f.plaques || !f.plaques.length) return "";
+  if(!parsed || parsed.plates.length<2) return "";
+  var p=f.plaques.map(String);
+  if(p.length===1) return "placa "+p[0];
+  return "plaques "+p.slice(0,-1).join(", ")+" i "+p[p.length-1];
 }
 /* el "en tens 820 g → 750 g" de cada fila */
 function textQueda(f, usat){
@@ -1691,6 +1789,8 @@ function filaHTML(f, i, usats, cru){
     titol = f.color || "sense color";
     var etq=[f.type||"?"];
     if(f.nom) etq.push(String(f.nom).slice(0,34));
+    var tp=textPlaques(f);
+    if(tp) etq.push(tp);
     sub = etq.join(" · ");
   }
 
@@ -1722,11 +1822,47 @@ function filaHTML(f, i, usats, cru){
   if(ma){
     blocs+='<div class="matreu"><button type="button" class="lnk" data-treu="'+esc(f.slot)+'">Treu aquest filament</button></div>';
   }
+  /* si el color surt de més d'una placa, es pot partir per triar-ne una d'un
+     altre color: és per això que les plaques hi surten dites */
+  if(!ma && f.potPartir && (!f.partit || f.ultimTros)){
+    blocs+='<div class="matreu"><button type="button" class="lnk" data-part="'+esc(f.grup)+'"'+
+           ' data-plaques="'+esc((f.totesPlaques||[]).join("\u0001"))+'">'+
+           (f.partit ? "Torna a ajuntar les plaques" : "Divideix per plaques")+'</button></div>';
+  }
 
   return '<div class="filrow">'+sw+'<div class="filmain">'+
     '<div class="filtop"><b>'+esc(titol)+'</b>'+gHTML+'</div>'+
     '<div class="filsub">'+esc(sub)+'</div>'+
     blocs+'</div></div>';
+}
+function lligaParticions(){
+  Array.prototype.forEach.call($("fil-list").querySelectorAll("[data-part]"),function(b){
+    b.onclick=function(){
+      var ck=b.dataset.part;
+      var plaques=String(b.dataset.plaques||"").split("\u0001").filter(Boolean);
+      if(obertes[ck]){
+        /* en tornar a ajuntar em quedo la primera bobina triada: és la que ell
+           havia posat al grup sencer abans de partir-lo */
+        var tria=null;
+        plaques.forEach(function(px){
+          var k=ck+"#"+px;
+          if(tria==null && triaBobina[k]) tria=triaBobina[k];
+          delete triaBobina[k]; delete picFiltre[k];
+        });
+        delete obertes[ck];
+        if(tria!=null) triaBobina[ck]=tria;
+      } else {
+        obertes[ck]=true;
+        /* cada tros arrenca amb la bobina que tenia el grup: només n'ha de
+           canviar la que vulgui d'un altre color */
+        var t=triaBobina[ck];
+        plaques.forEach(function(px){ if(t!=null) triaBobina[ck+"#"+px]=t; });
+        delete triaBobina[ck]; delete picFiltre[ck];
+      }
+      picObert=null;
+      showResult();
+    };
+  });
 }
 function showResult(){
   var pl=currentPlate();
@@ -1770,27 +1906,23 @@ function showResult(){
     if(parsed.modelNames && parsed.modelNames.length && parsed.modelNames.join(", ")!==nom){
       bits2.push(parsed.modelNames.slice(0,3).join(", "));
     }
+    if(parsed.plates.length>1) bits2.push(parsed.plates.length+" plaques sumades");
     if(parsed.layerHeight) bits2.push("capa "+parsed.layerHeight+" mm");
     if(parsed.nozzle) bits2.push("nas "+parsed.nozzle+" mm");
     bits2.push(parsed.fileName);
   }
   $("r-sub2").textContent = bits2.join(" · ");
 
-  if(!ma && parsed.plates.length>1){
-    $("plates-wrap").hidden=false;
-    $("plate-seg").innerHTML = parsed.plates.map(function(p,i){
-      return '<button type="button" data-i="'+i+'" aria-pressed="'+(i===plateIdx)+'">Placa '+esc(p.index)+'</button>';
-    }).join("");
-    Array.prototype.forEach.call($("plate-seg").querySelectorAll("button"),function(b){
-      b.onclick=function(){ plateIdx=+b.dataset.i; showResult(); };
-    });
-  } else $("plates-wrap").hidden=true;
+  /* el selector de plaques ja no hi és: la llista de sota surt sumada i cada
+     fila diu de quines plaques ve */
+  $("plates-wrap").hidden=true;
 
   var usats = cru ? pl.filaments.map(function(){ return null; }) : gramsReals(pl);
   $("fil-list").innerHTML = pl.filaments.map(function(f,i){
     return filaHTML(f,i,usats,cru);
   }).join("");
   lligaPickers();
+  lligaParticions();
   lligaFilesMa(pl);
   pintaEstoc(pl, cru);
   pintaNota(pl, usats, cru);
@@ -1850,7 +1982,9 @@ function renderFallada(){
   if(failMode==="capa" && !pl.totalCapes){
     e.innerHTML = esMa()
       ? "Per capa em fa falta saber quantes capes tenia en total: posa-ho a dalt, o fes-ho pel tant per cent o pesa el tros."
-      : "Aquest fitxer no em diu quantes capes té, així que per capa no et puc calcular res. Fes-ho pel tant per cent o pesa el tros.";
+      : (pl.nPlaques>1
+         ? "Amb "+pl.nPlaques+" plaques sumades, dir-me una capa no serveix: la capa 300 no diu de quina placa és. Fes-ho pel tant per cent o pesa el tros."
+         : "Aquest fitxer no em diu quantes capes té, així que per capa no et puc calcular res. Fes-ho pel tant per cent o pesa el tros.");
     return;
   }
   var total=sumaGrams(pl.filaments.map(function(f){ return f.grams==null?null:f.grams; }));
@@ -1988,6 +2122,7 @@ function savePrint(){
       var bo=it ? { uid:invKey(it), id:it.id||null, marca:it.marca||null,
                     material:it.material||null, nom:invNom(it) } : null;
       return { slot:f.slot, idx:f.idx, type:f.type||null, color:f.color||null,
+               plaques:(f.plaques&&f.plaques.length?f.plaques.slice():null),
                grams:(f.grams==null?null:Math.round(f.grams*100)/100),
                usats:(usats[i]==null?null:usats[i]),
                estimat:!!f.estimat, bobina:bo };
@@ -2025,7 +2160,7 @@ function savePrint(){
   });
 }
 function clearRead(){
-  parsed=null; plateIdx=0; triaBobina={}; picObert=null; picFiltre={};
+  parsed=null; plateIdx=0; triaBobina={}; picObert=null; picFiltre={}; obertes={};
   $("result").hidden=true;
   $("ma-add-wrap").hidden=true;
   $("estoc-box").hidden=true; $("estoc-box").innerHTML="";
@@ -2176,7 +2311,11 @@ function openDetail(uid){
     return '<div class="filrow">'+sw+'<div class="filmain">'+
       '<div class="filtop"><b>'+esc(f.color||"sense color")+'</b>'+
       '<span class="filg">'+fmtG(f.grams||0)+gSub+'</span></div>'+
-      '<div class="filsub">'+esc(f.type||"?")+'</div>'+
+      '<div class="filsub">'+esc([f.type||"?"].concat(
+        (f.plaques&&f.plaques.length>1) ? ["plaques "+f.plaques.join(", ")]
+        : ((f.plaques&&f.plaques.length===1&&(rec.filaments||[]).some(function(x){
+             return x.plaques&&x.plaques.length&&x.plaques[0]!==f.plaques[0]; }))
+           ? ["placa "+f.plaques[0]] : [])).join(" · "))+'</div>'+
       (f.bobina?'<div class="filmatch"><b>'+esc(f.bobina.nom)+'</b></div>':'')+
       '</div></div>';
   }).join("");
