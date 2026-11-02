@@ -1058,9 +1058,12 @@ function setTipus(v){
     $("pintat-box").hidden = true;
   }
   if(!$("q-preu-material").value || $("q-preu-material")._auto){
-    $("q-preu-material").value = isR?settings.general.materialLResina:settings.general.materialKgFdm;
+    /* per a l'FDM, el que diu l'inventari; la resina encara no hi és */
+    $("q-preu-material").value = isR ? settings.general.materialLResina
+      : (invPreuKg!=null ? invPreuKg : settings.general.materialKgFdm);
     $("q-preu-material")._auto = true;
   }
+  posaNotaPreu(isR ? "" : invPreuNota);
   recalc();
 }
 $("q-preu-material").addEventListener("input", function(){ this._auto=false; });
@@ -1402,6 +1405,57 @@ function buildCSV(){
   return cols.join(",")+"\n"+rows.join("\n");
 }
 
+/* ---------------- el preu del material, de l'inventari ---------------- */
+/* Era un número escrit a mà als Ajustos mentre l'inventari ja sabia què havia
+   costat cada bobina. Es pondera pels grams que queden: és el que costa de
+   debò el pròxim gram, no la mitjana de les etiquetes. */
+var invPreuKg = null, invPreuNota = "";
+function preuKgInventari(items){
+  var grams = 0, euros = 0, amb = 0, sense = 0, min = null, max = null;
+  (items || []).forEach(function (it) {
+    if (!it) return;
+    var q = Number(it.quantitat); if (!isFinite(q)) q = 1;
+    var nom = Number(it.pes_net_nominal_g || it.pes_nominal_g) || 1000;
+    var rest = Number(it.pes_restant_g); if (!isFinite(rest)) rest = 0;
+    var est = q > 0 ? rest + (q - 1) * nom : 0;
+    var p = Number(it.preu_bobina_eur);
+    if (!(p > 0)) { if (est > 0) sense++; return; }
+    var kg = p / (nom / 1000);
+    if (min == null || kg < min) min = kg;
+    if (max == null || kg > max) max = kg;
+    amb++;
+    if (est > 0) { grams += est; euros += est / 1000 * kg; }
+  });
+  if (!amb || !(grams > 0)) return null;
+  return { kg: Math.round(euros / (grams / 1000) * 100) / 100,
+           amb: amb, sense: sense, min: min, max: max };
+}
+function carregaPreuInventari(){
+  if(typeof driveLlegeixDe!=="function" || !gToken) return;
+  driveLlegeixDe("zenkai3d-inventari.json").then(function(d){
+    var r = d ? preuKgInventari(d.items) : null;
+    if(!r){ posaNotaPreu(""); return; }
+    invPreuKg = r.kg;
+    var n = "Mitjana de l'inventari: " + fmtE(r.kg) + "/kg";
+    if(r.min!=null && r.max!=null && Math.abs(r.max-r.min) > 0.01)
+      n += " (de " + fmtE(r.min) + " a " + fmtE(r.max) + ")";
+    if(r.sense) n += " · " + r.sense + (r.sense===1?" bobina":" bobines") + " sense preu posat";
+    invPreuNota = n;
+    posaNotaPreu(n);
+    /* si no l'ha tocat ell, el camp passa a dir el de debò */
+    var e=$("q-preu-material");
+    if(e._auto && tipus!=="resina") { e.value = r.kg; }
+    recalc();
+  }).catch(function(){ posaNotaPreu(""); });
+}
+function posaNotaPreu(txt){
+  var l=$("mat-price-label"); if(!l) return;
+  var n=l.querySelector(".preunota");
+  if(!txt){ if(n) n.remove(); return; }
+  if(!n){ n=document.createElement("small"); n.className="note preunota";
+          n.style.cssText="display:block;margin-top:3px"; l.appendChild(n); }
+  n.textContent=txt;
+}
 var ZCFG = {
   nomFitxa: "pressupost",
   nomFitxes: "pressupostos",
@@ -1439,6 +1493,7 @@ var ZCFG = {
     $("q-marge").value=settings.general.marge;
     $("q-pintat-preu").value=settings.general.pintatHora;
     $("q-preu-material")._auto=true;
+    carregaPreuInventari();
     setMargeMode("pctmat");
     setTipus("fdm");
     renderExtres();

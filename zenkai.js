@@ -245,6 +245,17 @@ function driveLoad(fileId){
     .then(function(r){ return r.text(); })
     .then(function(t){ try{ return t?JSON.parse(t):{}; }catch(e){ return {}; } });
 }
+/* El fitxer d'una altra eina. A diferència de driveFindOrCreate, si no hi és
+   torna null en comptes de crear-lo: el pressupost no ha de crear l'inventari. */
+function driveLlegeixDe(nom){
+  var q=encodeURIComponent("name='"+nom+"' and trashed=false");
+  return driveFetch("https://www.googleapis.com/drive/v3/files?q="+q+"&fields=files(id,name)&spaces=drive")
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!d.files || !d.files.length) return null;
+      return driveLoad(d.files[0].id);
+    });
+}
 function driveSaveCSV(){
   if(!gToken||!ZCFG.csvName||!ZCFG.buildCSV) return Promise.resolve();
   var write=function(id){
