@@ -20,6 +20,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
+<link rel="stylesheet" href="zenkai.css">
 <style>
 :root{
   --paper:#F2F2F0; --surface:#FFFFFF; --ink:#191A1C; --ink-soft:#6B6D72;
@@ -358,14 +359,6 @@ input[type=range]{width:100%;accent-color:var(--brand-blue)}
 .empty-state[hidden]{display:none}
 
 
-/* ---------- ios-zoom: que l'iPhone no ampliï la pàgina ----------
-   Safari a l'iOS amplia la pàgina quan poses el cursor en un camp de menys de
-   16 px i, en sortir-ne, no la torna a reduir: es queda gran. Amb 16 px no ho
-   fa. L'!important hi és perquè regles com .toolbar select tenen més
-   especificitat que select i guanyarien igualment. */
-@media(max-width:900px){
-  input,select,textarea{font-size:16px!important}
-}
 </style>
 </head>
 <body>
@@ -2548,5 +2541,6 @@ var ZCFG = {
 <script src="zenkai.js"></script>
 <script>if(typeof gateInit!=="function"){var _g=document.getElementById("gate-status");
   if(_g) _g.textContent="No s'ha pogut carregar zenkai.js. Recarrega la pàgina.";}</script>
+<script src="zenkai-nav.js"></script>
 </body>
 </html>

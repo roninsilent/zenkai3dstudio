@@ -1,0 +1,50 @@
+/* ------------------------------------------------------------------
+   zenkai.css — l'estil que comparteixen totes les eines.
+
+   Va abans del <style> de cada pàgina, així que una eina pot sobreescriure
+   el que vulgui d'aquí sense haver de barallar-s'hi.
+   ------------------------------------------------------------------ */
+
+/* ---------- el saltador d'eines ----------
+   Abans hi havia un "‹ Menú" que et tornava a la portada i d'allà triaves.
+   Dos passos i una càrrega de pàgina pel mig per anar del pressupost al
+   registre. Ara la llista és aquí mateix. */
+.toolpick{position:relative;margin-left:auto;flex:none}
+.toolpick>button{
+  display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+  background:none;color:var(--ink-soft);border:1px solid var(--line-strong);
+  border-radius:20px;padding:4px 12px;font:inherit;font-size:12px;font-weight:500;
+  white-space:nowrap;
+}
+.toolpick>button:hover{color:var(--ink);border-color:var(--ink)}
+.toolpick>button .ca{font-size:9px;opacity:.7;transition:transform .15s}
+.toolpick>button[aria-expanded="true"] .ca{transform:rotate(180deg)}
+.toolmenu{
+  position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:208px;
+  background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r);
+  box-shadow:0 6px 24px rgba(0,0,0,.14);padding:5px;
+}
+.toolmenu[hidden]{display:none}
+.toolmenu a{
+  display:flex;align-items:baseline;gap:8px;text-decoration:none;color:var(--ink);
+  padding:8px 10px;border-radius:var(--r);font-size:14px;line-height:1.25;
+}
+.toolmenu a small{color:var(--ink-soft);font-size:11.5px;margin-left:auto;white-space:nowrap}
+.toolmenu a:hover{background:var(--paper)}
+.toolmenu a[aria-current="page"]{font-weight:600}
+.toolmenu a[aria-current="page"]:before{content:"";width:3px;align-self:stretch;
+  background:var(--brand-orange);border-radius:2px;margin:-8px 0 -8px -10px}
+.toolmenu a[aria-current="page"]{padding-left:13px}
+.toolmenu hr{border:0;border-top:1px solid var(--line);margin:5px 2px}
+@media(max-width:520px){
+  .toolmenu{min-width:min(252px,calc(100vw - 32px))}
+}
+
+/* ---------- ios-zoom: que l'iPhone no ampliï la pàgina ----------
+   Safari a l'iOS amplia la pàgina quan poses el cursor en un camp de menys de
+   16 px i, en sortir-ne, no la torna a reduir: es queda gran. Amb 16 px no ho
+   fa. L'!important hi és perquè regles com .toolbar select tenen més
+   especificitat que select i guanyarien igualment. */
+@media(max-width:900px){
+  input,select,textarea{font-size:16px!important}
+}

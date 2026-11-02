@@ -20,6 +20,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
+<link rel="stylesheet" href="zenkai.css">
 <style>
 :root{
   --paper:#F2F2F0; --surface:#FFFFFF; --ink:#191A1C; --ink-soft:#6B6D72;
@@ -245,14 +246,6 @@ ul.mini small{color:var(--ink-soft);font-size:12px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:40;background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:var(--r);font-size:13.5px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
-/* ---------- ios-zoom: que l'iPhone no ampliï la pàgina ----------
-   Safari a l'iOS amplia la pàgina quan poses el cursor en un camp de menys de
-   16 px i, en sortir-ne, no la torna a reduir: es queda gran. Amb 16 px no ho
-   fa. L'!important hi és perquè regles com .toolbar select tenen més
-   especificitat que select i guanyarien igualment. */
-@media(max-width:900px){
-  input,select,textarea{font-size:16px!important}
-}
 </style>
 </head>
 <body>
@@ -1726,5 +1719,6 @@ function llegeixConcursos() {
 
 gateInit();
 </script>
+<script src="zenkai-nav.js"></script>
 </body>
 </html>
