@@ -301,8 +301,10 @@ ul.mini small{color:var(--ink-soft);font-size:12px}
 
 <main>
 <div class="empty-state" id="buit" hidden style="margin-top:24px">
-  <b>Encara no hi ha dades</b>
-  <span>S'omplen cada matí. Si acabes d'obrir l'app per primer cop, demà ja hi seran, o demana a Claude que les actualitzi ara.</span>
+  <b id="buit-titol">Encara no hi ha dades</b>
+  <span id="buit-txt">S'omplen cada matí. Si acabes d'obrir l'app per primer cop, demà ja hi seran, o demana a Claude que les actualitzi ara.</span>
+  <div id="buit-detall" class="note" hidden
+       style="margin-top:12px;text-align:left;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5;overflow-wrap:anywhere"></div>
 </div>
 
 <section id="view-resum">
@@ -595,9 +597,41 @@ $("cerca").addEventListener("input", function () { pinta(); });
 var rT;
 window.addEventListener("resize", function () { clearTimeout(rT); rT = setTimeout(function () { if (D) pinta(); }, 150); });
 
+/* Per què és buida. Sense això, «Encara no hi ha dades» tant vol dir que és el
+   primer dia com que el Drive ha dit que no, i no hi ha manera de distingir-ho. */
+function buitPerque(titol, linies) {
+  var t = $("buit-titol"), x = $("buit-txt"), d = $("buit-detall");
+  if (t) t.textContent = titol;
+  if (x) x.textContent = "";
+  if (d) {
+    d.textContent = (linies || []).join("\n");
+    d.hidden = !(linies && linies.length);
+  }
+  $("buit").hidden = false;
+}
 function carrega(raw) {
   if (!raw || !raw.versio || !raw.reels) {
-    if (!D) { $("buit").hidden = false; mostra(vista); }
+    if (!D) {
+      if (gTrobats === 0) {
+        buitPerque("El teu compte no veu el fitxer de dades", [
+          "compte: " + (gEmail || "?"),
+          "fitxer: " + NOM,
+          "El Drive ha contestat bé, però amb aquest Client ID no hi ha cap fitxer",
+          "amb aquest nom. Les apps demanen el permís drive.file, que només els",
+          "deixa veure els fitxers que han creat elles mateixes: si has entrat amb",
+          "un Client ID diferent del de sempre, les dades hi són però ell no les veu.",
+          "Fa falta el mateix Client ID de sempre, amb l'adreça nova afegida als",
+          "orígens autoritzats."
+        ]);
+      } else {
+        buitPerque("Encara no hi ha dades", gTrobats === null ? [] : [
+          "compte: " + (gEmail || "?"),
+          "fitxer: " + NOM + " (" + gTrobats + " trobat" + (gTrobats === 1 ? "" : "s") + ")",
+          "El fitxer hi és però encara no porta dades."
+        ]);
+      }
+      mostra(vista);
+    }
     return;
   }
   D = normalitza(raw);
@@ -1587,7 +1621,9 @@ function tokDesat(calen) {
 }
 function tokOblida() { try { localStorage.removeItem(TOK_KEY); } catch (e) {} }
 
+var gEmail = null;
 function authOk(email, foto) {
+  gEmail = email || null;
   $("acct-pic").src = foto || "";
   $("acct-email").textContent = email || "";
   $("acctbar").hidden = false;
@@ -1662,18 +1698,26 @@ function driveFetch(url, opts) {
   opts = opts || {};
   opts.headers = Object.assign({}, opts.headers, { Authorization: "Bearer " + gToken });
   return fetch(url, opts).then(function (r) {
-    if (r.status === 401) { tokOblida(); throw { code: "g_401" }; }
-    if (!r.ok) throw { code: "g_http_" + r.status };
-    return r;
+    if (r.ok) return r;
+    /* el número d'error sol no dir res; el missatge de Google, sí */
+    return r.text().then(function (t) {
+      var detall = "";
+      try { var j = JSON.parse(t); detall = (j.error && (j.error.message || j.error.status)) || ""; }
+      catch (e) { detall = (t || "").slice(0, 200); }
+      if (r.status === 401) tokOblida();
+      throw { code: (r.status === 401 ? "g_401" : "g_http_" + r.status), status: r.status, detail: detall };
+    });
   });
 }
 /* L'app crea el fitxer si no el troba; la tasca diària d'actualització n'escriu el contingut.
    Aquesta app no hi escriu mai res més. */
+var gTrobats = null;   /* quants fitxers amb aquest nom ha vist l'última cerca */
 function driveFindOrCreate(name, mime, initialBody) {
   var q = encodeURIComponent("name='" + name + "' and trashed=false");
   return driveFetch("https://www.googleapis.com/drive/v3/files?q=" + q + "&fields=files(id,name,modifiedTime)&orderBy=" + encodeURIComponent("modifiedTime desc") + "&spaces=drive")
     .then(function (r) { return r.json(); })
     .then(function (d) {
+      gTrobats = (d.files || []).length;
       if (d.files && d.files.length) return d.files[0].id;
       var boundary = "zenkai3dboundary";
       var body = "--" + boundary + "\r\nContent-Type: application/json\r\n\r\n" + JSON.stringify({ name: name }) +
@@ -1697,7 +1741,14 @@ function llegeixDrive() {
     .catch(function (e) {
       if (e && e.code === "g_401") { gToken = null; showLogin("La sessió de Google ha caducat; torna a entrar-hi."); return; }
       toast("No he pogut llegir el Drive ara mateix." + (D ? " Et mostro les últimes dades guardades." : ""));
-      if (!D) { $("buit").hidden = false; }
+      if (D) return;
+      buitPerque("No he pogut llegir el Drive", [
+        "compte: " + (gEmail || "?"),
+        "fitxer: " + NOM,
+        "error: " + ((e && (e.code || e.message)) || "desconegut") +
+          (e && e.status ? " (HTTP " + e.status + ")" : ""),
+        (e && e.detail) ? "Google diu: " + e.detail : ""
+      ].filter(Boolean));
     });
 }
 
