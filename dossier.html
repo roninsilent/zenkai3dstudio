@@ -609,6 +609,7 @@ function pintaPeces() {
           (p.foto ? '<img src="' + esc(p.foto) + '" alt="' + esc(p.nom) + '" loading="lazy">'
                   : '<div class="capfoto" aria-hidden="true"></div>') +
           '<div class="d"><b>' + esc(p.nom) + '</b>' +
+          (p.nota ? '<p class="nota" style="margin:4px 0 0;font-size:12px;line-height:1.4">' + esc(p.nota[L] || p.nota.en || "") + '</p>' : "") +
           (on.length ? '<div class="on">' + on.map(function (e) {
             return '<a href="' + esc(e.url) + '" target="_blank" rel="noopener">' + esc(e.on) + '</a>';
           }).join("") + '</div>' : "") +

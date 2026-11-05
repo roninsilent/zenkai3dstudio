@@ -102,69 +102,8 @@
  ],
  "peces": [
   {
-   "nom": "Fangy McHowl",
-   "foto": "peces/fangy-mchowl.jpg",
-   "enllacos": [
-    {
-     "on": "MakerWorld",
-     "url": "https://makerworld.com/models/3497271?appSharePlatform=copy"
-    },
-    {
-     "on": "Creality",
-     "url": "https://www.crealitycloud.com/en/model-detail/6acfcbaecc5a1c53dff254c9?cloudPlatform=18"
-    },
-    {
-     "on": "Meshy",
-     "url": "https://www.meshy.ai/collections/Creepy-Monsters-Halloween-Toys-01a0e516-2894-745a-806a-9a2995b9a2c4"
-    }
-   ],
-   "colleccio": "Creepy Monsters: Halloween Toys"
-  },
-  {
-   "nom": "Creepy Franky",
-   "colleccio": "Creepy Monsters: Halloween Toys",
-   "foto": "peces/creepy-franky.jpg",
-   "enllacos": [
-    {
-     "on": "Meshy",
-     "url": "https://www.meshy.ai/collections/Creepy-Monsters-Halloween-Toys-01a0e516-2894-745a-806a-9a2995b9a2c4"
-    }
-   ]
-  },
-  {
-   "nom": "Skully McScream",
-   "colleccio": "Creepy Monsters: Halloween Toys",
-   "foto": "peces/skully-mcscream.jpg",
-   "enllacos": [
-    {
-     "on": "Creality",
-     "url": "https://www.crealitycloud.com/en/model-detail/6ad0eba51f116fe7ae568521?cloudPlatform=18"
-    },
-    {
-     "on": "Meshy",
-     "url": "https://www.meshy.ai/collections/Creepy-Monsters-Halloween-Toys-01a0e516-2894-745a-806a-9a2995b9a2c4"
-    }
-   ]
-  },
-  {
-   "nom": "The Cursed Mummy",
-   "colleccio": "Creepy Monsters: Halloween Toys",
-   "enllacos": [
-    {
-     "on": "Creality",
-     "url": "https://www.crealitycloud.com/en/model-detail/6ad0ce9e1f116fe7ae546233?cloudPlatform=18"
-    },
-    {
-     "on": "Meshy",
-     "url": "https://www.meshy.ai/collections/Creepy-Monsters-Halloween-Toys-01a0e516-2894-745a-806a-9a2995b9a2c4"
-    }
-   ],
-   "foto": "peces/the-cursed-mummy.jpg"
-  }
- ],
- "colleccions": [
-  {
    "nom": "Creepy Monsters: Halloween Toys",
+   "foto": "peces/creepy-monsters.jpg",
    "nota": {
     "en": "Stylised creatures from classic horror, made to print with no AMS: the colours come from clean multi-part separation.",
     "es": "Criaturas estilizadas de terror clásico, pensadas para imprimir sin AMS: los colores salen de separar la pieza en partes.",
@@ -172,7 +111,13 @@
     "de": "Stilisierte Kreaturen aus dem klassischen Horror, zum Druck ohne AMS: die Farben entstehen durch sauber getrennte Einzelteile.",
     "pt": "Criaturas estilizadas de terror clássico, feitas para imprimir sem AMS: as cores vêm da separação da peça em partes.",
     "zh": "取材于经典恐怖题材的风格化怪物，无需 AMS 即可打印：颜色靠干净的分件实现。"
-   }
+   },
+   "enllacos": [
+    {
+     "on": "Meshy",
+     "url": "https://www.meshy.ai/collections/Creepy-Monsters-Halloween-Toys-01a0e516-2894-745a-806a-9a2995b9a2c4"
+    }
+   ]
   }
  ],
  "analitica": {
