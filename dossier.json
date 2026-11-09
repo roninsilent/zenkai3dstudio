@@ -1,14 +1,14 @@
 {
- "actualitzat": "2026-11-03",
+ "actualitzat": "2026-11-09",
  "instagram": {
   "usuari": "zenkai3d_studio",
-  "seguidors": 6432,
-  "reels_12m": 101,
-  "vistes_12m": 440318,
-  "mediana_vistes": 3109,
-  "mediana_abast": 2424,
-  "interaccio_pct": 3.2,
-  "compartits_mitjana": 7.1
+  "seguidors": 6428,
+  "reels_12m": 98,
+  "vistes_12m": 426099,
+  "mediana_vistes": 2287,
+  "mediana_abast": 1951,
+  "interaccio_pct": 2.9,
+  "compartits_mitjana": 7
  },
  "tiktok": {
   "usuari": "zenkai3d_studio",
@@ -17,8 +17,8 @@
  },
  "youtube": {
   "usuari": "zenkai3dstudio",
-  "subscriptors": 4,
-  "shorts": 12
+  "subscriptors": 8,
+  "shorts": 17
  },
  "top": [
   {
@@ -35,7 +35,7 @@
   },
   {
    "titol": "Nostalgia pura! El mítico tiro con efecto de Oliver Atom en 3D",
-   "vistes": 14649,
+   "vistes": 14671,
    "data": "2026-07-28",
    "url": "https://www.instagram.com/reel/DbVoRwHNVP0/"
   },
@@ -76,7 +76,10 @@
   "Whale 3D Studio",
   "AT62 3D",
   "Antinsky v2",
-  "Artillery"
+  "MakeYourCaps",
+  "HOZO",
+  "Artillery",
+  "QUARTIK"
  ],
  "premis": 8
 }
