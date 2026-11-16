@@ -1,14 +1,14 @@
 {
- "actualitzat": "2026-11-09",
+ "actualitzat": "2026-11-16",
  "instagram": {
   "usuari": "zenkai3d_studio",
-  "seguidors": 6428,
-  "reels_12m": 98,
-  "vistes_12m": 426099,
-  "mediana_vistes": 2287,
-  "mediana_abast": 1951,
-  "interaccio_pct": 2.9,
-  "compartits_mitjana": 7
+  "seguidors": 6415,
+  "reels_12m": 94,
+  "vistes_12m": 423348,
+  "mediana_vistes": 3142,
+  "mediana_abast": 2454,
+  "interaccio_pct": 2.8,
+  "compartits_mitjana": 7.4
  },
  "tiktok": {
   "usuari": "zenkai3d_studio",
@@ -17,31 +17,31 @@
  },
  "youtube": {
   "usuari": "zenkai3dstudio",
-  "subscriptors": 8,
-  "shorts": 17
+  "subscriptors": 18,
+  "shorts": 23
  },
  "top": [
   {
    "titol": "Limits? They exist to be broken. ⚪🔥",
-   "vistes": 17203,
+   "vistes": 17221,
    "data": "2026-02-03",
    "url": "https://www.instagram.com/reel/DUTTs9GDZja/"
   },
   {
    "titol": "Good luck fitting in the mousehole with those kicks.",
-   "vistes": 15701,
+   "vistes": 15707,
    "data": "2026-03-31",
    "url": "https://www.instagram.com/reel/DWj1Dfbjdi9/"
   },
   {
    "titol": "Nostalgia pura! El mítico tiro con efecto de Oliver Atom en 3D",
-   "vistes": 14671,
+   "vistes": 14687,
    "data": "2026-07-28",
    "url": "https://www.instagram.com/reel/DbVoRwHNVP0/"
   },
   {
    "titol": "A new workhorse just landed in the studio. 📦🖨️",
-   "vistes": 12456,
+   "vistes": 12457,
    "data": "2026-03-25",
    "url": "https://www.instagram.com/reel/DWUDgIDNJgd/"
   },
@@ -53,7 +53,7 @@
   },
   {
    "titol": "Reporting for duty. To infinity and beyond! 🚀✨",
-   "vistes": 10804,
+   "vistes": 10810,
    "data": "2026-05-03",
    "url": "https://www.instagram.com/reel/DX4aXy9NJim/"
   }
@@ -75,11 +75,13 @@
   "The Craft Vault",
   "Whale 3D Studio",
   "AT62 3D",
+  "SUNLU",
   "Antinsky v2",
   "MakeYourCaps",
   "HOZO",
   "Artillery",
-  "QUARTIK"
+  "QUARTIK",
+  "IceWhale"
  ],
- "premis": 8
+ "premis": 9
 }
