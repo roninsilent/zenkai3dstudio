@@ -334,7 +334,7 @@ header,.navwrap,#view-concursos,#view-tancades,#view-pendent,#view-seguiment,#vi
 .punt.gris{background:var(--ink-soft)}
 
 /* Tauler */
-#llista.tauler{max-width:none}
+#llista.tauler,#llista.quadres{max-width:none}
 .tauler{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start;margin-top:6px}
 .col{background:color-mix(in srgb,var(--ink) 4%,var(--paper));border:1px solid var(--line);border-radius:8px;padding:10px;min-height:120px}
 .col.drop{outline:2px dashed var(--brand-orange);outline-offset:-3px}
@@ -421,6 +421,69 @@ header,.navwrap,#view-concursos,#view-tancades,#view-pendent,#view-seguiment,#vi
 .tornaeines{background:none;border:0;padding:0;margin:0 0 10px;color:var(--ink-soft);cursor:pointer;font-size:13px}
 .tornaeines:hover{color:var(--ink)}
 
+
+/* ════════ v5.1: quadres ════════ */
+.aratoca{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border:0;background:none;padding:0;margin:0 0 14px}
+.aratoca h2{margin:0 6px 0 0;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft)}
+.aratoca .atrow{border:1px solid var(--line-strong);border-radius:999px;padding:6px 13px 6px 10px;background:var(--surface);font-size:13px;gap:7px;max-width:100%}
+.aratoca .atrow:hover{border-color:var(--ink)}
+.aratoca .atrow .que{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.aratoca .atrow .que .det{display:inline;margin-left:6px;font-size:12px}
+.aratoca .atrow:has(.punt.alerta){border-color:var(--alert);background:color-mix(in srgb,var(--alert) 8%,var(--surface))}
+.aratoca .buit{font-size:13px}
+.vistes{display:inline-flex;border:1px solid var(--line-strong);border-radius:999px;overflow:hidden;flex:none}
+.vistes button{border:0;background:var(--surface);padding:7px 13px;font-size:13px;cursor:pointer;color:var(--ink-soft)}
+.vistes button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.ph-propostes{--ph:#7B8794}.ph-acceptades{--ph:var(--brand-blue)}.ph-marxa{--ph:var(--brand-orange)}.ph-publicat{--ph:var(--good)}
+.quadres{display:block}
+.fase{margin:0 0 26px;border:0;background:none;padding:0;min-height:0;border-radius:10px}
+.fase.drop{outline:2px dashed var(--ph);outline-offset:4px}
+.fase h3{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;margin:0 0 12px;font-size:17px;font-weight:700;letter-spacing:-.01em}
+.fase h3 .fpunt{width:11px;height:11px;border-radius:50%;background:var(--ph);align-self:center}
+.fase h3 .quants{font-size:13px;font-weight:600;color:#fff;background:var(--ph);border-radius:999px;padding:1px 9px}
+.fase h3 .fhint{font-size:12.5px;font-weight:400;color:var(--ink-soft);letter-spacing:0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.tile{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 14px 12px;cursor:pointer;
+  display:flex;flex-direction:column;gap:8px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04);transition:transform .12s,box-shadow .12s}
+.tile::before{content:"";position:absolute;left:0;top:0;right:0;height:4px;background:var(--ph)}
+.tile:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.08)}
+.tile.tard{border-color:var(--alert);background:color-mix(in srgb,var(--alert) 5%,var(--surface))}
+.thead{display:flex;gap:10px;align-items:center}
+.mono{width:42px;height:42px;border-radius:11px;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;letter-spacing:.02em}
+.tnom{min-width:0;flex:1}
+.tname{font-weight:700;font-size:15.5px;line-height:1.2;overflow-wrap:anywhere}
+.tmeta{margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.testat{font-size:11.5px;color:var(--ph);font-weight:600}
+.tbig{font-size:28px;font-weight:700;letter-spacing:-.03em;line-height:1;margin-top:2px}
+.tbig small{font-size:12px;font-weight:500;letter-spacing:0;color:var(--ink-soft);margin-left:6px}
+.tbig.aviat{color:var(--brand-orange)}
+.tbig.tard{color:var(--alert)}
+.tbig.tard small{color:var(--alert)}
+.tbig.sense{font-size:13px;font-weight:500;color:var(--ink-soft);letter-spacing:0;padding:6px 0}
+.tcomp{font-size:12.5px;color:var(--ink-soft);line-height:1.35}
+.tnext{font-size:13px;line-height:1.35;background:var(--paper);border-radius:7px;padding:7px 9px}
+.tnext::before{content:"Ara: ";font-weight:600}
+.tfoot{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:2px}
+.tbar{flex:1;height:6px;background:var(--line);border-radius:6px;overflow:hidden}
+.tbar span{display:block;height:100%;background:var(--ph)}
+.tcompte{font-size:11.5px;color:var(--ink-soft)}
+.tile .avanca{font-size:11.5px;padding:4px 9px;border:1px solid var(--line-strong);border-radius:20px;background:var(--surface);cursor:pointer;color:var(--ink-soft);white-space:nowrap}
+.tile .avanca:hover{color:var(--ink);border-color:var(--ink)}
+@media(max-width:600px){
+  .tiles{grid-template-columns:1fr 1fr;gap:9px}
+  .tile{padding:12px 11px 10px;gap:7px}
+  .mono{width:34px;height:34px;font-size:13px;border-radius:9px}
+  .tname{font-size:14px}
+  .tbig{font-size:23px}
+  .tbig small{display:block;margin:3px 0 0}
+  .tcomp{display:none}
+  .tnext{font-size:12px;padding:6px 7px}
+  .tile .avanca{font-size:11px;padding:4px 7px}
+  .tfoot{flex-wrap:wrap}
+  .fase h3 .fhint{flex-basis:100%}
+  .vistes{flex:1 1 100%}
+  .vistes button{flex:1}
+}
 </style>
 </head>
 <body>
@@ -461,7 +524,7 @@ header,.navwrap,#view-concursos,#view-tancades,#view-pendent,#view-seguiment,#vi
     <button class="btn" id="acct-signout">Tanca sessió</button>
   </div>
   <h1>Col·laboracions</h1>
-  <p class="sub">On és cada marca, què toca ara i quan has d'entregar. <span class="ver">v5 · tauler i calendari</span></p>
+  <p class="sub">On és cada marca, què toca ara i quan has d'entregar. <span class="ver">v5.1 · quadres</span></p>
   <div class="stats">
     <span><b id="t-actives">0</b> en marxa</span>
     <span id="t-tard-w"><b id="t-tard">0</b> vas tard</span>
@@ -494,6 +557,10 @@ header,.navwrap,#view-concursos,#view-tancades,#view-pendent,#view-seguiment,#vi
       <option value="disseny">Disseny</option>
       <option value="altre">Altre</option>
     </select>
+    <div class="vistes" role="group" aria-label="Com vols veure-les">
+      <button type="button" data-vista="quadres" aria-pressed="true">Quadres</button>
+      <button type="button" data-vista="tauler" aria-pressed="false">Columnes</button>
+    </div>
     <span class="spacer"></span>
     <button class="btn primary" id="add">Nova col·laboració</button>
   </div>
@@ -1098,6 +1165,42 @@ function bindRows(box){
     row.onclick=function(){ openEditor(row.dataset.uid); };
   });
 }
+var vistaTauler = (function(){ try{ return localStorage.getItem("collabs-vista-tauler")||"quadres"; }catch(e){ return "quadres"; } })();
+var ORDRE_QUADRES = ["marxa","acceptades","propostes","publicat"];
+var PALETA = ["#E67324","#3E96C2","#3F7D4C","#8E5BB5","#C4362B","#2F8F8A","#B5892A","#5B6CC4"];
+function colorMarca(m){ var h=0; m=String(m||""); for(var i=0;i<m.length;i++) h=(h*31+m.charCodeAt(i))>>>0; return PALETA[h%PALETA.length]; }
+function inicials(m){
+  var w=String(m||"?").replace(/[(·—].*$/,"").trim().split(/\s+/).filter(Boolean);
+  return ((w[0]||"?").charAt(0)+(w.length>1?w[1].charAt(0):(w[0]||"").charAt(1))).toUpperCase();
+}
+function compteEnrere(c){
+  var n=diesFins(c.dataLliurament);
+  if(n==null) return ["enviada","proposta","publicat"].indexOf(c.estat)>=0 ? "" : '<div class="tbig sense">sense data d\'entrega</div>';
+  if(n<0 && c.estat!=="publicat") return '<div class="tbig tard">'+(-n)+'<small>'+(n===-1?'dia tard':'dies tard')+'</small></div>';
+  if(n<0) return '<div class="tbig sense">'+esc(fmtDataCurta(c.dataLliurament))+'</div>';
+  if(n===0) return '<div class="tbig tard">avui</div>';
+  return '<div class="tbig'+(n<=7?' aviat':'')+'">'+n+'<small>'+(n===1?'dia':'dies')+' · '+esc(fmtDataCurta(c.dataLliurament))+'</small></div>';
+}
+function tileHtml(c){
+  var p=progress(c), n=diesFins(c.dataLliurament), next=seguentPas(c), seg=SEGUENT[c.estat];
+  var cls=(n!=null && n<0 && c.estat!=="publicat") ? " tard" : (n!=null && n>=0 && n<=7 ? " aviat" : "");
+  return '<div class="tile'+cls+'" draggable="true" data-uid="'+esc(c.uid)+'">'+
+    '<div class="thead"><span class="mono" style="background:'+colorMarca(c.marca)+'">'+esc(inicials(c.marca))+'</span>'+
+      '<div class="tnom"><div class="tname">'+esc(c.marca||"Sense nom")+'</div>'+
+      '<div class="tmeta"><span class="badge t-'+esc(c.tipus||"material")+'">'+esc(TIPUS[c.tipus||"material"]||"")+'</span> <span class="testat">'+esc(CURT[c.estat]||c.estat)+'</span></div></div></div>'+
+    compteEnrere(c)+
+    (c.compensacio?'<div class="tcomp">'+esc(c.compensacio.length>70?c.compensacio.slice(0,68)+"…":c.compensacio)+'</div>':'')+
+    (next?'<div class="tnext">'+esc(next.length>90?next.slice(0,88)+"…":next)+'</div>':'')+
+    '<div class="tfoot">'+
+      (p.total?'<div class="tbar"><span style="width:'+Math.round(p.fet/p.total*100)+'%"></span></div><span class="tcompte">'+p.fet+'/'+p.total+'</span>':'<span class="spacer"></span>')+
+      (seg?'<button class="avanca" type="button" data-seg="'+seg+'" title="Passa-la a «'+esc(ESTATS[seg])+'»">→ '+esc(CURT[seg])+'</button>':'')+
+    '</div></div>';
+}
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-vista]"); if(!b) return;
+  vistaTauler=b.dataset.vista; try{ localStorage.setItem("collabs-vista-tauler", vistaTauler); }catch(err){}
+  renderLlista();
+});
 function renderLlista(){
   renderAraToca();
   var box=$("llista");
@@ -1105,14 +1208,23 @@ function renderLlista(){
   var list=collabs.filter(function(c){ return !esConcurs(c) && !isTancat(c) && passaFiltre(c, q, "", ft); });
   $("llista-empty").hidden = collabs.filter(function(c){ return !esConcurs(c); }).length>0;
   var scroll=box.scrollLeft;
-  box.innerHTML = COLS.map(function(col){
+  box.className = vistaTauler==="quadres" ? "quadres" : "tauler";
+  Array.prototype.forEach.call(document.querySelectorAll("[data-vista]"),function(b){ b.setAttribute("aria-pressed", String(b.dataset.vista===vistaTauler)); });
+  if(vistaTauler==="quadres") box.innerHTML = ORDRE_QUADRES.map(function(k){
+    var col=COLS.filter(function(x){return x.k===k;})[0];
+    var items=list.filter(function(c){ return col.estats.indexOf(c.estat)>=0; }).sort(ordreTauler);
+    if(!items.length) return "";
+    return '<section class="fase col ph-'+col.k+'" data-col="'+col.k+'"><h3><span class="fpunt"></span>'+col.t+' <span class="quants">'+items.length+'</span><span class="fhint">'+col.hint+'</span></h3>'+
+      '<div class="tiles">'+items.map(tileHtml).join("")+'</div></section>';
+  }).join("") || '<div class="buida">'+(q||ft?'Cap col·laboració amb aquest filtre':'Cap col·laboració oberta')+'</div>';
+  else box.innerHTML = COLS.map(function(col){
     var items=list.filter(function(c){ return col.estats.indexOf(c.estat)>=0; }).sort(ordreTauler);
     return '<div class="col" data-col="'+col.k+'" data-def="'+col.def+'"><h3>'+col.t+' <span class="quants">'+items.length+'</span></h3>'+
       '<p class="colhint">'+col.hint+'</p>'+
       (items.map(kcardHtml).join("") || '<div class="buida">'+(q||ft?'Cap amb aquest filtre':'Cap')+'</div>')+'</div>';
   }).join("");
   box.scrollLeft=scroll;
-  Array.prototype.forEach.call(box.querySelectorAll(".kcard"),function(card){
+  Array.prototype.forEach.call(box.querySelectorAll(".kcard,.tile"),function(card){
     card.onclick=function(e){
       var b=e.target.closest(".avanca");
       if(b){ e.stopPropagation(); canviaEstat(card.dataset.uid, b.dataset.seg); return; }
