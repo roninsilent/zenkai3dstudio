@@ -1,59 +1,59 @@
 {
- "actualitzat": "2026-11-16",
+ "actualitzat": "2026-11-23",
  "instagram": {
   "usuari": "zenkai3d_studio",
-  "seguidors": 6415,
-  "reels_12m": 94,
-  "vistes_12m": 423348,
-  "mediana_vistes": 3142,
-  "mediana_abast": 2454,
+  "seguidors": 6425,
+  "reels_12m": 93,
+  "vistes_12m": 418339,
+  "mediana_vistes": 3100,
+  "mediana_abast": 2422,
   "interaccio_pct": 2.8,
-  "compartits_mitjana": 7.4
+  "compartits_mitjana": 6.7
  },
  "tiktok": {
   "usuari": "zenkai3d_studio",
-  "seguidors": 1155,
-  "mediana_vistes": 639
+  "seguidors": 1171,
+  "mediana_vistes": 796
  },
  "youtube": {
   "usuari": "zenkai3dstudio",
-  "subscriptors": 18,
-  "shorts": 23
+  "subscriptors": 19,
+  "shorts": 27
  },
  "top": [
   {
    "titol": "Limits? They exist to be broken. ⚪🔥",
-   "vistes": 17221,
+   "vistes": 17243,
    "data": "2026-02-03",
    "url": "https://www.instagram.com/reel/DUTTs9GDZja/"
   },
   {
    "titol": "Good luck fitting in the mousehole with those kicks.",
-   "vistes": 15707,
+   "vistes": 15709,
    "data": "2026-03-31",
    "url": "https://www.instagram.com/reel/DWj1Dfbjdi9/"
   },
   {
    "titol": "Nostalgia pura! El mítico tiro con efecto de Oliver Atom en 3D",
-   "vistes": 14687,
+   "vistes": 14711,
    "data": "2026-07-28",
    "url": "https://www.instagram.com/reel/DbVoRwHNVP0/"
   },
   {
    "titol": "A new workhorse just landed in the studio. 📦🖨️",
-   "vistes": 12457,
+   "vistes": 12458,
    "data": "2026-03-25",
    "url": "https://www.instagram.com/reel/DWUDgIDNJgd/"
   },
   {
    "titol": "Lightning strikes. A silhouette on the gargoyle. ⚡🦇",
-   "vistes": 11102,
+   "vistes": 11104,
    "data": "2026-02-07",
    "url": "https://www.instagram.com/reel/DUdqjF-jUMW/"
   },
   {
    "titol": "Reporting for duty. To infinity and beyond! 🚀✨",
-   "vistes": 10810,
+   "vistes": 10813,
    "data": "2026-05-03",
    "url": "https://www.instagram.com/reel/DX4aXy9NJim/"
   }
@@ -81,7 +81,17 @@
   "HOZO",
   "Artillery",
   "QUARTIK",
-  "IceWhale"
+  "IceWhale",
+  "Anycubic · Christmas Wonderland",
+  "HOTO",
+  "Sovol",
+  "Revopoint",
+  "Rosa3D",
+  "Kexcelled",
+  "QIDI",
+  "Flashforge · Creator 5",
+  "Meshy · Maker Program",
+  "UGREEN"
  ],
  "premis": 9
 }
