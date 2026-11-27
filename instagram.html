@@ -197,6 +197,15 @@ table.bd td b{font-weight:600}
 .resum{margin:0 0 16px;max-width:68ch}
 .resum p{margin:0 0 8px;font-size:16px;line-height:1.55}
 .resum b{font-weight:700}
+.coms{list-style:none;margin:0 0 8px;padding:0}
+.coms li{padding:12px 0;border-top:1px solid var(--line)}
+.coms li:last-child{border-bottom:1px solid var(--line)}
+.coms .qui{font-size:12.5px;color:var(--ink-soft)}
+.coms .qui b{color:var(--ink);font-size:14px;margin-right:6px}
+.coms q{display:block;font-size:14.5px;margin:4px 0 6px;line-height:1.45;overflow-wrap:anywhere}
+.coms .prop{font-size:13px;color:var(--ink-soft);line-height:1.45}
+.coms .prop b{color:var(--ink);font-weight:600}
+.coms a{font-size:13px;color:inherit}
 .fer{list-style:none;margin:0 0 8px;padding:0;counter-reset:f}
 .fer li{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
 .fer li:last-child{border-bottom:1px solid var(--line)}
@@ -313,6 +322,11 @@ ul.mini small{color:var(--ink-soft);font-size:12px}
   <p class="hint" id="kpi-note"></p>
   <h2>Què fer avui</h2>
   <ol class="fer" id="fer"></ol>
+  <div id="coms-box" hidden>
+    <h2>Comentaris sense resposta</h2>
+    <p class="hint" id="coms-hint"></p>
+    <ul class="coms" id="coms"></ul>
+  </div>
   <div id="idees-box" hidden>
     <h2>Idees per a aquesta setmana</h2>
     <p class="hint" id="idees-hint"></p>
@@ -864,6 +878,7 @@ function pintaResum() {
   }
 
   pintaFer();
+  pintaComentaris();
   pintaIdees();
   pintaConcursos();
   pintaAvui();
@@ -994,6 +1009,37 @@ function pintaFer() {
   var ol = $("fer"); ol.replaceChildren();
   items.slice(0, 5).forEach(function (it) {
     var li = el("li"); var d = el("div"); d.appendChild(el("b", "", it[0])); d.appendChild(el("span", "", it[1])); li.appendChild(d); ol.appendChild(li);
+  });
+}
+/* Els escriu cada vespre la tasca programada «Comentaris d'Instagram sense
+   resposta»: només hi entren els que demanen resposta de debò. */
+function pintaComentaris() {
+  var C = D.raw.comentaris, box = $("coms-box");
+  if (!C || !C.actualitzat) { box.hidden = true; return; }
+  box.hidden = false;
+  var ll = C.pendents || [], quan = String(C.actualitzat).slice(0, 10);
+  $("coms-hint").textContent = ll.length
+    ? "Comentaris dels últims 21 dies on l'última paraula no és teva. Revisat el " + fData(quan) + ". La resposta és una proposta: retoca-la abans de contestar."
+    : "Cap comentari pendent de resposta. Revisat el " + fData(quan) + ".";
+  var ul = $("coms"); ul.replaceChildren();
+  ll.forEach(function (x) {
+    var li = el("li"), qui = el("div", "qui");
+    qui.appendChild(el("b", "", x.usuari ? "@" + x.usuari : "Algú"));
+    qui.appendChild(document.createTextNode((x.data ? fCurta(x.data) : "") + (x.publicacio ? " · " + x.publicacio : "")));
+    li.appendChild(qui);
+    li.appendChild(el("q", "", x.text || ""));
+    if (x.resposta) {
+      var pr = el("div", "prop");
+      pr.appendChild(el("b", "", "Proposta: "));
+      pr.appendChild(document.createTextNode(x.resposta));
+      li.appendChild(pr);
+    }
+    if (x.enllac && /^https:\/\/(www\.)?instagram\.com\//.test(x.enllac)) {
+      var a = el("a", "", "Obre la publicació");
+      a.href = x.enllac; a.target = "_blank"; a.rel = "noopener";
+      li.appendChild(a);
+    }
+    ul.appendChild(li);
   });
 }
 function pintaIdees() {

@@ -294,6 +294,18 @@ table.tbl td:last-child,table.tbl th:last-child{text-align:right;padding-right:0
 .chk input{width:auto!important;flex:none}
 .buygroup{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin:22px 0 2px}
 .buygroup:first-child{margin-top:0}
+.sacaba{border:1px solid var(--line-strong);border-left:3px solid var(--alert);background:var(--surface);border-radius:var(--r);padding:14px 16px;margin:0 0 20px}
+.sacaba-cap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.sacaba-cap b{font-size:15.5px}
+.sacaba-cap .btn{margin-left:auto}
+.sacaba-linia{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-top:1px solid var(--line);font-size:13.5px;line-height:1.45}
+.sacaba-linia .et{flex:none;width:112px;color:var(--ink-soft);font-size:12.5px}
+.sacaba-chips{display:flex;flex-wrap:wrap;gap:6px 8px}
+.sacaba-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:var(--r);padding:3px 8px;background:var(--paper);cursor:pointer;font:inherit;color:inherit}
+.sacaba-chip .swatchstrip{width:22px;height:12px}
+.sacaba-chip small{color:var(--alert);font-weight:500}
+.sacaba a{color:inherit}
+@media(max-width:520px){.sacaba-linia{flex-direction:column;gap:4px}.sacaba-linia .et{width:auto}}
 .buyrow{display:flex;gap:14px;align-items:center;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
 .buyrow:last-of-type{border-bottom:1px solid var(--line)}
 .reason{flex:none;text-align:right;font-size:12.5px;color:var(--alert);font-weight:500}
@@ -426,6 +438,7 @@ nav::-webkit-scrollbar{display:none}
 
 <main>
 <section id="view-inventari">
+  <div id="sacaba" class="sacaba" hidden></div>
   <div class="toolbar">
     <input type="search" id="q" placeholder="Cerca color, marca, material…">
     <select id="f-material"><option value="">Tots els materials</option></select>
@@ -1270,6 +1283,7 @@ function carregaDtes(){
       });
       DTES=d;
       if(view==="marques") renderMarques();
+      renderSacaba();
     }).catch(function(){});
 }
 function dteDe(nom){
@@ -1461,7 +1475,81 @@ function buyText(){
   }).join("\n");
 }
 
-function renderAll(){ renderHeader(); renderGrid(); renderColors(); renderMarques(); renderBuy(); }
+/* ---------------- el que s'acaba, a dalt de tot ----------------
+   El mateix que «Per comprar», però a la vista tan bon punt obres l'app: el
+   que és gairebé buit, bobina per bobina; el que només és baix, en una línia;
+   el filament que les marques encara t'han d'enviar, perquè potser no cal
+   comprar-lo, i els codis de descompte de les marques que surten a la llista. */
+var DE_CAMI_KEY="zenkai_inv_decami_v1", DE_CAMI=null;
+try{ DE_CAMI=JSON.parse(localStorage.getItem(DE_CAMI_KEY)||"null"); }catch(e){ DE_CAMI=null; }
+function carregaDeCami(){
+  if(typeof gToken==="undefined" || !gToken || typeof driveLlegeixDe!=="function") return;
+  driveLlegeixDe("zenkai3d-collaboracions.json").then(function(j){
+    if(!j || !Array.isArray(j.collabs)) return;
+    var esb={}; (j.deleted||[]).forEach(function(u){ esb[u]=1; });
+    DE_CAMI=j.collabs.filter(function(c){
+      return c && !esb[c.uid] && (c.tipus==="material"||c.tipus==="concurs") &&
+        (c.estat==="acceptada"||c.estat==="producte") &&
+        (c.rebuts||[]).some(function(x){ return x && !x.fet; });
+    }).map(function(c){
+      return {marca:c.marca||"", pendent:(c.rebuts||[]).filter(function(x){ return x && !x.fet; })
+                                              .map(function(x){ return x.text; })};
+    });
+    try{ localStorage.setItem(DE_CAMI_KEY, JSON.stringify(DE_CAMI)); }catch(e){}
+    renderSacaba();
+  }).catch(function(){});
+}
+function renderSacaba(){
+  var box=$("sacaba");
+  if(!box) return;
+  var llista=items.filter(needsBuy).sort(function(a,b){ return stockOf(a)-stockOf(b); });
+  if(!items.length || !llista.length){ box.hidden=true; box.innerHTML=""; return; }
+  var buides=llista.filter(function(it){
+    return qtyOf(it)===0 || it.comprar || (it.pes_restant_g!=null && stockOf(it)<50);
+  });
+  var baixes=llista.filter(function(it){ return buides.indexOf(it)<0; });
+  var h='<div class="sacaba-cap"><b>S\'acaba</b><span class="note">'+llista.length+
+    (llista.length===1?' bobina per sota del llindar':' bobines per sota del llindar')+
+    '</span><button class="btn" type="button" id="sacaba-llista">Llista per comprar</button></div>';
+  if(buides.length){
+    h+='<div class="sacaba-linia"><span class="et">Gairebé buides</span><div class="sacaba-chips">'+
+      buides.map(function(it){
+        var r=buyReason(it), txt=(qtyOf(it)===0?"esgotada":(it.pes_restant_g==null?r.text:fmtG(stockOf(it))));
+        return '<button type="button" class="sacaba-chip" data-uid="'+esc(it.uid)+'">'+strip(it)+
+          '<span>'+esc(it.color_nom||"Sense nom")+' · '+esc(it.material||"?")+(it.marca?' · '+esc(it.marca):'')+
+          '</span><small>'+esc(txt)+'</small></button>';
+      }).join("")+'</div></div>';
+  }
+  if(baixes.length){
+    h+='<div class="sacaba-linia"><span class="et">Baixes</span><div>'+
+      baixes.map(function(it){
+        return esc((it.color_nom||"Sense nom")+' '+(it.material||"")+(it.marca?' ('+it.marca+')':''))+' <span class="note">'+esc(fmtG(stockOf(it)))+'</span>';
+      }).join(", ")+'</div></div>';
+  }
+  if(DE_CAMI && DE_CAMI.length){
+    h+='<div class="sacaba-linia"><span class="et">De camí</span><div>'+
+      DE_CAMI.map(function(c){
+        return '<b>'+esc(c.marca)+'</b>'+(c.pendent.length?': '+esc(c.pendent.join(", ")):'');
+      }).join(" · ")+' <span class="note">Encara t\'ho han d\'enviar marques: potser no cal comprar-ho.</span></div></div>';
+  }
+  var vistes={}, dtes=[];
+  llista.forEach(function(it){
+    var d=it.marca?dteDe(it.marca):null, k=normMarca(it.marca);
+    if(!d || vistes[k] || (!d.codi && !d.pct)) return;
+    vistes[k]=1;
+    var t=esc(it.marca)+(d.pct?' −'+esc(String(d.pct).replace(/%$/,""))+'%':'')+(d.codi?' amb el codi <b>'+esc(d.codi)+'</b>':'');
+    dtes.push(d.url ? '<a href="'+esc(d.url)+'" target="_blank" rel="noopener">'+t+'</a>' : t);
+  });
+  if(dtes.length) h+='<div class="sacaba-linia"><span class="et">Descomptes</span><div>'+dtes.join(" · ")+'</div></div>';
+  box.innerHTML=h;
+  box.hidden=false;
+  $("sacaba-llista").onclick=function(){ go("comprar"); window.scrollTo(0,0); };
+  Array.prototype.forEach.call(box.querySelectorAll(".sacaba-chip"),function(b){
+    b.onclick=function(){ openEditor(b.dataset.uid); };
+  });
+}
+
+function renderAll(){ renderHeader(); renderSacaba(); renderGrid(); renderColors(); renderMarques(); renderBuy(); }
 
 /* ---------------- editor ---------------- */
 var edColors=[];
@@ -2314,6 +2402,7 @@ function bootApp(){
   $("minall").value=settings.min;
   renderAll();
   carregaDtes();
+  carregaDeCami();
   connectDb();
   connectCaps();
 }
@@ -2358,6 +2447,7 @@ var ZCFG = {
     $("minall").value=settings.min;
     renderAll();
     carregaDtes();
+    carregaDeCami();
     connectDb();
     connectCaps();
   }
